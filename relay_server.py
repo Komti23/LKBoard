@@ -25,6 +25,7 @@ def get_room(room_id):
     with GLOBAL_LOCK:
         if room_id not in ROOMS:
             ROOMS[room_id] = {
+                'title': f'LKBoard {room_id}',
                 'elements': {},
                 'actions': [],
                 'version': 0,
@@ -109,7 +110,17 @@ class RelayHandler(BaseHTTPRequestHandler):
             action_id = room['version']
             
             atype = action.get('type')
-            if atype == 'upsert_element':
+            if atype == 'snapshot':
+                doc = action.get('document', {})
+                room['elements'] = {}
+                for el in doc.get('elements', []):
+                    if isinstance(el, dict) and 'id' in el:
+                        room['elements'][el['id']] = el
+                if 'title' in doc and doc['title']:
+                    room['title'] = doc['title']
+            elif atype == 'clear_board':
+                room['elements'] = {}
+            elif atype == 'upsert_element':
                 el = action.get('element')
                 if el and 'id' in el:
                     room['elements'][el['id']] = el
@@ -148,7 +159,7 @@ class RelayHandler(BaseHTTPRequestHandler):
         with room['lock']:
             elements_list = list(room['elements'].values())
             data = {
-                "title": f"LKBoard {room_id}",
+                "title": room.get('title', f"LKBoard {room_id}"),
                 "elements": elements_list,
                 "version": room['version']
             }

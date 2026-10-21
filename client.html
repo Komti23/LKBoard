@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LKBoard Live Collaboration — Комната LK-ROOM-PLACEHOLDER</title>
+    <title>LKBoard Live — Комната LK-ROOM-PLACEHOLDER</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
             width: 100%; height: 100%;
             overflow: hidden;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f1f5f9;
+            background-color: #f8fafc;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -21,24 +21,29 @@
             display: block;
             width: 100%;
             height: 100%;
-            cursor: crosshair;
+            cursor: grab;
+            touch-action: none;
         }
+        #canvas.drawing { cursor: crosshair; }
+        #canvas.panning { cursor: grabbing; }
+
         .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.90);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
             border-radius: 16px;
         }
+
         .header {
             position: fixed;
-            top: 16px; left: 16px; right: 16px;
+            top: 14px; left: 14px; right: 14px;
             height: 52px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 18px;
+            padding: 0 16px;
             z-index: 100;
         }
         .header-title {
@@ -48,21 +53,42 @@
         }
         .logo-badge {
             width: 32px; height: 32px;
-            background: linear-gradient(135deg, #0284c7, #3b82f6);
+            background: linear-gradient(135deg, #0284c7, #2563eb);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 14px;
-            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
         }
         .board-title {
             font-weight: 700;
-            font-size: 16px;
+            font-size: 15px;
             color: #0f172a;
             letter-spacing: -0.2px;
+        }
+        .room-badge {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .peers-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #475569;
         }
         .status-pill {
             display: flex;
@@ -70,11 +96,12 @@
             gap: 8px;
             padding: 6px 14px;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             background: rgba(16, 185, 129, 0.12);
             color: #059669;
             border: 1px solid rgba(16, 185, 129, 0.25);
+            transition: all 0.2s ease;
         }
         .status-dot {
             width: 8px; height: 8px;
@@ -87,30 +114,30 @@
             70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
+
         .toolbar {
             position: fixed;
-            bottom: 24px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
+            gap: 6px;
+            padding: 6px 10px;
             z-index: 100;
         }
         .tool-btn {
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 44px; height: 44px;
-            border-radius: 12px;
+            width: 42px; height: 42px;
+            border-radius: 10px;
             border: none;
             background: transparent;
             color: #475569;
             font-size: 18px;
             cursor: pointer;
-            transition: all 0.18s ease;
+            transition: all 0.15s ease;
         }
         .tool-btn:hover {
             background: rgba(0, 0, 0, 0.05);
@@ -122,10 +149,11 @@
             box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
         }
         .tool-divider {
-            width: 1px; height: 26px;
-            background: rgba(0, 0, 0, 0.12);
-            margin: 0 4px;
+            width: 1px; height: 24px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0 2px;
         }
+
         .color-palette {
             display: flex;
             align-items: center;
@@ -133,28 +161,66 @@
             margin: 0 4px;
         }
         .color-dot {
-            width: 22px; height: 22px;
+            width: 20px; height: 20px;
             border-radius: 50%;
             cursor: pointer;
             border: 2px solid #ffffff;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
             transition: transform 0.12s;
         }
-        .color-dot:hover { transform: scale(1.15); }
+        .color-dot:hover { transform: scale(1.2); }
         .color-dot.active {
             outline: 2px solid #0284c7;
             outline-offset: 1px;
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
+
+        .zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            z-index: 100;
+        }
+        .zoom-btn {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: #334155;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .zoom-btn:hover { background: rgba(0, 0, 0, 0.06); }
+        .zoom-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            min-width: 46px;
+            text-align: center;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .zoom-value:hover { background: rgba(0, 0, 0, 0.05); }
+
         .toast {
             position: fixed;
-            bottom: 88px;
+            bottom: 84px;
             left: 50%;
             transform: translateX(-50%) translateY(20px);
             opacity: 0;
             background: rgba(15, 23, 42, 0.90);
             color: #fff;
-            padding: 10px 20px;
+            padding: 9px 18px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 500;
@@ -173,14 +239,17 @@
         <div class="header-title">
             <div class="logo-badge">LK</div>
             <div>
-                <div class="board-title">LKBoard Live</div>
-                <div style="font-size: 11px; color: #64748B;">Комната: <b>LK-ROOM-PLACEHOLDER</b></div>
+                <div class="board-title" id="boardTitle">LKBoard Live</div>
+                <div class="room-badge">Комната: <b id="roomCodeText">LK-ROOM-PLACEHOLDER</b></div>
             </div>
         </div>
 
-        <div class="status-pill" id="statusPill">
-            <div class="status-dot"></div>
-            <span id="statusText">Подключение...</span>
+        <div class="header-actions">
+            <div class="peers-pill" id="peersPill">👥 1 онлайн</div>
+            <div class="status-pill" id="statusPill">
+                <div class="status-dot"></div>
+                <span id="statusText">Подключение...</span>
+            </div>
         </div>
     </div>
 
@@ -189,7 +258,7 @@
     <div class="toolbar glass-panel">
         <button class="tool-btn active" id="toolHand" title="Перемещение (Рука)">✋</button>
         <button class="tool-btn" id="toolPen" title="Перо рисования">✏️</button>
-        <button class="tool-btn" id="toolSticky" title="Стикер с To-Do">🗂️</button>
+        <button class="tool-btn" id="toolSticky" title="Создать стикер с To-Do">🗂️</button>
         <button class="tool-btn" id="toolLaser" title="Лазерная указка">🎯</button>
 
         <div class="tool-divider"></div>
@@ -199,11 +268,17 @@
             <div class="color-dot" style="background: #ef4444;" data-color="#ef4444"></div>
             <div class="color-dot" style="background: #10b981;" data-color="#10b981"></div>
             <div class="color-dot" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+            <div class="color-dot" style="background: #f59e0b;" data-color="#f59e0b"></div>
             <div class="color-dot" style="background: #0f172a;" data-color="#0f172a"></div>
         </div>
+    </div>
 
+    <div class="zoom-controls glass-panel">
+        <button class="zoom-btn" id="btnZoomOut" title="Уменьшить">−</button>
+        <span class="zoom-value" id="zoomValue" title="Сбросить на 100%">100%</span>
+        <button class="zoom-btn" id="btnZoomIn" title="Увеличить">+</button>
         <div class="tool-divider"></div>
-        <button class="tool-btn" id="toolResetZoom" title="Сбросить масштаб">🔍</button>
+        <button class="zoom-btn" id="btnFit" title="Показать всё (Fit to Screen)">⊡</button>
     </div>
 
     <div class="toast" id="toast">Стикер создан</div>
@@ -219,6 +294,8 @@
         let dragStartX = 0, dragStartY = 0;
         let currentStroke = null;
         let remotePointers = {};
+        let hasInitialFit = false;
+
         const clientId = 'web-' + Math.random().toString(36).substring(2, 9);
         const clientName = 'Участник ' + Math.floor(100 + Math.random() * 900);
 
@@ -237,8 +314,8 @@
 
         function worldToScreen(wx, wy) {
             return {
-                x: (wx * scale + panX) * window.devicePixelRatio,
-                y: (wy * scale + panY) * window.devicePixelRatio
+                x: wx * scale + panX,
+                y: wy * scale + panY
             };
         }
 
@@ -250,20 +327,77 @@
         }
 
         function roundRect(ctx, x, y, w, h, r) {
-            r = Math.min(r, w / 2, h / 2);
+            r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+            if (ctx.roundRect) {
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, r);
+                return;
+            }
             ctx.beginPath();
             ctx.moveTo(x + r, y);
             ctx.arcTo(x + w, y, x + w, y + h, r);
             ctx.arcTo(x + w, y + h, x, y + h, r);
             ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y + x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
             ctx.closePath();
+        }
+
+        function updateZoomPill() {
+            document.getElementById('zoomValue').textContent = Math.round(scale * 100) + '%';
+        }
+
+        function fitToContent() {
+            const list = Object.values(elements);
+            if (list.length === 0) {
+                panX = window.innerWidth / 2;
+                panY = window.innerHeight / 2;
+                scale = 1.0;
+                render();
+                updateZoomPill();
+                return;
+            }
+
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const el of list) {
+                let ex = el.x !== undefined ? el.x : 0;
+                let ey = el.y !== undefined ? el.y : 0;
+                let ew = el.width !== undefined ? el.width : 200;
+                let eh = el.height !== undefined ? el.height : 100;
+
+                if (el.points && el.points.length > 0) {
+                    for (const p of el.points) {
+                        minX = Math.min(minX, p.x);
+                        minY = Math.min(minY, p.y);
+                        maxX = Math.max(maxX, p.x);
+                        maxY = Math.max(maxY, p.y);
+                    }
+                } else {
+                    minX = Math.min(minX, ex);
+                    minY = Math.min(minY, ey);
+                    maxX = Math.max(maxX, ex + ew);
+                    maxY = Math.max(maxY, ey + eh);
+                }
+            }
+
+            const boxW = Math.max(maxX - minX, 120);
+            const boxH = Math.max(maxY - minY, 120);
+            const padX = 80;
+            const padY = 120;
+            const availW = Math.max(window.innerWidth - padX * 2, 200);
+            const availH = Math.max(window.innerHeight - padY * 2, 200);
+
+            scale = Math.max(0.15, Math.min(availW / boxW, availH / boxH, 1.25));
+            panX = (window.innerWidth - boxW * scale) / 2 - minX * scale;
+            panY = (window.innerHeight - boxH * scale) / 2 - minY * scale;
+            render();
+            updateZoomPill();
         }
 
         function render() {
             const dpr = window.devicePixelRatio;
             ctx.save();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             drawGrid();
 
             ctx.scale(dpr, dpr);
@@ -282,6 +416,7 @@
             for (const pid in remotePointers) {
                 drawPointer(remotePointers[pid]);
             }
+
             ctx.restore();
         }
 
@@ -291,7 +426,7 @@
             ctx.scale(dpr, dpr);
             ctx.fillStyle = '#cbd5e1';
             const step = 32 * scale;
-            if (step > 8) {
+            if (step > 9) {
                 const startX = (panX % step + step) % step;
                 const startY = (panY % step + step) % step;
                 for (let x = startX; x < window.innerWidth; x += step) {
@@ -307,33 +442,45 @@
 
         function drawElement(el) {
             ctx.save();
-            if (el.type === 'drawing_path' || el.points) {
+            const type = el.type;
+            if (type === 'drawing_path' || el.points) {
                 drawStroke(el);
-            } else if (el.type === 'sticky_note' || (el.text !== undefined && el.colorHex !== undefined && el.type !== 'text')) {
+            } else if (type === 'sticky_note' || (el.text !== undefined && el.colorHex !== undefined && type !== 'text')) {
                 drawSticky(el);
-            } else if (el.type === 'milestone_card' || el.status !== undefined) {
+            } else if (type === 'milestone_card' || el.status !== undefined) {
                 drawMilestone(el);
-            } else if (el.type === 'kanban_board') {
+            } else if (type === 'kanban_board') {
                 drawKanban(el);
-            } else if (el.type === 'document_frame' || el.totalPages !== undefined || el.currentPageIndex !== undefined) {
+            } else if (type === 'document_frame' || el.totalPages !== undefined || el.currentPageIndex !== undefined) {
                 drawDocumentFrame(el);
-            } else if (el.type === 'function_graph' || el.expressions !== undefined) {
+            } else if (type === 'function_graph' || el.expressions !== undefined) {
                 drawFunctionGraph(el);
-            } else if (el.type === 'shape' || el.shapeType !== undefined) {
+            } else if (type === 'connector' || el.startElementId !== undefined) {
+                drawConnector(el);
+            } else if (type === 'shape' || el.shapeType !== undefined) {
                 drawShape(el);
-            } else if (el.type === 'text') {
+            } else if (type === 'text') {
                 drawText(el);
             }
             ctx.restore();
         }
 
         function drawStroke(s) {
-            if (!s.points || s.points.length < 2) return;
+            if (!s.points || s.points.length < 1) return;
             ctx.beginPath();
-            ctx.strokeStyle = s.strokeColorHex ? hexToColor(s.strokeColorHex) : (s.color || '#0284c7');
-            ctx.lineWidth = s.strokeWidth || 3;
+            const color = s.strokeColorHex ? hexToColor(s.strokeColorHex) : (s.color || '#0284c7');
+            ctx.strokeStyle = s.isHighlighter ? (color + '55') : color;
+            ctx.lineWidth = s.strokeWidth || 3.5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
+
+            if (s.points.length === 1) {
+                ctx.arc(s.points[0].x, s.points[0].y, ctx.lineWidth / 2, 0, Math.PI * 2);
+                ctx.fillStyle = ctx.strokeStyle;
+                ctx.fill();
+                return;
+            }
+
             ctx.moveTo(s.points[0].x, s.points[0].y);
             for (let i = 1; i < s.points.length; i++) {
                 ctx.lineTo(s.points[i].x, s.points[i].y);
@@ -344,53 +491,169 @@
         function drawSticky(note) {
             const x = note.x, y = note.y, w = note.width || 210, h = note.height || 210;
             const bg = note.colorHex ? hexToColor(note.colorHex) : '#fef08a';
+
+            // Shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetY = 4;
             ctx.fillStyle = bg;
             roundRect(ctx, x, y, w, h, 14);
             ctx.fill();
+            ctx.shadowColor = 'transparent';
 
-            ctx.fillStyle = '#0f172a';
-            ctx.font = '14px Inter, sans-serif';
-            const lines = (note.text || '').split('\n');
-            let ty = y + 26;
+            // Paper peel fold at bottom right
+            const fold = Math.min(22, w * 0.12);
+            ctx.beginPath();
+            ctx.moveTo(x + w - fold, y + h);
+            ctx.lineTo(x + w, y + h - fold);
+            ctx.lineTo(x + w - fold, y + h - fold);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(0,0,0,0.06)';
+            ctx.fill();
+
+            // Border
+            ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, x, y, w, h, 14);
+            ctx.stroke();
+
+            // Text & Checkboxes
+            const text = note.text || '';
+            const lines = text.split('\n');
+            const autoFontSize = Math.max(11, Math.min(16, w / 14));
+            const lineH = autoFontSize * 1.5;
+            let ty = y + 18;
+
             for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                if (line.startsWith('- [ ] ') || line.startsWith('- [x] ') || line.startsWith('- [X] ')) {
-                    const checked = line.startsWith('- [x] ') || line.startsWith('- [X] ');
-                    ctx.strokeStyle = checked ? '#059669' : '#94a3b8';
-                    ctx.fillStyle = checked ? '#10b981' : '#ffffff';
-                    ctx.lineWidth = 1.5;
-                    roundRect(ctx, x + 14, ty - 12, 14, 14, 4);
-                    ctx.fill();
-                    ctx.stroke();
-                    if (checked) {
+                if (ty + lineH > y + h - 14) break;
+                const rawLine = lines[i];
+                const trimmed = rawLine.trim();
+                const isChecked = trimmed.startsWith('- [x] ') || trimmed.startsWith('[x] ') || trimmed.startsWith('- [X] ');
+                const isUnchecked = trimmed.startsWith('- [ ] ') || trimmed.startsWith('[ ] ');
+
+                if (isChecked || isUnchecked) {
+                    const todoText = trimmed.startsWith('- ') ? trimmed.substring(6) : trimmed.substring(4);
+                    const cbSize = Math.max(13, autoFontSize * 1.05);
+                    const cbX = x + 14;
+                    const cbY = ty;
+
+                    if (isChecked) {
+                        ctx.fillStyle = '#16a34a';
+                        roundRect(ctx, cbX, cbY, cbSize, cbSize, 4);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.6;
+                        ctx.beginPath();
+                        ctx.moveTo(cbX + cbSize * 0.22, cbY + cbSize * 0.52);
+                        ctx.lineTo(cbX + cbSize * 0.44, cbY + cbSize * 0.74);
+                        ctx.lineTo(cbX + cbSize * 0.78, cbY + cbSize * 0.26);
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.font = autoFontSize + 'px Inter, sans-serif';
+                        ctx.fillText(todoText, cbX + cbSize + 8, ty + cbSize * 0.85);
+                    } else {
                         ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 11px Inter, sans-serif';
-                        ctx.fillText('✓', x + 16, ty);
+                        roundRect(ctx, cbX, cbY, cbSize, cbSize, 4);
+                        ctx.fill();
+                        ctx.strokeStyle = '#94a3b8';
+                        ctx.lineWidth = 1.3;
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#1e293b';
+                        ctx.font = '500 ' + autoFontSize + 'px Inter, sans-serif';
+                        ctx.fillText(todoText, cbX + cbSize + 8, ty + cbSize * 0.85);
                     }
-                    ctx.fillStyle = checked ? '#94a3b8' : '#0f172a';
-                    ctx.font = '14px Inter, sans-serif';
-                    ctx.fillText(line.substring(6), x + 36, ty);
                 } else {
-                    ctx.fillStyle = '#0f172a';
-                    ctx.font = '14px Inter, sans-serif';
-                    ctx.fillText(line, x + 14, ty);
+                    const isFirstHeader = (i === 0 && lines.length > 1 && !rawLine.startsWith('- '));
+                    ctx.fillStyle = isFirstHeader ? '#0f172a' : '#1e293b';
+                    ctx.font = (isFirstHeader ? 'bold ' : '500 ') + autoFontSize + 'px Inter, sans-serif';
+                    ctx.fillText(rawLine, x + 14, ty + autoFontSize * 0.85);
                 }
-                ty += 22;
+                ty += lineH;
             }
         }
 
         function drawMilestone(card) {
-            const x = card.x, y = card.y, w = card.width || 260, h = card.height || 140;
+            const x = card.x, y = card.y, w = card.width || 280, h = card.height || 160;
+            const cr = 14;
+
+            // Card background & soft shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.07)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetY = 4;
             ctx.fillStyle = '#ffffff';
-            roundRect(ctx, x, y, w, h, 14);
+            roundRect(ctx, x, y, w, h, cr);
             ctx.fill();
+            ctx.shadowColor = 'transparent';
+
             ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 1.2;
+            roundRect(ctx, x, y, w, h, cr);
             ctx.stroke();
 
+            // Status color stripe
+            const statusKey = (card.status && card.status.label) ? card.status.label : (card.status || 'В работе');
+            let statusColor = '#3b82f6';
+            let statusLabel = 'В работе';
+            let statusIcon = '🟡';
+
+            if (statusKey.includes('Готово') || statusKey === 'DONE') {
+                statusColor = '#10b981'; statusLabel = 'Готово'; statusIcon = '🟢';
+            } else if (statusKey.includes('Бэклог') || statusKey === 'BACKLOG') {
+                statusColor = '#ef4444'; statusLabel = 'Бэклог'; statusIcon = '🔴';
+            } else if (statusKey.includes('ревью') || statusKey.includes('согласовании') || statusKey === 'IN_REVIEW') {
+                statusColor = '#8b5cf6'; statusLabel = 'На ревью'; statusIcon = '🟣';
+            }
+
+            ctx.fillStyle = statusColor;
+            roundRect(ctx, x, y, 6, h, 6);
+            ctx.fill();
+
+            // Status Badge
+            ctx.fillStyle = statusColor + '1a';
+            roundRect(ctx, x + 16, y + 14, 110, 22, 6);
+            ctx.fill();
+            ctx.fillStyle = statusColor;
+            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.fillText(statusIcon + ' ' + statusLabel, x + 24, y + 29);
+
+            // Due Date
+            if (card.dueDate) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '500 11px Inter, sans-serif';
+                ctx.fillText('📅 ' + card.dueDate, x + w - 95, y + 29);
+            }
+
+            // Title
             ctx.fillStyle = '#0f172a';
             ctx.font = 'bold 14px Inter, sans-serif';
-            ctx.fillText(card.title || 'Веха', x + 16, y + 28);
+            ctx.fillText(card.title || 'Веха проекта', x + 16, y + 60);
+
+            // Description
+            if (card.description) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px Inter, sans-serif';
+                ctx.fillText(card.description.substring(0, 36) + (card.description.length > 36 ? '...' : ''), x + 16, y + 80);
+            }
+
+            // Progress bar
+            const prog = Math.max(0, Math.min(1, card.progress !== undefined ? card.progress : 0.5));
+            const barY = y + h - 32;
+            const barW = w - 75;
+            ctx.fillStyle = '#e2e8f0';
+            roundRect(ctx, x + 16, barY, barW, 6, 3);
+            ctx.fill();
+
+            if (prog > 0) {
+                ctx.fillStyle = statusColor;
+                roundRect(ctx, x + 16, barY, barW * prog, 6, 3);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = statusColor;
+            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.fillText(Math.round(prog * 100) + '%', x + 16 + barW + 8, barY + 6);
         }
 
         function drawKanban(k) {
@@ -399,18 +662,39 @@
             const headH = Math.max(36, 46 * kScale);
             const colHeadH = Math.max(28, 38 * kScale);
 
-            ctx.fillStyle = 'rgba(248, 250, 252, 0.95)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+            ctx.shadowBlur = 18;
+            ctx.shadowOffsetY = 6;
+            ctx.fillStyle = '#f8fafc';
             roundRect(ctx, x, y, w, h, 16 * kScale);
             ctx.fill();
+            ctx.shadowColor = 'transparent';
+
             ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 1.5 * kScale;
+            roundRect(ctx, x, y, w, h, 16 * kScale);
+            ctx.stroke();
+
+            // Header
+            ctx.fillStyle = '#f1f5f9';
+            roundRect(ctx, x, y, w, headH, 16 * kScale);
+            ctx.fill();
+            ctx.fillRect(x, y + headH - 10 * kScale, w, 10 * kScale);
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.moveTo(x, y + headH); ctx.lineTo(x + w, y + headH);
             ctx.stroke();
 
             ctx.fillStyle = '#0f172a';
             ctx.font = 'bold ' + Math.round(15 * kScale) + 'px Inter, sans-serif';
             ctx.fillText('📋 ' + (k.title || 'Канбан-доска'), x + 18 * kScale, y + headH * 0.65);
 
-            const cols = ['🔴 Бэклог', '🟡 В работе', '🟣 На ревью', '🟢 Готово'];
+            const cols = [
+                { title: '🔴 Бэклог', color: '#ef4444' },
+                { title: '🟡 В работе', color: '#f59e0b' },
+                { title: '🟣 На ревью', color: '#8b5cf6' },
+                { title: '🟢 Готово', color: '#10b981' }
+            ];
             const colW = w / 4;
             for (let i = 0; i < 4; i++) {
                 const cx = x + i * colW;
@@ -423,9 +707,9 @@
                     ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.stroke();
                 }
 
-                ctx.fillStyle = '#334155';
-                ctx.font = 'bold ' + Math.round(12 * kScale) + 'px Inter, sans-serif';
-                ctx.fillText(cols[i], cx + 14 * kScale, cy + colHeadH * 0.65);
+                ctx.fillStyle = cols[i].color;
+                ctx.font = 'bold ' + Math.round(12.5 * kScale) + 'px Inter, sans-serif';
+                ctx.fillText(cols[i].title, cx + 14 * kScale, cy + colHeadH * 0.65);
             }
         }
 
@@ -435,38 +719,43 @@
             const headH = Math.max(28, 38 * fScale);
             const cr = 10 * fScale;
 
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetY = 4;
             ctx.fillStyle = '#ffffff';
             roundRect(ctx, x, y, w, h, cr);
             ctx.fill();
+            ctx.shadowColor = 'transparent';
+
             ctx.strokeStyle = '#cbd5e1';
             ctx.lineWidth = 1.2 * fScale;
+            roundRect(ctx, x, y, w, h, cr);
             ctx.stroke();
 
             // Header
             ctx.fillStyle = '#f1f5f9';
             roundRect(ctx, x, y, w, headH, cr);
             ctx.fill();
+            ctx.fillRect(x, y + headH - 8 * fScale, w, 8 * fScale);
             ctx.strokeStyle = '#e2e8f0';
             ctx.beginPath();
             ctx.moveTo(x, y + headH); ctx.lineTo(x + w, y + headH);
             ctx.stroke();
 
-            // Title
             ctx.fillStyle = '#1e293b';
             ctx.font = 'bold ' + Math.round(13 * fScale) + 'px Inter, sans-serif';
             ctx.fillText(f.title || 'Презентация / PDF', x + 14 * fScale, y + headH * 0.65);
 
-            // Badge
             const pageTxt = (f.totalPages && f.totalPages > 0) ? ((f.currentPageIndex || 0) + 1) + ' / ' + f.totalPages : 'Нет файла';
-            ctx.fillStyle = '#e0f2fe';
             const badgeW = 75 * fScale, badgeH = 22 * fScale;
+            ctx.fillStyle = '#e0f2fe';
             roundRect(ctx, x + w - badgeW - 12 * fScale, y + (headH - badgeH) / 2, badgeW, badgeH, badgeH / 2);
             ctx.fill();
             ctx.fillStyle = '#0284c7';
             ctx.font = '600 ' + Math.round(11 * fScale) + 'px Inter, sans-serif';
             ctx.fillText(pageTxt, x + w - badgeW + 8 * fScale, y + headH * 0.62);
 
-            // Placeholder content if no image
+            // Placeholder
             ctx.fillStyle = '#f8fafc';
             ctx.fillRect(x, y + headH, w, h - headH);
             ctx.fillStyle = '#64748b';
@@ -483,16 +772,22 @@
             roundRect(ctx, x, y, w, h, 12 * gScale);
             ctx.fill();
             ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 1.2;
+            ctx.lineWidth = 1.2 * gScale;
             ctx.stroke();
 
             // Header
             ctx.fillStyle = '#f8fafc';
             roundRect(ctx, x, y, w, headH, 12 * gScale);
             ctx.fill();
+            ctx.fillRect(x, y + headH - 8 * gScale, w, 8 * gScale);
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.moveTo(x, y + headH); ctx.lineTo(x + w, y + headH);
+            ctx.stroke();
+
             ctx.fillStyle = '#1e293b';
-            ctx.font = 'bold ' + Math.round(12 * gScale) + 'px Inter, sans-serif';
-            const fTitle = (g.expressions && g.expressions.length > 0) ? g.expressions.map(e => 'f(x)=' + e).join(', ') : (g.title || 'График');
+            ctx.font = 'bold ' + Math.round(11.5 * gScale) + 'px Inter, sans-serif';
+            const fTitle = (g.expressions && g.expressions.length > 0) ? g.expressions.map(e => 'f(x)=' + e).join(', ') : (g.title || 'График функций');
             ctx.fillText(fTitle, x + 12 * gScale, y + headH * 0.65);
 
             // Inner clipping
@@ -505,7 +800,7 @@
             ctx.rect(px, py, pw, ph);
             ctx.clip();
 
-            ctx.fillStyle = '#f8fafc';
+            ctx.fillStyle = '#fbfbfb';
             ctx.fillRect(px, py, pw, ph);
 
             const xMin = g.xMin !== undefined ? g.xMin : -10;
@@ -519,43 +814,77 @@
             const originX = Math.max(px, Math.min(px + pw, toScreenX(0)));
             const originY = Math.max(py, Math.min(py + ph, toScreenY(0)));
 
-            // Grid lines and numbers
-            ctx.font = '600 ' + Math.round(9 * gScale) + 'px Inter, sans-serif';
-            ctx.fillStyle = '#64748b';
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 1;
+            function calculateNiceStep(span, targetCount) {
+                if (span <= 0) return 1.0;
+                const rawStep = span / Math.max(1, targetCount);
+                const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+                const residual = rawStep / magnitude;
+                let niceResidual = 10;
+                if (residual < 1.5) niceResidual = 1;
+                else if (residual < 3.5) niceResidual = 2;
+                else if (residual < 7.5) niceResidual = 5;
+                return niceResidual * magnitude;
+            }
 
-            const xStep = Math.max(1, Math.round((xMax - xMin) / 8));
-            for (let gx = Math.ceil(xMin); gx <= Math.floor(xMax); gx += xStep) {
+            const xStep = calculateNiceStep(xMax - xMin, Math.max(4, Math.min(10, Math.round(pw / (60 * gScale)))));
+            const yStep = calculateNiceStep(yMax - yMin, Math.max(4, Math.min(8, Math.round(ph / (50 * gScale)))));
+
+            ctx.font = '500 ' + Math.max(8, Math.round(9 * gScale)) + 'px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+
+            // X Axis Grid & Numbers
+            const startX = Math.ceil(xMin / xStep) * xStep;
+            for (let gx = startX; gx <= xMax + 1e-6; gx += xStep) {
                 const sx = toScreenX(gx);
-                ctx.beginPath();
-                ctx.moveTo(sx, py); ctx.lineTo(sx, py + ph);
-                ctx.stroke();
-                if (gx !== 0) {
-                    ctx.fillText(gx.toString(), sx - 6, Math.min(py + ph - 4, Math.max(py + 12, originY + 12)));
+                if (Math.abs(gx) > 1e-5) {
+                    ctx.strokeStyle = '#f1f5f9';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(sx, py); ctx.lineTo(sx, py + ph);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.beginPath();
+                    ctx.moveTo(sx, originY - 3 * gScale); ctx.lineTo(sx, originY + 3 * gScale);
+                    ctx.stroke();
+
+                    const lbl = (Math.abs(gx - Math.round(gx)) < 1e-5) ? Math.round(gx).toString() : gx.toFixed(1);
+                    const lblY = Math.max(py + 10, Math.min(py + ph - 4, originY + 12 * gScale));
+                    ctx.fillText(lbl, sx - 4, lblY);
                 }
             }
 
-            const yStep = Math.max(1, Math.round((yMax - yMin) / 6));
-            for (let gy = Math.ceil(yMin); gy <= Math.floor(yMax); gy += yStep) {
+            // Y Axis Grid & Numbers
+            const startY = Math.ceil(yMin / yStep) * yStep;
+            for (let gy = startY; gy <= yMax + 1e-6; gy += yStep) {
                 const sy = toScreenY(gy);
-                ctx.beginPath();
-                ctx.moveTo(px, sy); ctx.lineTo(px + pw, sy);
-                ctx.stroke();
-                if (gy !== 0) {
-                    ctx.fillText(gy.toString(), Math.min(px + pw - 18, Math.max(px + 4, originX + 4)), sy + 3);
+                if (Math.abs(gy) > 1e-5) {
+                    ctx.strokeStyle = '#f1f5f9';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(px, sy); ctx.lineTo(px + pw, sy);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.beginPath();
+                    ctx.moveTo(originX - 3 * gScale, sy); ctx.lineTo(originX + 3 * gScale, sy);
+                    ctx.stroke();
+
+                    const lbl = (Math.abs(gy - Math.round(gy)) < 1e-5) ? Math.round(gy).toString() : gy.toFixed(1);
+                    const lblX = Math.max(px + 4, Math.min(px + pw - 20, originX - 16 * gScale));
+                    ctx.fillText(lbl, lblX, sy + 3);
                 }
             }
 
             // Axes
             ctx.strokeStyle = '#94a3b8';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 1.5 * gScale;
             ctx.beginPath();
             ctx.moveTo(px, originY); ctx.lineTo(px + pw, originY);
             ctx.moveTo(originX, py); ctx.lineTo(originX, py + ph);
             ctx.stroke();
 
-            // Zero label
+            // Zero
             ctx.fillText('0', originX + 4, originY + 12);
 
             // Curves
@@ -563,10 +892,10 @@
                 const colors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea'];
                 g.expressions.forEach((expr, idx) => {
                     ctx.strokeStyle = colors[idx % colors.length];
-                    ctx.lineWidth = 2.4;
+                    ctx.lineWidth = 2.4 * gScale;
                     ctx.beginPath();
                     let started = false;
-                    const steps = 180;
+                    const steps = 200;
                     for (let s = 0; s <= steps; s++) {
                         const xv = xMin + (s / steps) * (xMax - xMin);
                         let yv = null;
@@ -583,7 +912,7 @@
                             yv = fn(xv);
                         } catch(e) {}
 
-                        if (yv !== null && !isNaN(yv) && isFinite(yv) && yv >= yMin - 50 && yv <= yMax + 50) {
+                        if (yv !== null && !isNaN(yv) && isFinite(yv) && yv >= yMin - 100 && yv <= yMax + 100) {
                             const sx = toScreenX(xv);
                             const sy = toScreenY(yv);
                             if (!started) {
@@ -604,12 +933,83 @@
 
         function drawShape(s) {
             const x = s.x, y = s.y, w = s.width || 120, h = s.height || 80;
-            ctx.fillStyle = s.fillColorHex ? hexToColor(s.fillColorHex) : 'rgba(255, 255, 255, 0.85)';
+            ctx.fillStyle = s.fillColorHex ? hexToColor(s.fillColorHex) : 'rgba(255, 255, 255, 0.9)';
             ctx.strokeStyle = s.strokeColorHex ? hexToColor(s.strokeColorHex) : '#0284c7';
             ctx.lineWidth = s.strokeWidth || 2;
-            roundRect(ctx, x, y, w, h, 8);
+
+            const stype = s.shapeType || 'RECTANGLE';
+            ctx.beginPath();
+            if (stype === 'ELLIPSE') {
+                ctx.ellipse(x + w / 2, y + h / 2, Math.abs(w / 2), Math.abs(h / 2), 0, 0, Math.PI * 2);
+            } else if (stype === 'DIAMOND') {
+                ctx.moveTo(x + w / 2, y);
+                ctx.lineTo(x + w, y + h / 2);
+                ctx.lineTo(x + w / 2, y + h);
+                ctx.lineTo(x, y + h / 2);
+                ctx.closePath();
+            } else if (stype === 'TRIANGLE') {
+                ctx.moveTo(x + w / 2, y);
+                ctx.lineTo(x + w, y + h);
+                ctx.lineTo(x, y + h);
+                ctx.closePath();
+            } else if (stype === 'ARROW') {
+                const arrH = h * 0.4;
+                ctx.moveTo(x, y + h / 2 - arrH / 2);
+                ctx.lineTo(x + w * 0.65, y + h / 2 - arrH / 2);
+                ctx.lineTo(x + w * 0.65, y);
+                ctx.lineTo(x + w, y + h / 2);
+                ctx.lineTo(x + w * 0.65, y + h);
+                ctx.lineTo(x + w * 0.65, y + h / 2 + arrH / 2);
+                ctx.lineTo(x, y + h / 2 + arrH / 2);
+                ctx.closePath();
+            } else {
+                roundRect(ctx, x, y, w, h, s.cornerRadius || 8);
+            }
             ctx.fill();
             ctx.stroke();
+        }
+
+        function drawConnector(c) {
+            const sx = c.startPoint ? c.startPoint.x : c.x;
+            const sy = c.startPoint ? c.startPoint.y : c.y;
+            const ex = c.endPoint ? c.endPoint.x : (c.x + (c.width || 100));
+            const ey = c.endPoint ? c.endPoint.y : (c.y + (c.height || 50));
+            const color = c.strokeColorHex ? hexToColor(c.strokeColorHex) : '#0284c7';
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = c.strokeWidth || 2.5;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(ex, ey);
+            ctx.stroke();
+
+            // Arrow head
+            const angle = Math.atan2(ey - sy, ex - sx);
+            const headLen = 14;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(ex, ey);
+            ctx.lineTo(ex - headLen * Math.cos(angle - 0.4), ey - headLen * Math.sin(angle - 0.4));
+            ctx.lineTo(ex - headLen * Math.cos(angle + 0.4), ey - headLen * Math.sin(angle + 0.4));
+            ctx.closePath();
+            ctx.fill();
+
+            // Text label
+            if (c.text) {
+                const mx = (sx + ex) / 2;
+                const my = (sy + ey) / 2;
+                ctx.fillStyle = '#ffffff';
+                roundRect(ctx, mx - 30, my - 12, 60, 24, 6);
+                ctx.fill();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                roundRect(ctx, mx - 30, my - 12, 60, 24, 6);
+                ctx.stroke();
+
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 11px Inter, sans-serif';
+                ctx.fillText(c.text, mx - 22, my + 4);
+            }
         }
 
         function drawText(t) {
@@ -618,16 +1018,30 @@
             const fWeight = t.isBold ? 'bold ' : '';
             const fStyle = t.isItalic ? 'italic ' : '';
             ctx.font = fStyle + fWeight + fSize + 'px Inter, sans-serif';
-            ctx.fillText(t.text || '', t.x, t.y + fSize);
+            const lines = (t.text || '').split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                ctx.fillText(lines[i], t.x, t.y + fSize * (i + 1) * 1.25);
+            }
         }
 
         function drawPointer(p) {
-            if (Date.now() - p.lastUpdated > 4000) return;
+            if (Date.now() - p.lastUpdated > 4500) return;
             const x = p.x, y = p.y;
-            ctx.fillStyle = p.colorHex ? hexToColor(p.colorHex) : '#ef4444';
+            const color = p.colorHex ? hexToColor(p.colorHex) : '#ef4444';
+
+            ctx.fillStyle = color;
             ctx.beginPath();
             ctx.arc(x, y, p.isLaser ? 8 : 5, 0, Math.PI * 2);
             ctx.fill();
+
+            if (p.peerName) {
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                roundRect(ctx, x + 8, y + 8, ctx.measureText(p.peerName).width + 12, 18, 4);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px Inter, sans-serif';
+                ctx.fillText(p.peerName, x + 14, y + 21);
+            }
         }
 
         function hexToColor(hex) {
@@ -637,37 +1051,76 @@
             return '#' + num.toString(16).padStart(6, '0');
         }
 
-        // Canvas Events
-        canvas.addEventListener('pointerdown', (e) => {
-            const world = screenToWorld(e.clientX, e.clientY);
-            isDragging = true;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
+        // Pointer & Touch Events
+        let activePointers = new Map();
+        let initialPinchDistance = 0;
+        let initialPinchScale = 1.0;
 
-            if (activeTool === 'pen') {
-                currentStroke = {
-                    id: 'path-' + Math.random().toString(36).substring(2, 9),
-                    type: 'drawing_path',
-                    points: [{ x: world.x, y: world.y }],
-                    strokeColorHex: parseInt(currentColor.replace('#', '0xFF'), 16),
-                    strokeWidth: 3.5,
-                    zIndex: 100
-                };
-            } else if (activeTool === 'sticky') {
-                createStickyAt(world.x, world.y);
-            } else if (activeTool === 'laser') {
-                sendPointer(world.x, world.y, true);
-            } else if (activeTool === 'hand') {
-                checkStickyClick(world.x, world.y);
+        canvas.addEventListener('pointerdown', (e) => {
+            canvas.setPointerCapture(e.pointerId);
+            activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+            if (activePointers.size === 1) {
+                const world = screenToWorld(e.clientX, e.clientY);
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+
+                if (activeTool === 'pen') {
+                    canvas.classList.add('drawing');
+                    currentStroke = {
+                        id: 'path-' + Math.random().toString(36).substring(2, 9),
+                        type: 'drawing_path',
+                        points: [{ x: world.x, y: world.y }],
+                        strokeColorHex: parseInt(currentColor.replace('#', '0xFF'), 16),
+                        strokeWidth: 3.5,
+                        zIndex: 100
+                    };
+                } else if (activeTool === 'sticky') {
+                    createStickyAt(world.x, world.y);
+                } else if (activeTool === 'laser') {
+                    sendPointer(world.x, world.y, true);
+                } else if (activeTool === 'hand') {
+                    canvas.classList.add('panning');
+                    checkStickyClick(world.x, world.y);
+                }
+            } else if (activePointers.size === 2) {
+                // Pinch zoom init
+                const pts = Array.from(activePointers.values());
+                initialPinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                initialPinchScale = scale;
             }
         });
 
         canvas.addEventListener('pointermove', (e) => {
+            if (activePointers.has(e.pointerId)) {
+                activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            }
+
             const world = screenToWorld(e.clientX, e.clientY);
-            if (activeTool === 'laser') {
+            if (activeTool === 'laser' && isDragging) {
                 sendPointer(world.x, world.y, true);
             }
+
+            if (activePointers.size === 2) {
+                // Pinch to zoom
+                const pts = Array.from(activePointers.values());
+                const curDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                if (initialPinchDistance > 10) {
+                    const newScale = Math.max(0.15, Math.min(4.0, initialPinchScale * (curDist / initialPinchDistance)));
+                    const midX = (pts[0].x + pts[1].x) / 2;
+                    const midY = (pts[0].y + pts[1].y) / 2;
+                    panX = midX - (midX - panX) * (newScale / scale);
+                    panY = midY - (midY - panY) * (newScale / scale);
+                    scale = newScale;
+                    render();
+                    updateZoomPill();
+                }
+                return;
+            }
+
             if (!isDragging) return;
+
             if (activeTool === 'hand') {
                 panX += e.clientX - dragStartX;
                 panY += e.clientY - dragStartY;
@@ -680,7 +1133,12 @@
             }
         });
 
-        canvas.addEventListener('pointerup', () => {
+        canvas.addEventListener('pointerup', (e) => {
+            activePointers.delete(e.pointerId);
+            try { canvas.releasePointerCapture(e.pointerId); } catch(_) {}
+
+            canvas.classList.remove('panning', 'drawing');
+
             if (activeTool === 'pen' && currentStroke && currentStroke.points.length > 1) {
                 elements[currentStroke.id] = currentStroke;
                 sendAction({
@@ -692,19 +1150,22 @@
                 currentStroke = null;
                 render();
             }
-            isDragging = false;
+            if (activePointers.size === 0) {
+                isDragging = false;
+            }
         });
 
         canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-            const newScale = Math.max(0.1, Math.min(5.0, scale * zoomFactor));
+            const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+            const newScale = Math.max(0.15, Math.min(4.5, scale * zoomFactor));
             const mouseX = e.clientX;
             const mouseY = e.clientY;
             panX = mouseX - (mouseX - panX) * (newScale / scale);
             panY = mouseY - (mouseY - panY) * (newScale / scale);
             scale = newScale;
             render();
+            updateZoomPill();
         }, { passive: false });
 
         function checkStickyClick(wx, wy) {
@@ -712,21 +1173,33 @@
                 const el = elements[id];
                 if ((el.type === 'sticky_note' || el.text) && wx >= el.x && wx <= el.x + (el.width || 210) && wy >= el.y && wy <= el.y + (el.height || 210)) {
                     const lines = (el.text || '').split('\n');
-                    let cy = el.y + 26;
+                    const autoFontSize = Math.max(11, Math.min(16, (el.width || 210) / 14));
+                    const lineH = autoFontSize * 1.5;
+                    let ty = el.y + 18;
+
                     for (let i = 0; i < lines.length; i++) {
-                        if (lines[i].startsWith('- [ ] ') || lines[i].startsWith('- [x] ') || lines[i].startsWith('- [X] ')) {
-                            if (wx >= el.x + 10 && wx <= el.x + 34 && wy >= cy - 14 && wy <= cy + 6) {
+                        const trimmed = lines[i].trim();
+                        if (trimmed.startsWith('- [ ] ') || trimmed.startsWith('- [x] ') || trimmed.startsWith('- [X] ')) {
+                            if (wx >= el.x + 10 && wx <= el.x + 36 && wy >= ty - 4 && wy <= ty + lineH) {
                                 sendAction({
                                     type: 'toggle_sticky_todo',
                                     noteId: el.id,
                                     lineIndex: i,
                                     senderId: clientId
                                 });
+                                // Toggle locally immediately for snappy feel
+                                if (trimmed.startsWith('- [ ] ')) {
+                                    lines[i] = '- [x] ' + trimmed.substring(6);
+                                } else {
+                                    lines[i] = '- [ ] ' + trimmed.substring(6);
+                                }
+                                el.text = lines.join('\n');
+                                render();
                                 showToast('Статус задачи изменен');
                                 return;
                             }
                         }
-                        cy += 20;
+                        ty += lineH;
                     }
                 }
             }
@@ -740,7 +1213,7 @@
                 y: y - 105,
                 width: 210,
                 height: 210,
-                text: 'Заметка ' + clientName + '\n- [ ] Задача 1\n- [ ] Задача 2',
+                text: 'Заметка ' + clientName + '\n- [ ] Первая задача\n- [ ] Вторая задача',
                 colorHex: 0xFFFEF08A,
                 zIndex: 50
             };
@@ -786,7 +1259,6 @@
         document.getElementById('toolPen').onclick = () => setTool('pen');
         document.getElementById('toolSticky').onclick = () => setTool('sticky');
         document.getElementById('toolLaser').onclick = () => setTool('laser');
-        document.getElementById('toolResetZoom').onclick = () => { panX = 0; panY = 0; scale = 1.0; render(); };
 
         function setTool(tool) {
             activeTool = tool;
@@ -805,6 +1277,33 @@
             };
         });
 
+        // Zoom Controls
+        document.getElementById('btnZoomIn').onclick = () => {
+            const newScale = Math.min(4.5, scale * 1.25);
+            panX = window.innerWidth / 2 - (window.innerWidth / 2 - panX) * (newScale / scale);
+            panY = window.innerHeight / 2 - (window.innerHeight / 2 - panY) * (newScale / scale);
+            scale = newScale;
+            render();
+            updateZoomPill();
+        };
+
+        document.getElementById('btnZoomOut').onclick = () => {
+            const newScale = Math.max(0.15, scale * 0.8);
+            panX = window.innerWidth / 2 - (window.innerWidth / 2 - panX) * (newScale / scale);
+            panY = window.innerHeight / 2 - (window.innerHeight / 2 - panY) * (newScale / scale);
+            scale = newScale;
+            render();
+            updateZoomPill();
+        };
+
+        document.getElementById('zoomValue').onclick = () => {
+            scale = 1.0;
+            render();
+            updateZoomPill();
+        };
+
+        document.getElementById('btnFit').onclick = () => fitToContent();
+
         // SSE + Delta Sync
         let evtSource = null;
         let lastSyncVersion = 0;
@@ -813,9 +1312,9 @@
         function connectLiveStream() {
             if (evtSource) { try { evtSource.close(); } catch(e) {} }
             evtSource = new EventSource('/api/events?room=' + encodeURIComponent(roomCode));
-            
+
             evtSource.onopen = () => {
-                document.getElementById('statusText').textContent = 'Подключено (Live)';
+                document.getElementById('statusText').textContent = 'В сети (Live)';
                 document.getElementById('statusPill').style.background = 'rgba(16, 185, 129, 0.12)';
                 document.getElementById('statusPill').style.color = '#059669';
             };
@@ -855,7 +1354,7 @@
                 })
                 .catch(() => {});
         }
-        setInterval(pollDeltaSync, 1200);
+        setInterval(pollDeltaSync, 1000);
 
         function handleRemoteAction(action) {
             if (!action || action.senderId === clientId) return;
@@ -866,12 +1365,25 @@
                     for (const el of action.document.elements) {
                         elements[el.id] = el;
                     }
+                    if (action.document.title) {
+                        document.getElementById('boardTitle').textContent = action.document.title;
+                    }
                 }
-                render();
+                if (!hasInitialFit && Object.keys(elements).length > 0) {
+                    hasInitialFit = true;
+                    fitToContent();
+                } else {
+                    render();
+                }
             } else if (action.type === 'upsert_element') {
                 if (action.element) {
                     elements[action.element.id] = action.element;
-                    render();
+                    if (!hasInitialFit && Object.keys(elements).length > 0) {
+                        hasInitialFit = true;
+                        fitToContent();
+                    } else {
+                        render();
+                    }
                 }
             } else if (action.type === 'delete_elements') {
                 if (action.elementIds) {
@@ -905,18 +1417,33 @@
                         render();
                     }
                 }
+            } else if (action.type === 'peer_joined' || action.type === 'peer_left') {
+                updatePeersCount();
             }
+        }
+
+        function updatePeersCount() {
+            const count = Math.max(1, Object.keys(remotePointers).length + 1);
+            document.getElementById('peersPill').textContent = '👥 ' + count + ' онлайн';
         }
 
         // Initial snapshot
         fetch('/api/snapshot?room=' + encodeURIComponent(roomCode))
             .then(res => res.json())
             .then(doc => {
-                if (doc && doc.elements) {
-                    for (const el of doc.elements) {
-                        elements[el.id] = el;
+                if (doc) {
+                    if (doc.title) {
+                        document.getElementById('boardTitle').textContent = doc.title;
                     }
-                    render();
+                    if (doc.elements && doc.elements.length > 0) {
+                        for (const el of doc.elements) {
+                            elements[el.id] = el;
+                        }
+                        fitToContent();
+                        hasInitialFit = true;
+                    } else {
+                        render();
+                    }
                 }
             })
             .catch(() => {});

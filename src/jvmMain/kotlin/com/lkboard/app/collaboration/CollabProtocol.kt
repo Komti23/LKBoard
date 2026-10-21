@@ -30,6 +30,18 @@ data class RemotePointer(
     val lastUpdated: Long = System.currentTimeMillis()
 )
 
+@Serializable
+data class CollabSyncResponse(
+    val currentVersion: Long,
+    val actions: List<CollabActionRecord>
+)
+
+@Serializable
+data class CollabActionRecord(
+    val id: Long,
+    val action: CollabAction
+)
+
 /**
  * Протокол сообщений совместной работы в реальном времени.
  */

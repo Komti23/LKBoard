@@ -13,17 +13,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 
-@Serializable
-data class CollabSyncResponse(
-    val currentVersion: Long,
-    val actions: List<CollabActionRecord>
-)
-
-@Serializable
-data class CollabActionRecord(
-    val id: Long,
-    val action: CollabAction
-)
 
 /**
  * Встроенный высокоскоростной сервер совместной работы на базе JDK HttpServer.

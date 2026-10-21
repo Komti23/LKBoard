@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import java.util.UUID
 
 data class CollabSessionState(
@@ -47,6 +49,10 @@ class CollabManager(
 
     private val scope = CoroutineScope(Dispatchers.Default + Job())
     private var pointerPruneJob: Job? = null
+    private var cloudSyncJob: Job? = null
+    private val httpClient = java.net.http.HttpClient.newBuilder()
+        .connectTimeout(java.time.Duration.ofSeconds(4))
+        .build()
 
     private val _state = MutableStateFlow(CollabSessionState())
     val state: StateFlow<CollabSessionState> = _state.asStateFlow()
@@ -115,12 +121,17 @@ class CollabManager(
                 )
             )
         }
+
+        // Запуск облачной синхронизации для публичной веб-ссылки
+        startCloudRelaySync(roomCode, userName)
     }
 
     /**
      * Остановка хостинга доски.
      */
     fun stopHosting() {
+        cloudSyncJob?.cancel()
+        cloudSyncJob = null
         server?.stop()
         server = null
         _state.update {
@@ -281,8 +292,80 @@ class CollabManager(
     private fun sendActionToAll(action: CollabAction) {
         if (_state.value.isHosting) {
             server?.broadcastAction(action)
+            sendActionToCloudRelay(_state.value.roomCode, action)
         } else if (_state.value.isConnectedAsClient) {
             client?.sendAction(action)
+        }
+    }
+
+    private fun startCloudRelaySync(roomCode: String, userName: String) {
+        cloudSyncJob?.cancel()
+        cloudSyncJob = scope.launch(Dispatchers.IO) {
+            // 1. Немедленно отправляем текущий снимок доски в облачный релей
+            try {
+                val doc = snapshotProvider()
+                val snapshotAction = CollabAction.Snapshot(
+                    document = doc,
+                    senderId = myClientId,
+                    senderName = userName
+                )
+                sendActionToCloudRelay(roomCode, snapshotAction)
+            } catch (_: Exception) {}
+
+            // 2. Периодическая дельта-синхронизация с облаком для получения правок из браузера
+            var lastCloudVersion = 0L
+            while (isActive) {
+                try {
+                    val url = "http://${NetworkUtils.PUBLIC_RELAY_IP}:${NetworkUtils.PUBLIC_RELAY_PORT}/api/sync?room=" +
+                            java.net.URLEncoder.encode(roomCode, "UTF-8") + "&since=$lastCloudVersion"
+                    val req = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(url))
+                        .timeout(java.time.Duration.ofSeconds(4))
+                        .GET()
+                        .build()
+                    val resp = httpClient.send(req, java.net.http.HttpResponse.BodyHandlers.ofString(Charsets.UTF_8))
+                    if (resp.statusCode() == 200) {
+                        val body = resp.body()
+                        val syncData = com.lkboard.app.data.BoardSerializer.jsonFormat.decodeFromString<CollabSyncResponse>(body)
+                        lastCloudVersion = maxOf(lastCloudVersion, syncData.currentVersion)
+                        for (rec in syncData.actions) {
+                            val act = rec.action
+                            val isSelf = when (act) {
+                                is CollabAction.UpsertElement -> act.senderId == myClientId
+                                is CollabAction.DeleteElements -> act.senderId == myClientId
+                                is CollabAction.PointerMove -> act.senderId == myClientId
+                                is CollabAction.ToggleStickyTodo -> act.senderId == myClientId
+                                is CollabAction.Snapshot -> act.senderId == myClientId
+                                is CollabAction.ClearBoard -> act.senderId == myClientId
+                                else -> false
+                            }
+                            if (!isSelf) {
+                                handleRemoteAction(act)
+                                server?.broadcastAction(act)
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+                delay(800)
+            }
+        }
+    }
+
+    private fun sendActionToCloudRelay(roomCode: String, action: CollabAction) {
+        if (roomCode.isBlank()) return
+        scope.launch(Dispatchers.IO) {
+            try {
+                val json = com.lkboard.app.data.BoardSerializer.jsonFormat.encodeToString<CollabAction>(action)
+                val url = "http://${NetworkUtils.PUBLIC_RELAY_IP}:${NetworkUtils.PUBLIC_RELAY_PORT}/api/action?room=" +
+                        java.net.URLEncoder.encode(roomCode, "UTF-8")
+                val req = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(url))
+                    .timeout(java.time.Duration.ofSeconds(5))
+                    .header("Content-Type", "application/json; charset=UTF-8")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, Charsets.UTF_8))
+                    .build()
+                httpClient.send(req, java.net.http.HttpResponse.BodyHandlers.discarding())
+            } catch (_: Exception) {}
         }
     }
 }
