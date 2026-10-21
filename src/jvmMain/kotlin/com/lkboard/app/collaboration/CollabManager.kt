@@ -21,6 +21,8 @@ data class CollabSessionState(
     val localIp: String = "127.0.0.1",
     val webShareLink: String = "",
     val appShareLink: String = "",
+    val publicWebShareLink: String = "",
+    val publicAppShareLink: String = "",
     val roomCode: String = "",
     val hostUrl: String = "",
     val statusMessage: String = "Совместная работа выключена",
@@ -92,6 +94,8 @@ class CollabManager(
 
         val webLink = NetworkUtils.buildWebLink(primaryIp, actualPort)
         val appLink = NetworkUtils.buildAppLink(primaryIp, actualPort)
+        val publicWebLink = NetworkUtils.buildPublicWebLink(roomCode)
+        val publicAppLink = NetworkUtils.buildPublicAppLink(roomCode)
 
         _state.update {
             it.copy(
@@ -101,9 +105,11 @@ class CollabManager(
                 localIp = primaryIp,
                 webShareLink = webLink,
                 appShareLink = appLink,
+                publicWebShareLink = publicWebLink,
+                publicAppShareLink = publicAppLink,
                 roomCode = roomCode,
                 userName = userName,
-                statusMessage = "Трансляция активна на порту $actualPort",
+                statusMessage = "Трансляция активна (Локально + Облако)",
                 connectedPeers = listOf(
                     CollabPeer(id = myClientId, name = userName, colorHex = 0xFF0284C7, isHost = true)
                 )
@@ -123,6 +129,8 @@ class CollabManager(
                 statusMessage = "Совместная работа выключена",
                 webShareLink = "",
                 appShareLink = "",
+                publicWebShareLink = "",
+                publicAppShareLink = "",
                 connectedPeers = emptyList(),
                 remotePointers = emptyMap()
             )

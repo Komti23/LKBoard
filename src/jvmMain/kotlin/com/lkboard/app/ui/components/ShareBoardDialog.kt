@@ -32,6 +32,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -70,13 +71,18 @@ fun ShareBoardDialog(
     var clientUserName by remember { mutableStateOf(collabState.userName.ifBlank { "Участник" }) }
     var joinUrlInput by remember { mutableStateOf(collabState.hostUrl.ifBlank { "http://192.168.1." }) }
     var copiedWebFeedback by remember { mutableStateOf(false) }
+    var copiedPublicFeedback by remember { mutableStateOf(false) }
     var copiedAppFeedback by remember { mutableStateOf(false) }
 
-    fun copyToClipboard(text: String, isWeb: Boolean) {
+    fun copyToClipboard(text: String, type: Int) {
         try {
             val sel = StringSelection(text)
             Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
-            if (isWeb) copiedWebFeedback = true else copiedAppFeedback = true
+            when (type) {
+                0 -> copiedPublicFeedback = true
+                1 -> copiedWebFeedback = true
+                else -> copiedAppFeedback = true
+            }
         } catch (_: Exception) {}
     }
 
@@ -289,9 +295,64 @@ fun ShareBoardDialog(
                     }
 
                     if (collabState.isHosting) {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        // Прямая веб-ссылка для браузера
+                        // 1. Общедоступная облачная интернет-ссылка (через сервер 164.37.224.219)
+                        if (collabState.publicWebShareLink.isNotBlank()) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text("🌐", fontSize = 14.sp)
+                                        Text("Интернет-ссылка (для участников в любой точке мира)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF0F172A))
+                                    }
+                                    if (copiedPublicFeedback) {
+                                        Text("Скопировано!", fontSize = 12.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFFEFF6FF))
+                                        .border(BorderStroke(1.2.dp, Color(0xFF93C5FD)), RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = collabState.publicWebShareLink,
+                                        fontSize = 12.5.sp,
+                                        color = Color(0xFF1D4ED8),
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.weight(1f)
+                                    )
+
+                                    Button(
+                                        onClick = { copyToClipboard(collabState.publicWebShareLink, type = 0) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Копировать", fontSize = 12.sp)
+                                    }
+                                }
+                                Text(
+                                    text = "Открывается на любом телефоне, планшете или компьютере через интернет (работает без общего Wi-Fi).",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+
+                        // 2. Прямая локальная веб-ссылка для локальной сети (Wi-Fi)
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -299,8 +360,8 @@ fun ShareBoardDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Icon(Icons.Default.Language, contentDescription = null, tint = Color(0xFF0284C7), modifier = Modifier.size(16.dp))
-                                    Text("Веб-ссылка (для любого браузера, смартфона, iPad, ПК)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = Color(0xFF1E293B))
+                                    Text("🏠", fontSize = 14.sp)
+                                    Text("Локальная ссылка (для одной Wi-Fi сети)", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp, color = Color(0xFF334155))
                                 }
                                 if (copiedWebFeedback) {
                                     Text("Скопировано!", fontSize = 12.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
@@ -313,21 +374,20 @@ fun ShareBoardDialog(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color(0xFFF8FAFC))
                                     .border(BorderStroke(1.dp, Color(0xFFCBD5E1)), RoundedCornerShape(12.dp))
-                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                                    .padding(horizontal = 12.dp, vertical = 7.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
                                     text = collabState.webShareLink,
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF0284C7),
+                                    fontSize = 12.5.sp,
+                                    color = Color(0xFF475569),
                                     fontWeight = FontWeight.Medium,
                                     modifier = Modifier.weight(1f)
                                 )
 
-                                Button(
-                                    onClick = { copyToClipboard(collabState.webShareLink, isWeb = true) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                                OutlinedButton(
+                                    onClick = { copyToClipboard(collabState.webShareLink, type = 1) },
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
@@ -335,11 +395,6 @@ fun ShareBoardDialog(
                                     Text("Копировать", fontSize = 12.sp)
                                 }
                             }
-                            Text(
-                                text = "Любой человек может открыть эту ссылку в Chrome/Safari и рисовать/добавлять заметки в реальном времени.",
-                                fontSize = 11.sp,
-                                color = Color(0xFF64748B)
-                            )
                         }
 
                         Spacer(modifier = Modifier.height(14.dp))
@@ -370,7 +425,7 @@ fun ShareBoardDialog(
                                     .weight(1.5f)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color(0xFFF1F5F9))
-                                    .clickable { copyToClipboard(collabState.appShareLink, isWeb = false) }
+                                    .clickable { copyToClipboard(collabState.appShareLink, type = 2) }
                                     .padding(12.dp)
                             ) {
                                 Row(
@@ -392,19 +447,19 @@ fun ShareBoardDialog(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Подсказка об интернете / ngrok / Cloudflare
+                        // Подсказка об облачном сервере
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFFFFBEB))
-                                .border(BorderStroke(1.dp, Color(0xFFFDE68A)), RoundedCornerShape(10.dp))
+                                .background(Color(0xFFF0FDF4))
+                                .border(BorderStroke(1.dp, Color(0xFFBBF7D0)), RoundedCornerShape(10.dp))
                                 .padding(10.dp)
                         ) {
                             Text(
-                                text = "💡 Для совместной работы через глобальный интернет (не в одном Wi-Fi): запустите бесплатный ngrok («ngrok http ${collabState.serverPort}») или Cloudflare Tunnel и отправьте ссылку участникам.",
+                                text = "🚀 Облачный сервер LKBoard (164.37.224.219) активен: участники могут мгновенно подключиться по интернет-ссылке из любого браузера или смартфона без дополнительных настроек!",
                                 fontSize = 11.sp,
-                                color = Color(0xFF92400E)
+                                color = Color(0xFF166534)
                             )
                         }
                     }
@@ -416,8 +471,8 @@ fun ShareBoardDialog(
                         OutlinedTextField(
                             value = joinUrlInput,
                             onValueChange = { joinUrlInput = it },
-                            label = { Text("Ссылка или адрес хоста (http://ip:порт)") },
-                            placeholder = { Text("например, http://192.168.1.45:8765") },
+                            label = { Text("Ссылка или адрес хоста (http://ip:порт или облако)") },
+                            placeholder = { Text("например, http://164.37.224.219:8765/?room=LK-1234") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),

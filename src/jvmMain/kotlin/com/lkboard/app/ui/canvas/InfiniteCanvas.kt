@@ -140,6 +140,7 @@ fun InfiniteCanvas(
     onSpaceStateChange: (Boolean) -> Unit,
     editingElement: BoardElement? = null,
     onCommitTextEdit: (String) -> Unit = {},
+    onCommitTextElementEdit: (text: String, fontSize: Float, isBold: Boolean, isItalic: Boolean, colorHex: Long) -> Unit = { t, _, _, _, _ -> onCommitTextEdit(t) },
     onCancelTextEdit: () -> Unit = {},
     onCursorPositionChange: (Offset) -> Unit = {},
     remotePointers: Map<String, com.lkboard.app.collaboration.RemotePointer> = emptyMap(),
@@ -615,12 +616,13 @@ fun InfiniteCanvas(
         }
     }
 
-        // 5. Встроенный инлайн-редактор текста (Inline Text Editor)
+        // 5. Встроенный инлайн-редактор текста с панелью форматирования шрифта (Inline Text Editor)
         if (editingElement is BoardElement.Text) {
             InlineTextEditorOverlay(
                 element = editingElement,
                 transform = state.transform,
                 onCommit = onCommitTextEdit,
+                onCommitDetailed = onCommitTextElementEdit,
                 onCancel = onCancelTextEdit
             )
         }

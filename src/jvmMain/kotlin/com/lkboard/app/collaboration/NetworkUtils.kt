@@ -8,6 +8,22 @@ import kotlin.random.Random
 object NetworkUtils {
 
     const val DEFAULT_PORT = 8765
+    const val PUBLIC_RELAY_IP = "164.37.224.219"
+    const val PUBLIC_RELAY_PORT = 8765
+
+    /**
+     * Создает общедоступную интернет-ссылку на облачный сервер LKBoard.
+     */
+    fun buildPublicWebLink(roomCode: String): String {
+        return "http://$PUBLIC_RELAY_IP:$PUBLIC_RELAY_PORT/?room=$roomCode"
+    }
+
+    /**
+     * Создает интернет-ссылку подключения для приложения LKBoard.
+     */
+    fun buildPublicAppLink(roomCode: String): String {
+        return "lkboard://connect?host=$PUBLIC_RELAY_IP&port=$PUBLIC_RELAY_PORT&room=$roomCode"
+    }
 
     /**
      * Возвращает список доступных локальных IPv4 адресов машины (Wi-Fi, Ethernet).

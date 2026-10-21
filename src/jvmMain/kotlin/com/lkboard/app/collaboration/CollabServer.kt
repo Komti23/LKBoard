@@ -4,21 +4,30 @@ import com.lkboard.app.data.BoardDocument
 import com.lkboard.app.data.BoardSerializer
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicLong
+
+@Serializable
+data class CollabSyncResponse(
+    val currentVersion: Long,
+    val actions: List<CollabActionRecord>
+)
+
+@Serializable
+data class CollabActionRecord(
+    val id: Long,
+    val action: CollabAction
+)
 
 /**
- * Встроенный сервер совместной работы на базе стандартного JDK HttpServer.
- * Обеспечивает веб-клиент для браузеров и SSE-поток реального времени для Desktop и Web.
+ * Встроенный высокоскоростной сервер совместной работы на базе JDK HttpServer.
+ * Обеспечивает веб-клиент для браузеров, непрерывный SSE-поток реального времени и дельта-синхронизацию.
  */
 class CollabServer(
     private var snapshotProvider: () -> BoardDocument,
@@ -27,8 +36,13 @@ class CollabServer(
 
     private var server: HttpServer? = null
     private val sseClients = ConcurrentHashMap<String, OutputStream>()
-    private val serverScope = CoroutineScope(Dispatchers.IO + Job())
-    private var heartbeatJob: Job? = null
+    private val clientLocks = ConcurrentHashMap<String, Any>()
+    @Volatile
+    private var isRunning = false
+
+    private val actionCounter = AtomicLong(0)
+    private val actionHistory = ConcurrentLinkedQueue<CollabActionRecord>()
+    private val maxHistorySize = 500
 
     var actualPort: Int = NetworkUtils.DEFAULT_PORT
         private set
@@ -43,6 +57,7 @@ class CollabServer(
         actualPort = NetworkUtils.findAvailablePort(port)
         val s = HttpServer.create(InetSocketAddress(actualPort), 0)
         s.executor = Executors.newCachedThreadPool()
+        isRunning = true
 
         // 1. Корневой маршрут — веб-клиент LKBoard для браузеров
         s.createContext("/") { exchange ->
@@ -92,11 +107,14 @@ class CollabServer(
                 try {
                     val body = exchange.requestBody.reader(Charsets.UTF_8).readText()
                     val action = BoardSerializer.jsonFormat.decodeFromString<CollabAction>(body)
-                    
+
+                    // Фиксируем в истории
+                    recordAction(action)
+
                     // Применяем локально у хоста
                     onActionReceived(action)
 
-                    // Рассылаем всем остальным подключенным клиентам
+                    // Рассылаем всем остальным подключенным клиентам SSE
                     broadcastAction(action)
 
                     val resp = """{"status":"ok"}""".toByteArray()
@@ -114,20 +132,55 @@ class CollabServer(
             }
         }
 
-        // 4. Поток событий реального времени Server-Sent Events (SSE)
-        s.createContext("/api/events") { exchange ->
+        // 4. Дельта-синхронизация по номеру версии (гарантирует получение данных даже при сбое SSE)
+        s.createContext("/api/sync") { exchange ->
             handleCors(exchange)
             if (exchange.requestMethod.equals("OPTIONS", ignoreCase = true)) {
                 exchange.sendResponseHeaders(204, -1)
                 return@createContext
             }
             try {
+                val query = exchange.requestURI.query ?: ""
+                val since = query.split("&")
+                    .firstOrNull { it.startsWith("since=") }
+                    ?.substringAfter("since=")
+                    ?.toLongOrNull() ?: 0L
+
+                val currentVer = actionCounter.get()
+                val newActions = actionHistory.filter { it.id > since }
+                val respObj = CollabSyncResponse(
+                    currentVersion = currentVer,
+                    actions = newActions
+                )
+                val json = BoardSerializer.jsonFormat.encodeToString(respObj)
+                val bytes = json.toByteArray(Charsets.UTF_8)
+                exchange.responseHeaders.set("Content-Type", "application/json; charset=UTF-8")
+                exchange.sendResponseHeaders(200, bytes.size.toLong())
+                exchange.responseBody.use { it.write(bytes) }
+            } catch (_: Exception) {
+                sendInternalError(exchange)
+            }
+        }
+
+        // 5. Поток событий реального времени Server-Sent Events (SSE)
+        s.createContext("/api/events") { exchange ->
+            handleCors(exchange)
+            if (exchange.requestMethod.equals("OPTIONS", ignoreCase = true)) {
+                exchange.sendResponseHeaders(204, -1)
+                return@createContext
+            }
+
+            val clientId = "client-${System.currentTimeMillis()}-${(1000..9999).random()}"
+            val clientLock = Any()
+            clientLocks[clientId] = clientLock
+
+            try {
                 exchange.responseHeaders.set("Content-Type", "text/event-stream; charset=UTF-8")
-                exchange.responseHeaders.set("Cache-Control", "no-cache")
+                exchange.responseHeaders.set("Cache-Control", "no-cache, no-transform")
                 exchange.responseHeaders.set("Connection", "keep-alive")
+                exchange.responseHeaders.set("X-Accel-Buffering", "no")
                 exchange.sendResponseHeaders(200, 0) // chunked transfer
 
-                val clientId = "client-${System.currentTimeMillis()}-${(1000..9999).random()}"
                 val os = exchange.responseBody
                 sseClients[clientId] = os
 
@@ -138,16 +191,46 @@ class CollabServer(
                     senderName = hostName
                 )
                 val json = BoardSerializer.jsonFormat.encodeToString(initialSnapshot)
-                val sseData = "data: $json\n\n".toByteArray(Charsets.UTF_8)
-                os.write(sseData)
-                os.flush()
-            } catch (_: Exception) {}
+                synchronized(os) {
+                    os.write("data: $json\n\n".toByteArray(Charsets.UTF_8))
+                    os.flush()
+                }
+
+                // ВАЖНО: удерживаем поток открытым, чтобы HttpServer не закрыл соединение!
+                synchronized(clientLock) {
+                    while (isRunning && sseClients.containsKey(clientId)) {
+                        try {
+                            (clientLock as java.lang.Object).wait(15_000)
+                        } catch (_: InterruptedException) {
+                            break
+                        }
+
+                        if (!isRunning || !sseClients.containsKey(clientId)) break
+
+                        // Периодический keep-alive heartbeat
+                        try {
+                            synchronized(os) {
+                                os.write(": ping\n\n".toByteArray(Charsets.UTF_8))
+                                os.flush()
+                            }
+                        } catch (_: Exception) {
+                            break
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            } finally {
+                sseClients.remove(clientId)
+                clientLocks.remove(clientId)
+                try { exchange.responseBody.close() } catch (_: Exception) {}
+                try { exchange.close() } catch (_: Exception) {}
+            }
         }
 
-        // 5. Статус сервера
+        // 6. Статус сервера
         s.createContext("/api/status") { exchange ->
             handleCors(exchange)
-            val json = """{"active":true,"clients":${sseClients.size},"port":$actualPort}""".toByteArray()
+            val json = """{"active":true,"clients":${sseClients.size},"port":$actualPort,"version":${actionCounter.get()}}""".toByteArray()
             exchange.responseHeaders.set("Content-Type", "application/json")
             exchange.sendResponseHeaders(200, json.size.toLong())
             exchange.responseBody.use { it.write(json) }
@@ -155,44 +238,45 @@ class CollabServer(
 
         s.start()
         server = s
-
-        // Heartbeat корутина для поддержания SSE соединений
-        heartbeatJob = serverScope.launch {
-            while (isActive) {
-                delay(15_000)
-                val ping = ": ping\n\n".toByteArray(Charsets.UTF_8)
-                val deadClients = mutableListOf<String>()
-                for ((id, os) in sseClients) {
-                    try {
-                        os.write(ping)
-                        os.flush()
-                    } catch (_: Exception) {
-                        deadClients.add(id)
-                    }
-                }
-                deadClients.forEach { sseClients.remove(it) }
-            }
-        }
-
         return actualPort
+    }
+
+    private fun recordAction(action: CollabAction) {
+        val id = actionCounter.incrementAndGet()
+        actionHistory.add(CollabActionRecord(id = id, action = action))
+        while (actionHistory.size > maxHistorySize) {
+            actionHistory.poll()
+        }
     }
 
     /**
      * Рассылает действие всем подключенным клиентам SSE.
      */
     fun broadcastAction(action: CollabAction) {
+        recordAction(action)
         val json = BoardSerializer.jsonFormat.encodeToString(action)
         val sseData = "data: $json\n\n".toByteArray(Charsets.UTF_8)
         val dead = mutableListOf<String>()
+
         for ((id, os) in sseClients) {
             try {
-                os.write(sseData)
-                os.flush()
+                synchronized(os) {
+                    os.write(sseData)
+                    os.flush()
+                }
             } catch (_: Exception) {
                 dead.add(id)
             }
         }
-        dead.forEach { sseClients.remove(it) }
+
+        for (id in dead) {
+            sseClients.remove(id)
+            clientLocks.remove(id)?.let { lock ->
+                synchronized(lock) {
+                    try { (lock as java.lang.Object).notifyAll() } catch (_: Exception) {}
+                }
+            }
+        }
     }
 
     fun updateSnapshotProvider(newProvider: () -> BoardDocument) {
@@ -201,12 +285,20 @@ class CollabServer(
 
     @Synchronized
     fun stop() {
-        heartbeatJob?.cancel()
-        heartbeatJob = null
+        isRunning = false
+
+        for ((id, lock) in clientLocks) {
+            synchronized(lock) {
+                try { (lock as java.lang.Object).notifyAll() } catch (_: Exception) {}
+            }
+        }
+        clientLocks.clear()
+
         for ((_, os) in sseClients) {
             try { os.close() } catch (_: Exception) {}
         }
         sseClients.clear()
+
         server?.stop(0)
         server = null
     }

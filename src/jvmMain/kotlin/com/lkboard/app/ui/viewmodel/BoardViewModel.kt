@@ -1052,7 +1052,7 @@ class BoardViewModel {
                 val (w, h) = com.lkboard.app.ui.components.TextLayoutHelper.calculateDimensions(
                     text = newText,
                     fontSize = element.fontSize,
-                    maxWidth = 600f
+                    maxWidth = 700f
                 )
                 val resized = element.copy(text = newText, width = w, height = h)
                 executeCommand(object : BoardCommand {
@@ -1063,6 +1063,41 @@ class BoardViewModel {
             } else {
                 executeCommand(UpdateTextCommand(element.id, currentText, newText))
             }
+        }
+        _editingElement.value = null
+    }
+
+    fun commitTextElementEdit(
+        newText: String,
+        fontSize: Float = 19f,
+        isBold: Boolean = false,
+        isItalic: Boolean = false,
+        colorHex: Long = 0xFF1E1E1EL
+    ) {
+        val element = _editingElement.value ?: return
+        if (element is BoardElement.Text) {
+            val (w, h) = com.lkboard.app.ui.components.TextLayoutHelper.calculateDimensions(
+                text = newText,
+                fontSize = fontSize,
+                maxWidth = 700f
+            )
+            val updated = element.copy(
+                text = newText,
+                fontSize = fontSize,
+                isBold = isBold,
+                isItalic = isItalic,
+                colorHex = colorHex,
+                width = w,
+                height = h
+            )
+            executeCommand(object : BoardCommand {
+                override val description = "Изменение стиля текста"
+                override fun execute(state: BoardState) = state.withElement(updated)
+                override fun undo(state: BoardState) = state.withElement(element)
+            })
+            collabManager.broadcastElementUpsert(updated)
+        } else if (element is BoardElement.StickyNote) {
+            commitTextEdit(newText)
         }
         _editingElement.value = null
     }

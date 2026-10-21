@@ -340,6 +340,7 @@ fun main() = application {
                             onSpaceStateChange = viewModel::setSpacePressed,
                             editingElement = editingElement,
                             onCommitTextEdit = viewModel::commitTextEdit,
+                            onCommitTextElementEdit = viewModel::commitTextElementEdit,
                             onCancelTextEdit = viewModel::cancelTextEdit,
                             onCursorPositionChange = { currentCursorScreenPos = it },
                             remotePointers = collabState.remotePointers,
@@ -487,10 +488,11 @@ fun main() = application {
                                     }
                                 }
                             )
-                        } else if (editingElement is BoardElement.StickyNote) {
+                        } else if (editingElement is BoardElement.StickyNote || editingElement is BoardElement.Text) {
                             TextEditDialog(
                                 element = editingElement!!,
                                 onSave = viewModel::commitTextEdit,
+                                onSaveDetailed = viewModel::commitTextElementEdit,
                                 onDismiss = viewModel::cancelTextEdit
                             )
                         }

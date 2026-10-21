@@ -333,12 +333,14 @@ object WebClientHtml {
             ctx.save();
             if (el.type === 'drawing_path' || el.points) {
                 drawStroke(el);
-            } else if (el.type === 'sticky_note' || el.text !== undefined && el.colorHex !== undefined) {
+            } else if (el.type === 'sticky_note' || (el.text !== undefined && el.colorHex !== undefined && el.type !== 'text')) {
                 drawSticky(el);
             } else if (el.type === 'milestone_card' || el.status !== undefined) {
                 drawMilestone(el);
             } else if (el.type === 'kanban_board') {
                 drawKanban(el);
+            } else if (el.type === 'function_graph' || el.expressions !== undefined) {
+                drawFunctionGraph(el);
             } else if (el.type === 'shape' || el.shapeType !== undefined) {
                 drawShape(el);
             } else if (el.type === 'text') {
@@ -465,28 +467,139 @@ object WebClientHtml {
 
         function drawKanban(k) {
             const x = k.x, y = k.y, w = k.width || 1000, h = k.height || 620;
-            ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
-            roundRect(ctx, x, y, w, h, 18);
+            const kScale = Math.min(3.5, Math.max(0.6, w / 1000));
+            const headH = Math.max(36, 46 * kScale);
+            const colHeadH = Math.max(28, 38 * kScale);
+
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.95)';
+            roundRect(ctx, x, y, w, h, 16 * kScale);
             ctx.fill();
             ctx.strokeStyle = '#cbd5e1';
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
+            // Header
             ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 18px Inter, sans-serif';
-            ctx.fillText(k.title || 'Канбан-доска', x + 24, y + 36);
+            ctx.font = 'bold ' + Math.round(15 * kScale) + 'px Inter, sans-serif';
+            ctx.fillText('📋 ' + (k.title || 'Канбан-доска'), x + 18 * kScale, y + headH * 0.65);
 
-            const cols = ['Бэклог', 'В работе', 'На ревью', 'Готово'];
-            const colW = (w - 40) / 4;
+            const cols = ['🔴 Бэклог', '🟡 В работе', '🟣 На ревью', '🟢 Готово'];
+            const colW = w / 4;
             for (let i = 0; i < 4; i++) {
-                const cx = x + 20 + i * colW;
-                ctx.fillStyle = 'rgba(241, 245, 249, 0.7)';
-                roundRect(ctx, cx, y + 54, colW - 12, h - 70, 12);
-                ctx.fill();
-                ctx.fillStyle = '#475569';
-                ctx.font = 'bold 13px Inter, sans-serif';
-                ctx.fillText(cols[i], cx + 12, y + 78);
+                const cx = x + i * colW;
+                const cy = y + headH;
+                const cw = colW;
+                const ch = h - headH;
+
+                if (i > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy);
+                    ctx.lineTo(cx, cy + ch);
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                ctx.fillStyle = '#334155';
+                ctx.font = 'bold ' + Math.round(12 * kScale) + 'px Inter, sans-serif';
+                ctx.fillText(cols[i], cx + 14 * kScale, cy + colHeadH * 0.65);
             }
+        }
+
+        function drawFunctionGraph(g) {
+            const x = g.x, y = g.y, w = g.width || 440, h = g.height || 280;
+            const headH = 34;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, x, y, w, h, 12);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Header
+            ctx.fillStyle = '#f8fafc';
+            roundRect(ctx, x, y, w, headH, 12);
+            ctx.fill();
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 12px Inter, sans-serif';
+            const fTitle = (g.expressions && g.expressions.length > 0) ? g.expressions.map(e => 'f(x)=' + e).join(', ') : (g.title || 'График');
+            ctx.fillText(fTitle, x + 12, y + 22);
+
+            // Inner plot clipping
+            const pad = 12;
+            const px = x + pad, py = y + headH + pad, pw = w - pad * 2, ph = h - headH - pad * 2;
+            if (pw <= 10 || ph <= 10) return;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(px, py, pw, ph);
+            ctx.clip();
+
+            // Background of plot
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(px, py, pw, ph);
+
+            // Axes
+            const xMin = g.xMin !== undefined ? g.xMin : -10;
+            const xMax = g.xMax !== undefined ? g.xMax : 10;
+            const yMin = g.yMin !== undefined ? g.yMin : -5;
+            const yMax = g.yMax !== undefined ? g.yMax : 5;
+
+            const toScreenX = (val) => px + ((val - xMin) / (xMax - xMin)) * pw;
+            const toScreenY = (val) => py + ((yMax - val) / (yMax - yMin)) * ph;
+
+            const originX = Math.max(px, Math.min(px + pw, toScreenX(0)));
+            const originY = Math.max(py, Math.min(py + ph, toScreenY(0)));
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(px, originY); ctx.lineTo(px + pw, originY);
+            ctx.moveTo(originX, py); ctx.lineTo(originX, py + ph);
+            ctx.stroke();
+
+            // Simple parser/evaluator for graph curves f(x)
+            if (g.expressions && g.expressions.length > 0) {
+                const colors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea'];
+                g.expressions.forEach((expr, idx) => {
+                    ctx.strokeStyle = colors[idx % colors.length];
+                    ctx.lineWidth = 2.2;
+                    ctx.beginPath();
+                    let started = false;
+                    const steps = 150;
+                    for (let s = 0; s <= steps; s++) {
+                        const xv = xMin + (s / steps) * (xMax - xMin);
+                        let yv = null;
+                        try {
+                            let jsExpr = expr.replace(/\^/g, '**')
+                                             .replace(/sin\(/g, 'Math.sin(')
+                                             .replace(/cos\(/g, 'Math.cos(')
+                                             .replace(/tan\(/g, 'Math.tan(')
+                                             .replace(/sqrt\(/g, 'Math.sqrt(')
+                                             .replace(/abs\(/g, 'Math.abs(')
+                                             .replace(/pi/gi, 'Math.PI')
+                                             .replace(/e/gi, 'Math.E');
+                            const fn = new Function('x', 'return ' + jsExpr);
+                            yv = fn(xv);
+                        } catch(e) {}
+
+                        if (yv !== null && !isNaN(yv) && isFinite(yv) && yv >= yMin - 50 && yv <= yMax + 50) {
+                            const sx = toScreenX(xv);
+                            const sy = toScreenY(yv);
+                            if (!started) {
+                                ctx.moveTo(sx, sy);
+                                started = true;
+                            } else {
+                                ctx.lineTo(sx, sy);
+                            }
+                        } else {
+                            started = false;
+                        }
+                    }
+                    ctx.stroke();
+                });
+            }
+            ctx.restore();
         }
 
         function drawShape(s) {
@@ -501,8 +614,11 @@ object WebClientHtml {
 
         function drawText(t) {
             ctx.fillStyle = t.colorHex ? hexToColor(t.colorHex) : '#0f172a';
-            ctx.font = '16px Inter, sans-serif';
-            ctx.fillText(t.text || '', t.x, t.y + 16);
+            const fSize = Math.round(t.fontSize || 18);
+            const fWeight = t.isBold ? 'bold ' : '';
+            const fStyle = t.isItalic ? 'italic ' : '';
+            ctx.font = fStyle + fWeight + fSize + 'px Inter, sans-serif';
+            ctx.fillText(t.text || '', t.x, t.y + fSize);
         }
 
         function drawPointer(p) {
@@ -723,9 +839,16 @@ object WebClientHtml {
             };
         });
 
-        // Server-Sent Events (SSE) Live Sync
+        // Server-Sent Events (SSE) Live Sync + Periodic Delta Sync
+        let evtSource = null;
+        let lastSyncVersion = 0;
+        let seenActionIds = new Set();
+
         function connectLiveStream() {
-            const evtSource = new EventSource('/api/events');
+            if (evtSource) {
+                try { evtSource.close(); } catch(e) {}
+            }
+            evtSource = new EventSource('/api/events');
             
             evtSource.onopen = () => {
                 document.getElementById('statusText').textContent = 'Подключено (Live)';
@@ -743,13 +866,41 @@ object WebClientHtml {
             };
 
             evtSource.onerror = () => {
-                document.getElementById('statusText').textContent = 'Переподключение...';
-                document.getElementById('statusPill').style.background = 'rgba(239, 68, 68, 0.12)';
-                document.getElementById('statusPill').style.color = '#dc2626';
+                document.getElementById('statusText').textContent = 'Синхронизация...';
+                document.getElementById('statusPill').style.background = 'rgba(245, 158, 11, 0.12)';
+                document.getElementById('statusPill').style.color = '#d97706';
+                setTimeout(connectLiveStream, 3000);
             };
         }
 
+        function pollDeltaSync() {
+            fetch('/api/sync?since=' + lastSyncVersion)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.actions) {
+                        lastSyncVersion = Math.max(lastSyncVersion, data.currentVersion || 0);
+                        let hasChanges = false;
+                        for (const item of data.actions) {
+                            if (!seenActionIds.has(item.id)) {
+                                seenActionIds.add(item.id);
+                                if (seenActionIds.size > 1000) {
+                                    const first = seenActionIds.values().next().value;
+                                    seenActionIds.delete(first);
+                                }
+                                handleRemoteAction(item.action);
+                                hasChanges = true;
+                            }
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+        setInterval(pollDeltaSync, 1200);
+
         function handleRemoteAction(action) {
+            if (!action) return;
+            if (action.senderId === clientId) return;
+
             if (action.type === 'snapshot') {
                 elements = {};
                 if (action.document && action.document.elements) {

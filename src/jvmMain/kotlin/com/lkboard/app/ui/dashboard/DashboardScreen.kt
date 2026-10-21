@@ -281,24 +281,6 @@ private fun DashboardHeader(
                             color = Color(0xFF0F172A),
                             letterSpacing = (-0.5).sp
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(Color(0xFF2563EB), Color(0xFF38BDF8))
-                                    )
-                                )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "STUDIO",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
                     }
                     Text(
                         text = "Бесконечные доски, дорожные карты & презентации",
@@ -476,21 +458,6 @@ private fun TemplatesSection(
                                 text = template.icon,
                                 fontSize = 24.sp
                             )
-                            if (isRoadmap) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(Color(0xFF2563EB))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "ПОПУЛЯРНО 🔥",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))

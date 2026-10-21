@@ -1,0 +1,1117 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+LKBoard Real-time Cloud Collaboration Relay Server.
+Provides real-time room-based synchronization via SSE, Delta Sync, and Web Canvas.
+"""
+
+import sys
+import json
+import time
+import threading
+from urllib.parse import urlparse, parse_qs
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
+
+PORT = 8765
+
+# In-memory storage for rooms
+# rooms[room_id] = {
+#     'elements': { id: element_dict },
+#     'actions': [ (id, action_dict) ],
+#     'version': int,
+#     'clients': [ client_queue ],
+#     'lock': threading.Lock()
+# }
+ROOMS = {}
+GLOBAL_LOCK = threading.Lock()
+
+def get_room(room_id):
+    with GLOBAL_LOCK:
+        if room_id not in ROOMS:
+            ROOMS[room_id] = {
+                'elements': {},
+                'actions': [],
+                'version': 0,
+                'clients': set(),
+                'lock': threading.Lock()
+            }
+        return ROOMS[room_id]
+
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
+
+class RelayHandler(BaseHTTPRequestHandler):
+
+    def send_cors_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_cors_headers()
+        self.end_headers()
+
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+        qs = parse_qs(parsed.query)
+        room_id = qs.get('room', ['LK-MAIN'])[0]
+        room = get_room(room_id)
+
+        if path == "/" or path == "/index.html":
+            self.serve_web_client(room_id)
+        elif path == "/api/snapshot":
+            self.serve_snapshot(room, room_id)
+        elif path == "/api/status":
+            self.serve_status()
+        elif path == "/api/sync":
+            since = int(qs.get('since', [0])[0])
+            self.serve_sync(room, since)
+        elif path == "/api/events":
+            self.serve_sse(room, room_id)
+        else:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"Not Found")
+
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+        qs = parse_qs(parsed.query)
+        room_id = qs.get('room', ['LK-MAIN'])[0]
+        room = get_room(room_id)
+
+        if path == "/api/action":
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+            try:
+                action = json.loads(body)
+                self.process_action(room, action)
+                resp = json.dumps({"status": "ok"}).encode('utf-8')
+                self.send_response(200)
+                self.send_cors_headers()
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(resp)))
+                self.end_headers()
+                self.wfile.write(resp)
+            except Exception as e:
+                resp = json.dumps({"status": "error", "message": str(e)}).encode('utf-8')
+                self.send_response(400)
+                self.send_cors_headers()
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(resp)))
+                self.end_headers()
+                self.wfile.write(resp)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def process_action(self, room, action):
+        with room['lock']:
+            room['version'] += 1
+            action_id = room['version']
+            
+            # Apply to state
+            atype = action.get('type')
+            if atype == 'upsert_element':
+                el = action.get('element')
+                if el and 'id' in el:
+                    room['elements'][el['id']] = el
+            elif atype == 'delete_elements':
+                for el_id in action.get('elementIds', []):
+                    room['elements'].pop(el_id, None)
+            elif atype == 'toggle_sticky_todo':
+                note_id = action.get('noteId')
+                idx = action.get('lineIndex', 0)
+                el = room['elements'].get(note_id)
+                if el and 'text' in el:
+                    lines = el['text'].split('\n')
+                    if 0 <= idx < len(lines):
+                        if lines[idx].startswith('- [ ] '):
+                            lines[idx] = '- [x] ' + lines[idx][6:]
+                        elif lines[idx].startswith('- [x] ') or lines[idx].startswith('- [X] '):
+                            lines[idx] = '- [ ] ' + lines[idx][6:]
+                        el['text'] = '\n'.join(lines)
+
+            # Record in history (max 500)
+            room['actions'].append((action_id, action))
+            if len(room['actions']) > 500:
+                room['actions'].pop(0)
+
+            # Broadcast to SSE clients
+            sse_msg = f"data: {json.dumps(action)}\n\n".encode('utf-8')
+            dead_clients = []
+            for client_wfile in room['clients']:
+                try:
+                    client_wfile.write(sse_msg)
+                    client_wfile.flush()
+                except Exception:
+                    dead_clients.append(client_wfile)
+            for dc in dead_clients:
+                room['clients'].discard(dc)
+
+    def serve_snapshot(self, room, room_id):
+        with room['lock']:
+            elements_list = list(room['elements'].values())
+            data = {
+                "title": f"LKBoard {room_id}",
+                "elements": elements_list,
+                "version": room['version']
+            }
+        resp = json.dumps(data).encode('utf-8')
+        self.send_response(200)
+        self.send_cors_headers()
+        self.send_header("Content-Type", "application/json; charset=UTF-8")
+        self.send_header("Content-Length", str(len(resp)))
+        self.end_headers()
+        self.wfile.write(resp)
+
+    def serve_sync(self, room, since):
+        with room['lock']:
+            new_actions = [{"id": aid, "action": act} for aid, act in room['actions'] if aid > since]
+            data = {
+                "currentVersion": room['version'],
+                "actions": new_actions
+            }
+        resp = json.dumps(data).encode('utf-8')
+        self.send_response(200)
+        self.send_cors_headers()
+        self.send_header("Content-Type", "application/json; charset=UTF-8")
+        self.send_header("Content-Length", str(len(resp)))
+        self.end_headers()
+        self.wfile.write(resp)
+
+    def serve_sse(self, room, room_id):
+        self.send_response(200)
+        self.send_cors_headers()
+        self.send_header("Content-Type", "text/event-stream; charset=UTF-8")
+        self.send_header("Cache-Control", "no-cache, no-transform")
+        self.send_header("Connection", "keep-alive")
+        self.send_header("X-Accel-Buffering", "no")
+        self.end_headers()
+
+        # Send initial snapshot
+        with room['lock']:
+            snapshot_action = {
+                "type": "snapshot",
+                "document": {
+                    "title": f"LKBoard {room_id}",
+                    "elements": list(room['elements'].values())
+                },
+                "senderId": "server",
+                "senderName": "Cloud Relay"
+            }
+            initial_data = f"data: {json.dumps(snapshot_action)}\n\n".encode('utf-8')
+            try:
+                self.wfile.write(initial_data)
+                self.wfile.flush()
+                room['clients'].add(self.wfile)
+            except Exception:
+                return
+
+        # Keepalive loop
+        try:
+            while True:
+                time.sleep(15)
+                self.wfile.write(b": ping\n\n")
+                self.wfile.flush()
+        except Exception:
+            pass
+        finally:
+            with room['lock']:
+                room['clients'].discard(self.wfile)
+
+    def serve_status(self):
+        with GLOBAL_LOCK:
+            total_rooms = len(ROOMS)
+            total_clients = sum(len(r['clients']) for r in ROOMS.values())
+        resp = json.dumps({
+            "status": "online",
+            "service": "LKBoard Cloud Relay",
+            "port": PORT,
+            "roomsCount": total_rooms,
+            "clientsCount": total_clients
+        }).encode('utf-8')
+        self.send_response(200)
+        self.send_cors_headers()
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(resp)))
+        self.end_headers()
+        self.wfile.write(resp)
+
+    def serve_web_client(self, room_id):
+        html = generate_web_client_html(room_id)
+        encoded = html.encode('utf-8')
+        self.send_response(200)
+        self.send_cors_headers()
+        self.send_header("Content-Type", "text/html; charset=UTF-8")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def log_message(self, format, *args):
+        # Concise logging to keep server logs clean
+        sys.stderr.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {args[0]} {args[1]}\n")
+
+def generate_web_client_html(room_id):
+    return f"""<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LKBoard Online — Комната {room_id}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body, html {{
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f1f5f9;
+            user-select: none;
+            -webkit-user-select: none;
+        }}
+        #canvas {{
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }}
+        .glass-panel {{
+            background: rgba(255, 255, 255, 0.84);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.90);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+            border-radius: 16px;
+        }}
+        .header {{
+            position: fixed;
+            top: 16px; left: 16px; right: 16px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            z-index: 100;
+        }}
+        .header-title {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }}
+        .logo-badge {{
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #0284c7, #3b82f6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+        }}
+        .board-title {{
+            font-weight: 700;
+            font-size: 16px;
+            color: #0f172a;
+            letter-spacing: -0.2px;
+        }}
+        .status-pill {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.12);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }}
+        .status-dot {{
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }}
+        @keyframes pulse {{
+            0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }}
+            70% {{ transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }}
+            100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }}
+        }}
+        .toolbar {{
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            z-index: 100;
+        }}
+        .tool-btn {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: #475569;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }}
+        .tool-btn:hover {{
+            background: rgba(0, 0, 0, 0.05);
+            color: #0f172a;
+        }}
+        .tool-btn.active {{
+            background: #0284c7;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+        }}
+        .tool-divider {{
+            width: 1px; height: 26px;
+            background: rgba(0, 0, 0, 0.12);
+            margin: 0 4px;
+        }}
+        .color-palette {{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0 4px;
+        }}
+        .color-dot {{
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: transform 0.12s;
+        }}
+        .color-dot:hover {{ transform: scale(1.15); }}
+        .color-dot.active {{
+            outline: 2px solid #0284c7;
+            outline-offset: 1px;
+            transform: scale(1.1);
+        }}
+        .toast {{
+            position: fixed;
+            bottom: 88px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            opacity: 0;
+            background: rgba(15, 23, 42, 0.90);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 200;
+        }}
+        .toast.show {{
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header glass-panel">
+        <div class="header-title">
+            <div class="logo-badge">LK</div>
+            <div>
+                <div class="board-title">LKBoard Live</div>
+                <div style="font-size: 11px; color: #64748B;">Комната: <b>{room_id}</b></div>
+            </div>
+        </div>
+
+        <div class="status-pill" id="statusPill">
+            <div class="status-dot"></div>
+            <span id="statusText">Подключение...</span>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="toolbar glass-panel">
+        <button class="tool-btn active" id="toolHand" title="Перемещение (Рука)">✋</button>
+        <button class="tool-btn" id="toolPen" title="Перо рисования">✏️</button>
+        <button class="tool-btn" id="toolSticky" title="Стикер с To-Do">🗂️</button>
+        <button class="tool-btn" id="toolLaser" title="Лазерная указка">🎯</button>
+
+        <div class="tool-divider"></div>
+
+        <div class="color-palette">
+            <div class="color-dot active" style="background: #0284c7;" data-color="#0284c7"></div>
+            <div class="color-dot" style="background: #ef4444;" data-color="#ef4444"></div>
+            <div class="color-dot" style="background: #10b981;" data-color="#10b981"></div>
+            <div class="color-dot" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+            <div class="color-dot" style="background: #0f172a;" data-color="#0f172a"></div>
+        </div>
+
+        <div class="tool-divider"></div>
+        <button class="tool-btn" id="toolResetZoom" title="Сбросить масштаб">🔍</button>
+    </div>
+
+    <div class="toast" id="toast">Стикер создан</div>
+
+    <script>
+        const roomCode = "{room_id}";
+        let elements = {{}};
+        let activeTool = 'hand';
+        let currentColor = '#0284c7';
+        let panX = 0, panY = 0;
+        let scale = 1.0;
+        let isDragging = false;
+        let dragStartX = 0, dragStartY = 0;
+        let currentStroke = null;
+        let remotePointers = {{}};
+        const clientId = 'web-' + Math.random().toString(36).substring(2, 9);
+        const clientName = 'Участник ' + Math.floor(100 + Math.random() * 900);
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {{
+            canvas.width = window.innerWidth * window.devicePixelRatio;
+            canvas.height = window.innerHeight * window.devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            render();
+        }}
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function worldToScreen(wx, wy) {{
+            return {{
+                x: (wx * scale + panX) * window.devicePixelRatio,
+                y: (wy * scale + panY) * window.devicePixelRatio
+            }};
+        }}
+
+        function screenToWorld(sx, sy) {{
+            return {{
+                x: (sx - panX) / scale,
+                y: (sy - panY) / scale
+            }};
+        }}
+
+        function roundRect(ctx, x, y, w, h, r) {{
+            r = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }}
+
+        function render() {{
+            const dpr = window.devicePixelRatio;
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+
+            ctx.scale(dpr, dpr);
+            ctx.translate(panX, panY);
+            ctx.scale(scale, scale);
+
+            const sorted = Object.values(elements).sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            for (const el of sorted) {{
+                drawElement(el);
+            }}
+
+            if (currentStroke && currentStroke.points && currentStroke.points.length > 1) {{
+                drawStroke(currentStroke);
+            }}
+
+            for (const pid in remotePointers) {{
+                drawPointer(remotePointers[pid]);
+            }}
+            ctx.restore();
+        }}
+
+        function drawGrid() {{
+            const dpr = window.devicePixelRatio;
+            ctx.save();
+            ctx.scale(dpr, dpr);
+            ctx.fillStyle = '#cbd5e1';
+            const step = 32 * scale;
+            if (step > 8) {{
+                const startX = (panX % step + step) % step;
+                const startY = (panY % step + step) % step;
+                for (let x = startX; x < window.innerWidth; x += step) {{
+                    for (let y = startY; y < window.innerHeight; y += step) {{
+                        ctx.beginPath();
+                        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+                }}
+            }}
+            ctx.restore();
+        }}
+
+        function drawElement(el) {{
+            ctx.save();
+            if (el.type === 'drawing_path' || el.points) {{
+                drawStroke(el);
+            }} else if (el.type === 'sticky_note' || (el.text !== undefined && el.colorHex !== undefined && el.type !== 'text')) {{
+                drawSticky(el);
+            }} else if (el.type === 'milestone_card' || el.status !== undefined) {{
+                drawMilestone(el);
+            }} else if (el.type === 'kanban_board') {{
+                drawKanban(el);
+            }} else if (el.type === 'function_graph' || el.expressions !== undefined) {{
+                drawFunctionGraph(el);
+            }} else if (el.type === 'shape' || el.shapeType !== undefined) {{
+                drawShape(el);
+            }} else if (el.type === 'text') {{
+                drawText(el);
+            }}
+            ctx.restore();
+        }}
+
+        function drawStroke(s) {{
+            if (!s.points || s.points.length < 2) return;
+            ctx.beginPath();
+            ctx.strokeStyle = s.strokeColorHex ? hexToColor(s.strokeColorHex) : (s.color || '#0284c7');
+            ctx.lineWidth = s.strokeWidth || 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.moveTo(s.points[0].x, s.points[0].y);
+            for (let i = 1; i < s.points.length; i++) {{
+                ctx.lineTo(s.points[i].x, s.points[i].y);
+            }}
+            ctx.stroke();
+        }}
+
+        function drawSticky(note) {{
+            const x = note.x, y = note.y, w = note.width || 210, h = note.height || 210;
+            const bg = note.colorHex ? hexToColor(note.colorHex) : '#fef08a';
+            ctx.fillStyle = bg;
+            roundRect(ctx, x, y, w, h, 14);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '14px Inter, sans-serif';
+            const lines = (note.text || '').split('\n');
+            let ty = y + 26;
+            for (let i = 0; i < lines.length; i++) {{
+                const line = lines[i];
+                if (line.startsWith('- [ ] ') || line.startsWith('- [x] ') || line.startsWith('- [X] ')) {{
+                    const checked = line.startsWith('- [x] ') || line.startsWith('- [X] ');
+                    ctx.strokeStyle = checked ? '#059669' : '#94a3b8';
+                    ctx.fillStyle = checked ? '#10b981' : '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    roundRect(ctx, x + 14, ty - 12, 14, 14, 4);
+                    ctx.fill();
+                    ctx.stroke();
+                    if (checked) {{
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 11px Inter, sans-serif';
+                        ctx.fillText('✓', x + 16, ty);
+                    }}
+                    ctx.fillStyle = checked ? '#94a3b8' : '#0f172a';
+                    ctx.font = '14px Inter, sans-serif';
+                    ctx.fillText(line.substring(6), x + 36, ty);
+                }} else {{
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = '14px Inter, sans-serif';
+                    ctx.fillText(line, x + 14, ty);
+                }}
+                ty += 22;
+            }}
+        }}
+
+        function drawMilestone(card) {{
+            const x = card.x, y = card.y, w = card.width || 260, h = card.height || 140;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, x, y, w, h, 14);
+            ctx.fill();
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.fillText(card.title || 'Веха', x + 16, y + 28);
+        }}
+
+        function drawKanban(k) {{
+            const x = k.x, y = k.y, w = k.width || 1000, h = k.height || 620;
+            const kScale = Math.min(3.5, Math.max(0.6, w / 1000));
+            const headH = Math.max(36, 46 * kScale);
+            const colHeadH = Math.max(28, 38 * kScale);
+
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.95)';
+            roundRect(ctx, x, y, w, h, 16 * kScale);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold ' + Math.round(15 * kScale) + 'px Inter, sans-serif';
+            ctx.fillText('📋 ' + (k.title || 'Канбан-доска'), x + 18 * kScale, y + headH * 0.65);
+
+            const cols = ['🔴 Бэклог', '🟡 В работе', '🟣 На ревью', '🟢 Готово'];
+            const colW = w / 4;
+            for (let i = 0; i < 4; i++) {{
+                const cx = x + i * colW;
+                const cy = y + headH;
+                const ch = h - headH;
+
+                if (i > 0) {{
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + ch);
+                    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.stroke();
+                }}
+
+                ctx.fillStyle = '#334155';
+                ctx.font = 'bold ' + Math.round(12 * kScale) + 'px Inter, sans-serif';
+                ctx.fillText(cols[i], cx + 14 * kScale, cy + colHeadH * 0.65);
+            }}
+        }}
+
+        function drawFunctionGraph(g) {{
+            const x = g.x, y = g.y, w = g.width || 440, h = g.height || 280;
+            const headH = 34;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, x, y, w, h, 12);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            // Header
+            ctx.fillStyle = '#f8fafc';
+            roundRect(ctx, x, y, w, headH, 12);
+            ctx.fill();
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 12px Inter, sans-serif';
+            const fTitle = (g.expressions && g.expressions.length > 0) ? g.expressions.map(e => 'f(x)=' + e).join(', ') : (g.title || 'График');
+            ctx.fillText(fTitle, x + 12, y + 22);
+
+            // Inner clipping
+            const pad = 12;
+            const px = x + pad, py = y + headH + pad, pw = w - pad * 2, ph = h - headH - pad * 2;
+            if (pw <= 10 || ph <= 10) return;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(px, py, pw, ph);
+            ctx.clip();
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(px, py, pw, ph);
+
+            const xMin = g.xMin !== undefined ? g.xMin : -10;
+            const xMax = g.xMax !== undefined ? g.xMax : 10;
+            const yMin = g.yMin !== undefined ? g.yMin : -5;
+            const yMax = g.yMax !== undefined ? g.yMax : 5;
+
+            const toScreenX = (val) => px + ((val - xMin) / (xMax - xMin)) * pw;
+            const toScreenY = (val) => py + ((yMax - val) / (yMax - yMin)) * ph;
+
+            const originX = Math.max(px, Math.min(px + pw, toScreenX(0)));
+            const originY = Math.max(py, Math.min(py + ph, toScreenY(0)));
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(px, originY); ctx.lineTo(px + pw, originY);
+            ctx.moveTo(originX, py); ctx.lineTo(originX, py + ph);
+            ctx.stroke();
+
+            if (g.expressions && g.expressions.length > 0) {{
+                const colors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea'];
+                g.expressions.forEach((expr, idx) => {{
+                    ctx.strokeStyle = colors[idx % colors.length];
+                    ctx.lineWidth = 2.2;
+                    ctx.beginPath();
+                    let started = false;
+                    const steps = 150;
+                    for (let s = 0; s <= steps; s++) {{
+                        const xv = xMin + (s / steps) * (xMax - xMin);
+                        let yv = null;
+                        try {{
+                            let jsExpr = expr.replace(/\\^/g, '**')
+                                             .replace(/sin\\(/g, 'Math.sin(')
+                                             .replace(/cos\\(/g, 'Math.cos(')
+                                             .replace(/tan\\(/g, 'Math.tan(')
+                                             .replace(/sqrt\\(/g, 'Math.sqrt(')
+                                             .replace(/abs\\(/g, 'Math.abs(')
+                                             .replace(/pi/gi, 'Math.PI')
+                                             .replace(/e/gi, 'Math.E');
+                            const fn = new Function('x', 'return ' + jsExpr);
+                            yv = fn(xv);
+                        }} catch(e) {{}}
+
+                        if (yv !== null && !isNaN(yv) && isFinite(yv) && yv >= yMin - 50 && yv <= yMax + 50) {{
+                            const sx = toScreenX(xv);
+                            const sy = toScreenY(yv);
+                            if (!started) {{
+                                ctx.moveTo(sx, sy);
+                                started = true;
+                            }} else {{
+                                ctx.lineTo(sx, sy);
+                            }}
+                        }} else {{
+                            started = false;
+                        }}
+                    }}
+                    ctx.stroke();
+                }});
+            }}
+            ctx.restore();
+        }}
+
+        function drawShape(s) {{
+            const x = s.x, y = s.y, w = s.width || 120, h = s.height || 80;
+            ctx.fillStyle = s.fillColorHex ? hexToColor(s.fillColorHex) : 'rgba(255, 255, 255, 0.85)';
+            ctx.strokeStyle = s.strokeColorHex ? hexToColor(s.strokeColorHex) : '#0284c7';
+            ctx.lineWidth = s.strokeWidth || 2;
+            roundRect(ctx, x, y, w, h, 8);
+            ctx.fill();
+            ctx.stroke();
+        }}
+
+        function drawText(t) {{
+            ctx.fillStyle = t.colorHex ? hexToColor(t.colorHex) : '#0f172a';
+            const fSize = Math.round(t.fontSize || 18);
+            const fWeight = t.isBold ? 'bold ' : '';
+            const fStyle = t.isItalic ? 'italic ' : '';
+            ctx.font = fStyle + fWeight + fSize + 'px Inter, sans-serif';
+            ctx.fillText(t.text || '', t.x, t.y + fSize);
+        }}
+
+        function drawPointer(p) {{
+            if (Date.now() - p.lastUpdated > 4000) return;
+            const x = p.x, y = p.y;
+            ctx.fillStyle = p.colorHex ? hexToColor(p.colorHex) : '#ef4444';
+            ctx.beginPath();
+            ctx.arc(x, y, p.isLaser ? 8 : 5, 0, Math.PI * 2);
+            ctx.fill();
+        }}
+
+        function hexToColor(hex) {{
+            if (!hex) return '#0284c7';
+            if (typeof hex === 'string') return hex;
+            const num = (Number(hex) >>> 0) & 0xFFFFFF;
+            return '#' + num.toString(16).padStart(6, '0');
+        }}
+
+        // Canvas Events
+        canvas.addEventListener('pointerdown', (e) => {{
+            const world = screenToWorld(e.clientX, e.clientY);
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+
+            if (activeTool === 'pen') {{
+                currentStroke = {{
+                    id: 'path-' + Math.random().toString(36).substring(2, 9),
+                    type: 'drawing_path',
+                    points: [{{ x: world.x, y: world.y }}],
+                    strokeColorHex: parseInt(currentColor.replace('#', '0xFF'), 16),
+                    strokeWidth: 3.5,
+                    zIndex: 100
+                }};
+            }} else if (activeTool === 'sticky') {{
+                createStickyAt(world.x, world.y);
+            }} else if (activeTool === 'laser') {{
+                sendPointer(world.x, world.y, true);
+            }} else if (activeTool === 'hand') {{
+                checkStickyClick(world.x, world.y);
+            }}
+        }});
+
+        canvas.addEventListener('pointermove', (e) => {{
+            const world = screenToWorld(e.clientX, e.clientY);
+            if (activeTool === 'laser') {{
+                sendPointer(world.x, world.y, true);
+            }}
+            if (!isDragging) return;
+            if (activeTool === 'hand') {{
+                panX += e.clientX - dragStartX;
+                panY += e.clientY - dragStartY;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                render();
+            }} else if (activeTool === 'pen' && currentStroke) {{
+                currentStroke.points.push({{ x: world.x, y: world.y }});
+                render();
+            }}
+        }});
+
+        canvas.addEventListener('pointerup', () => {{
+            if (activeTool === 'pen' && currentStroke && currentStroke.points.length > 1) {{
+                elements[currentStroke.id] = currentStroke;
+                sendAction({{
+                    type: 'upsert_element',
+                    element: currentStroke,
+                    senderId: clientId,
+                    senderName: clientName
+                }});
+                currentStroke = null;
+                render();
+            }}
+            isDragging = false;
+        }});
+
+        canvas.addEventListener('wheel', (e) => {{
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+            const newScale = Math.max(0.1, Math.min(5.0, scale * zoomFactor));
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            panX = mouseX - (mouseX - panX) * (newScale / scale);
+            panY = mouseY - (mouseY - panY) * (newScale / scale);
+            scale = newScale;
+            render();
+        }}, {{ passive: false }});
+
+        function checkStickyClick(wx, wy) {{
+            for (const id in elements) {{
+                const el = elements[id];
+                if ((el.type === 'sticky_note' || el.text) && wx >= el.x && wx <= el.x + (el.width || 210) && wy >= el.y && wy <= el.y + (el.height || 210)) {{
+                    const lines = (el.text || '').split('\n');
+                    let cy = el.y + 26;
+                    for (let i = 0; i < lines.length; i++) {{
+                        if (lines[i].startsWith('- [ ] ') || lines[i].startsWith('- [x] ') || lines[i].startsWith('- [X] ')) {{
+                            if (wx >= el.x + 10 && wx <= el.x + 34 && wy >= cy - 14 && wy <= cy + 6) {{
+                                sendAction({{
+                                    type: 'toggle_sticky_todo',
+                                    noteId: el.id,
+                                    lineIndex: i,
+                                    senderId: clientId
+                                }});
+                                showToast('Статус задачи изменен');
+                                return;
+                            }}
+                        }}
+                        cy += 20;
+                    }}
+                }}
+            }}
+        }}
+
+        function createStickyAt(x, y) {{
+            const note = {{
+                id: 'note-' + Math.random().toString(36).substring(2, 9),
+                type: 'sticky_note',
+                x: x - 105,
+                y: y - 105,
+                width: 210,
+                height: 210,
+                text: 'Заметка ' + clientName + '\\n- [ ] Задача 1\\n- [ ] Задача 2',
+                colorHex: 0xFFFEF08A,
+                zIndex: 50
+            }};
+            elements[note.id] = note;
+            sendAction({{
+                type: 'upsert_element',
+                element: note,
+                senderId: clientId,
+                senderName: clientName
+            }});
+            render();
+            showToast('Стикер добавлен');
+        }}
+
+        function sendPointer(x, y, isLaser) {{
+            sendAction({{
+                type: 'pointer_move',
+                senderId: clientId,
+                senderName: clientName,
+                x: x,
+                y: y,
+                colorHex: 0xFF0284C7,
+                isLaser: isLaser
+            }});
+        }}
+
+        function sendAction(action) {{
+            fetch('/api/action?room=' + encodeURIComponent(roomCode), {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify(action)
+            }}).catch(() => {{}});
+        }}
+
+        function showToast(msg) {{
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2200);
+        }}
+
+        document.getElementById('toolHand').onclick = () => setTool('hand');
+        document.getElementById('toolPen').onclick = () => setTool('pen');
+        document.getElementById('toolSticky').onclick = () => setTool('sticky');
+        document.getElementById('toolLaser').onclick = () => setTool('laser');
+        document.getElementById('toolResetZoom').onclick = () => {{ panX = 0; panY = 0; scale = 1.0; render(); }};
+
+        function setTool(tool) {{
+            activeTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            if (tool === 'hand') document.getElementById('toolHand').classList.add('active');
+            if (tool === 'pen') document.getElementById('toolPen').classList.add('active');
+            if (tool === 'sticky') document.getElementById('toolSticky').classList.add('active');
+            if (tool === 'laser') document.getElementById('toolLaser').classList.add('active');
+        }}
+
+        document.querySelectorAll('.color-dot').forEach(dot => {{
+            dot.onclick = () => {{
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+                currentColor = dot.dataset.color;
+            }};
+        }});
+
+        // SSE + Delta Sync
+        let evtSource = null;
+        let lastSyncVersion = 0;
+        let seenActionIds = new Set();
+
+        function connectLiveStream() {{
+            if (evtSource) {{ try {{ evtSource.close(); }} catch(e) {{}} }}
+            evtSource = new EventSource('/api/events?room=' + encodeURIComponent(roomCode));
+            
+            evtSource.onopen = () => {{
+                document.getElementById('statusText').textContent = 'Подключено (Live)';
+                document.getElementById('statusPill').style.background = 'rgba(16, 185, 129, 0.12)';
+                document.getElementById('statusPill').style.color = '#059669';
+            }};
+
+            evtSource.onmessage = (e) => {{
+                try {{
+                    const action = JSON.parse(e.data);
+                    handleRemoteAction(action);
+                }} catch (err) {{}}
+            }};
+
+            evtSource.onerror = () => {{
+                document.getElementById('statusText').textContent = 'Синхронизация...';
+                document.getElementById('statusPill').style.background = 'rgba(245, 158, 11, 0.12)';
+                document.getElementById('statusPill').style.color = '#d97706';
+                setTimeout(connectLiveStream, 3000);
+            }};
+        }}
+
+        function pollDeltaSync() {{
+            fetch('/api/sync?room=' + encodeURIComponent(roomCode) + '&since=' + lastSyncVersion)
+                .then(r => r.json())
+                .then(data => {{
+                    if (data && data.actions) {{
+                        lastSyncVersion = Math.max(lastSyncVersion, data.currentVersion || 0);
+                        for (const item of data.actions) {{
+                            if (!seenActionIds.has(item.id)) {{
+                                seenActionIds.add(item.id);
+                                if (seenActionIds.size > 1000) {{
+                                    const first = seenActionIds.values().next().value;
+                                    seenActionIds.delete(first);
+                                }}
+                                handleRemoteAction(item.action);
+                            }}
+                        }}
+                    }}
+                }})
+                .catch(() => {{}});
+        }}
+        setInterval(pollDeltaSync, 1200);
+
+        function handleRemoteAction(action) {{
+            if (!action || action.senderId === clientId) return;
+
+            if (action.type === 'snapshot') {{
+                elements = {{}};
+                if (action.document && action.document.elements) {{
+                    for (const el of action.document.elements) {{
+                        elements[el.id] = el;
+                    }}
+                }}
+                render();
+            }} else if (action.type === 'upsert_element') {{
+                if (action.element) {{
+                    elements[action.element.id] = action.element;
+                    render();
+                }}
+            }} else if (action.type === 'delete_elements') {{
+                if (action.elementIds) {{
+                    for (const id of action.elementIds) {{
+                        delete elements[id];
+                    }}
+                    render();
+                }}
+            }} else if (action.type === 'pointer_move') {{
+                remotePointers[action.senderId] = {{
+                    peerName: action.senderName,
+                    x: action.x,
+                    y: action.y,
+                    colorHex: action.colorHex,
+                    isLaser: action.isLaser,
+                    lastUpdated: Date.now()
+                }};
+                render();
+            }} else if (action.type === 'toggle_sticky_todo') {{
+                const note = elements[action.noteId];
+                if (note && note.text) {{
+                    const lines = note.text.split('\\n');
+                    const idx = action.lineIndex;
+                    if (idx >= 0 && idx < lines.length) {{
+                        if (lines[idx].startsWith('- [ ] ')) {{
+                            lines[idx] = '- [x] ' + lines[idx].substring(6);
+                        }} else if (lines[idx].startsWith('- [x] ') || lines[idx].startsWith('- [X] ')) {{
+                            lines[idx] = '- [ ] ' + lines[idx].substring(6);
+                        }}
+                        note.text = lines.join('\\n');
+                        render();
+                    }}
+                }}
+            }}
+        }}
+
+        // Initial snapshot
+        fetch('/api/snapshot?room=' + encodeURIComponent(roomCode))
+            .then(res => res.json())
+            .then(doc => {{
+                if (doc && doc.elements) {{
+                    for (const el of doc.elements) {{
+                        elements[el.id] = el;
+                    }}
+                    render();
+                }}
+            }})
+            .catch(() => {{}});
+
+        connectLiveStream();
+    </script>
+</body>
+</html>"""
+
+def run():
+    server_address = ('0.0.0.0', PORT)
+    httpd = ThreadingHTTPServer(server_address, RelayHandler)
+    print(f"[*] LKBoard Collaboration Relay Server running on port {PORT}")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        httpd.server_close()
+
+if __name__ == '__main__':
+    run()

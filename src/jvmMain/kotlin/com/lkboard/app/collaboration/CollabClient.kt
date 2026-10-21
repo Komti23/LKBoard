@@ -50,7 +50,7 @@ class CollabClient {
 
                 // 1. Проверяем доступность хоста и получаем снимок доски
                 val snapshotReq = HttpRequest.newBuilder()
-                    .uri(URI.create("$normalizedUrl/api/snapshot"))
+                    .uri(URI.create(buildEndpointUrl(normalizedUrl, "/api/snapshot")))
                     .timeout(Duration.ofSeconds(8))
                     .GET()
                     .build()
@@ -87,7 +87,7 @@ class CollabClient {
 
                 // 3. Подключаемся к потоку Server-Sent Events (SSE)
                 val eventsReq = HttpRequest.newBuilder()
-                    .uri(URI.create("$normalizedUrl/api/events"))
+                    .uri(URI.create(buildEndpointUrl(normalizedUrl, "/api/events")))
                     .header("Accept", "text/event-stream")
                     .timeout(Duration.ofHours(24))
                     .GET()
@@ -137,7 +137,7 @@ class CollabClient {
             try {
                 val json = BoardSerializer.jsonFormat.encodeToString(action)
                 val req = HttpRequest.newBuilder()
-                    .uri(URI.create("$host/api/action"))
+                    .uri(URI.create(buildEndpointUrl(host, "/api/action")))
                     .header("Content-Type", "application/json")
                     .timeout(Duration.ofSeconds(6))
                     .POST(HttpRequest.BodyPublishers.ofString(json, Charsets.UTF_8))
@@ -155,6 +155,19 @@ class CollabClient {
         streamJob = null
         isConnected = false
         currentHostUrl = ""
+    }
+
+    private fun buildEndpointUrl(base: String, endpoint: String): String {
+        return try {
+            val uri = URI(base)
+            val query = uri.query
+            val scheme = uri.scheme ?: "http"
+            val authority = uri.authority ?: base.removePrefix("http://").removePrefix("https://").substringBefore("/")
+            val basePath = "$scheme://$authority$endpoint"
+            if (!query.isNullOrBlank()) "$basePath?$query" else basePath
+        } catch (_: Exception) {
+            "$base$endpoint"
+        }
     }
 
     private fun normalizeUrl(url: String): String {

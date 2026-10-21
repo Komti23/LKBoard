@@ -10,9 +10,11 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
@@ -397,13 +399,15 @@ object ElementRenderer {
         allElements: Map<String, BoardElement>,
         textMeasurer: TextMeasurer
     ) {
-        val cr = CornerRadius(16f, 16f)
-        val headerH = 46f
+        val kScale = (kanban.width / 1000f).coerceIn(0.6f, 3.5f)
+        val cr = CornerRadius(16f * kScale, 16f * kScale)
+        val headerH = (46f * kScale).coerceAtLeast(36f)
+        val colHeaderH = (38f * kScale).coerceAtLeast(28f)
 
         // 1. Мягкая внешняя тень канбан-доски
         drawScope.drawRoundRect(
             color = Color.Black.copy(alpha = 0.08f),
-            topLeft = Offset(kanban.x + 3f, kanban.y + 6f),
+            topLeft = Offset(kanban.x + 3f * kScale, kanban.y + 6f * kScale),
             size = Size(kanban.width, kanban.height),
             cornerRadius = cr
         )
@@ -420,7 +424,7 @@ object ElementRenderer {
             topLeft = Offset(kanban.x, kanban.y),
             size = Size(kanban.width, kanban.height),
             cornerRadius = cr,
-            style = Stroke(width = 1.5f)
+            style = Stroke(width = 1.5f * kScale.coerceAtLeast(1f))
         )
 
         // 3. Шапка канбан-доски
@@ -432,14 +436,14 @@ object ElementRenderer {
         )
         drawScope.drawRect(
             color = Color(0xFFF1F5F9),
-            topLeft = Offset(kanban.x, kanban.y + headerH - 12f),
-            size = Size(kanban.width, 12f)
+            topLeft = Offset(kanban.x, kanban.y + headerH - 12f * kScale),
+            size = Size(kanban.width, 12f * kScale)
         )
         drawScope.drawLine(
             color = Color(0xFFE2E8F0),
             start = Offset(kanban.x, kanban.y + headerH),
             end = Offset(kanban.x + kanban.width, kanban.y + headerH),
-            strokeWidth = 1f
+            strokeWidth = 1f * kScale.coerceAtLeast(1f)
         )
 
         // Подсчет карточек вех внутри доски
@@ -448,42 +452,45 @@ object ElementRenderer {
             kanban.bounds.contains(center)
         }
 
-        // Заголовок доски
+        // Заголовок доски (масштабируется с размером)
         val titleRes = textMeasurer.measure(
             text = "📋 ${kanban.title}",
             style = TextStyle(
-                fontSize = 14.sp,
+                fontSize = (15f * kScale).sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF0F172A)
             ),
             maxLines = 1
         )
-        drawScope.drawText(titleRes, topLeft = Offset(kanban.x + 18f, kanban.y + 13f))
+        drawScope.drawText(titleRes, topLeft = Offset(kanban.x + 18f * kScale, kanban.y + (headerH - titleRes.size.height) / 2f))
 
         // Бейдж общего числа задач
         val totalBadgeText = "${milestoneCards.size} задач"
         val totalBadgeRes = textMeasurer.measure(
             text = totalBadgeText,
             style = TextStyle(
-                fontSize = 11.sp,
+                fontSize = (11f * kScale).sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF2563EB)
             )
         )
-        val totalBadgeW = totalBadgeRes.size.width + 16f
-        val totalBadgeX = kanban.x + kanban.width - totalBadgeW - 16f
+        val totalBadgeW = totalBadgeRes.size.width + 16f * kScale
+        val totalBadgeH = 24f * kScale
+        val totalBadgeX = kanban.x + kanban.width - totalBadgeW - 16f * kScale
         drawScope.drawRoundRect(
             color = Color(0xFFEFF6FF),
-            topLeft = Offset(totalBadgeX, kanban.y + 11f),
-            size = Size(totalBadgeW, 24f),
-            cornerRadius = CornerRadius(6f, 6f)
+            topLeft = Offset(totalBadgeX, kanban.y + (headerH - totalBadgeH) / 2f),
+            size = Size(totalBadgeW, totalBadgeH),
+            cornerRadius = CornerRadius(6f * kScale, 6f * kScale)
         )
-        drawScope.drawText(totalBadgeRes, topLeft = Offset(totalBadgeX + 8f, kanban.y + 15f))
+        drawScope.drawText(
+            totalBadgeRes,
+            topLeft = Offset(totalBadgeX + (totalBadgeW - totalBadgeRes.size.width) / 2f, kanban.y + (headerH - totalBadgeRes.size.height) / 2f)
+        )
 
         // 4. Отрисовка 4 колонок
         val colW = kanban.width / 4f
         val colH = kanban.height - headerH
-        val colHeaderH = 38f
 
         val colDefs = listOf(
             Triple("🔴 Бэклог", Color(0xFF64748B), Color(0xFFF1F5F9)),
@@ -523,37 +530,41 @@ object ElementRenderer {
             val colTitleRes = textMeasurer.measure(
                 text = colTitle,
                 style = TextStyle(
-                    fontSize = 12.sp,
+                    fontSize = (12.5f * kScale).sp,
                     fontWeight = FontWeight.Bold,
                     color = colColor
                 )
             )
-            drawScope.drawText(colTitleRes, topLeft = Offset(colX + 14f, colY + 11f))
+            drawScope.drawText(colTitleRes, topLeft = Offset(colX + 14f * kScale, colY + (colHeaderH - colTitleRes.size.height) / 2f))
 
             // Бейдж счетчика задач в колонке
             val countRes = textMeasurer.measure(
                 text = "$colCardsCount",
                 style = TextStyle(
-                    fontSize = 11.sp,
+                    fontSize = (11f * kScale).sp,
                     fontWeight = FontWeight.Bold,
                     color = colColor
                 )
             )
-            val countBadgeW = (countRes.size.width + 12f).coerceAtLeast(20f)
-            val countBadgeX = colX + colW - countBadgeW - 14f
+            val countBadgeW = (countRes.size.width + 12f * kScale).coerceAtLeast(20f * kScale)
+            val countBadgeH = 20f * kScale
+            val countBadgeX = colX + colW - countBadgeW - 14f * kScale
             drawScope.drawRoundRect(
                 color = colColor.copy(alpha = 0.12f),
-                topLeft = Offset(countBadgeX, colY + 9f),
-                size = Size(countBadgeW, 20f),
-                cornerRadius = CornerRadius(10f, 10f)
+                topLeft = Offset(countBadgeX, colY + (colHeaderH - countBadgeH) / 2f),
+                size = Size(countBadgeW, countBadgeH),
+                cornerRadius = CornerRadius(10f * kScale, 10f * kScale)
             )
-            drawScope.drawText(countRes, topLeft = Offset(countBadgeX + (countBadgeW - countRes.size.width) / 2f, colY + 11f))
+            drawScope.drawText(
+                countRes,
+                topLeft = Offset(countBadgeX + (countBadgeW - countRes.size.width) / 2f, colY + (colHeaderH - countRes.size.height) / 2f)
+            )
 
             // Линия под шапкой колонки
             drawScope.drawLine(
                 color = Color(0xFFE2E8F0),
-                start = Offset(colX + 8f, colY + colHeaderH),
-                end = Offset(colX + colW - 8f, colY + colHeaderH),
+                start = Offset(colX + 8f * kScale, colY + colHeaderH),
+                end = Offset(colX + colW - 8f * kScale, colY + colHeaderH),
                 strokeWidth = 1f
             )
 
@@ -562,13 +573,13 @@ object ElementRenderer {
                 val dropNoticeRes = textMeasurer.measure(
                     text = "Перетащите веху сюда",
                     style = TextStyle(
-                        fontSize = 11.sp,
+                        fontSize = (11f * kScale).sp,
                         fontWeight = FontWeight.Normal,
                         color = Color(0xFF94A3B8)
                     )
                 )
                 val dropNoticeX = colX + (colW - dropNoticeRes.size.width) / 2f
-                drawScope.drawText(dropNoticeRes, topLeft = Offset(dropNoticeX, colY + 80f))
+                drawScope.drawText(dropNoticeRes, topLeft = Offset(dropNoticeX, colY + 70f * kScale))
             }
         }
     }
@@ -602,6 +613,7 @@ object ElementRenderer {
             style = TextStyle(
                 fontSize = textElem.fontSize.sp,
                 fontWeight = if (textElem.isBold) FontWeight.Bold else FontWeight.Normal,
+                fontStyle = if (textElem.isItalic) FontStyle.Italic else FontStyle.Normal,
                 color = Color(textElem.colorHex),
                 lineHeight = (textElem.fontSize * 1.35f).sp
             ),
@@ -1024,73 +1036,88 @@ object ElementRenderer {
         val originX = toScreenX(0.0).coerceIn(plotLeft, plotLeft + plotW)
         val originY = toScreenY(0.0).coerceIn(plotTop, plotTop + plotH)
 
-        // Сетка
-        for (gx in kotlin.math.ceil(xMin).toInt()..kotlin.math.floor(xMax).toInt()) {
-            if (gx == 0) continue
-            val sx = toScreenX(gx.toDouble())
-            drawScope.drawLine(
-                color = Color(0xFFF1F5F9),
-                start = Offset(sx, plotTop),
-                end = Offset(sx, plotTop + plotH),
-                strokeWidth = 1f
+        // Сетка, оси и кривые строго обрезаются внутри области графика (clipRect), предотвращая вылезание кривых наружу
+        drawScope.clipRect(
+            left = plotLeft,
+            top = plotTop,
+            right = plotLeft + plotW,
+            bottom = plotTop + plotH
+        ) {
+            // Фоновая подложка координатной сетки
+            drawRect(
+                color = Color(0xFFFBFBFB),
+                topLeft = Offset(plotLeft, plotTop),
+                size = Size(plotW, plotH)
             )
-        }
-        for (gy in kotlin.math.ceil(yMin).toInt()..kotlin.math.floor(yMax).toInt()) {
-            if (gy == 0) continue
-            val sy = toScreenY(gy.toDouble())
-            drawScope.drawLine(
-                color = Color(0xFFF1F5F9),
-                start = Offset(plotLeft, sy),
-                end = Offset(plotLeft + plotW, sy),
-                strokeWidth = 1f
-            )
-        }
 
-        // Оси X и Y
-        drawScope.drawLine(
-            color = Color(0xFF94A3B8),
-            start = Offset(plotLeft, originY),
-            end = Offset(plotLeft + plotW, originY),
-            strokeWidth = 1.5f
-        )
-        drawScope.drawLine(
-            color = Color(0xFF94A3B8),
-            start = Offset(originX, plotTop),
-            end = Offset(originX, plotTop + plotH),
-            strokeWidth = 1.5f
-        )
-
-        // Отрисовка кривых функций f(x)
-        val colors = graph.strokeColorsHex.ifEmpty { listOf(0xFF2563EB) }
-        graph.expressions.forEachIndexed { exprIdx, expr ->
-            if (expr.isBlank()) return@forEachIndexed
-            val curveColor = Color(colors[exprIdx % colors.size])
-            val samples = MathEvaluator.sampleFunction(expr, xMin, xMax, steps = 240)
-
-            val curvePath = Path()
-            var inPath = false
-
-            for ((sxVal, syVal) in samples) {
-                if (syVal == null || syVal.isNaN() || syVal.isInfinite() || syVal < yMin - 100 || syVal > yMax + 100) {
-                    inPath = false
-                    continue
-                }
-                val px = toScreenX(sxVal)
-                val py = toScreenY(syVal)
-
-                if (!inPath) {
-                    curvePath.moveTo(px, py)
-                    inPath = true
-                } else {
-                    curvePath.lineTo(px, py)
-                }
+            // Сетка
+            for (gx in kotlin.math.ceil(xMin).toInt()..kotlin.math.floor(xMax).toInt()) {
+                if (gx == 0) continue
+                val sx = toScreenX(gx.toDouble())
+                drawLine(
+                    color = Color(0xFFF1F5F9),
+                    start = Offset(sx, plotTop),
+                    end = Offset(sx, plotTop + plotH),
+                    strokeWidth = 1f
+                )
+            }
+            for (gy in kotlin.math.ceil(yMin).toInt()..kotlin.math.floor(yMax).toInt()) {
+                if (gy == 0) continue
+                val sy = toScreenY(gy.toDouble())
+                drawLine(
+                    color = Color(0xFFF1F5F9),
+                    start = Offset(plotLeft, sy),
+                    end = Offset(plotLeft + plotW, sy),
+                    strokeWidth = 1f
+                )
             }
 
-            drawScope.drawPath(
-                path = curvePath,
-                color = curveColor,
-                style = Stroke(width = 2.2f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            // Оси X и Y
+            drawLine(
+                color = Color(0xFF94A3B8),
+                start = Offset(plotLeft, originY),
+                end = Offset(plotLeft + plotW, originY),
+                strokeWidth = 1.5f
             )
+            drawLine(
+                color = Color(0xFF94A3B8),
+                start = Offset(originX, plotTop),
+                end = Offset(originX, plotTop + plotH),
+                strokeWidth = 1.5f
+            )
+
+            // Отрисовка кривых функций f(x)
+            val colors = graph.strokeColorsHex.ifEmpty { listOf(0xFF2563EB) }
+            graph.expressions.forEachIndexed { exprIdx, expr ->
+                if (expr.isBlank()) return@forEachIndexed
+                val curveColor = Color(colors[exprIdx % colors.size])
+                val samples = MathEvaluator.sampleFunction(expr, xMin, xMax, steps = 300)
+
+                val curvePath = Path()
+                var inPath = false
+
+                for ((sxVal, syVal) in samples) {
+                    if (syVal == null || syVal.isNaN() || syVal.isInfinite() || syVal < yMin - 100 || syVal > yMax + 100) {
+                        inPath = false
+                        continue
+                    }
+                    val px = toScreenX(sxVal)
+                    val py = toScreenY(syVal)
+
+                    if (!inPath) {
+                        curvePath.moveTo(px, py)
+                        inPath = true
+                    } else {
+                        curvePath.lineTo(px, py)
+                    }
+                }
+
+                drawPath(
+                    path = curvePath,
+                    color = curveColor,
+                    style = Stroke(width = 2.4f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                )
+            }
         }
     }
 }
