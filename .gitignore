@@ -1,0 +1,21 @@
+# Gradle & Build Artifacts
+.gradle/
+build/
+.kotlin/
+out/
+
+# IDE Files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS & Temp Files
+.DS_Store
+Thumbs.db
+*.log
+*.hprof
+hs_err_pid*
+
+# Antigravity agent temp files if any
+.system_generated/

@@ -1,0 +1,85 @@
+package com.lkboard.app.collaboration
+
+import java.net.Inet4Address
+import java.net.NetworkInterface
+import java.net.ServerSocket
+import kotlin.random.Random
+
+object NetworkUtils {
+
+    const val DEFAULT_PORT = 8765
+
+    /**
+     * Возвращает список доступных локальных IPv4 адресов машины (Wi-Fi, Ethernet).
+     */
+    fun getLocalIpAddresses(): List<String> {
+        val ips = mutableListOf<String>()
+        try {
+            val interfaces = NetworkInterface.getNetworkInterfaces()
+            while (interfaces.hasMoreElements()) {
+                val iface = interfaces.nextElement()
+                if (iface.isLoopback || !iface.isUp) continue
+
+                val addresses = iface.inetAddresses
+                while (addresses.hasMoreElements()) {
+                    val addr = addresses.nextElement()
+                    if (addr is Inet4Address && !addr.isLoopbackAddress && !addr.isLinkLocalAddress) {
+                        ips.add(addr.hostAddress)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        if (ips.isEmpty()) {
+            ips.add("127.0.0.1")
+        }
+        return ips
+    }
+
+    /**
+     * Возвращает основной локальный IP адрес для ссылки.
+     */
+    fun getPrimaryLocalIp(): String {
+        val all = getLocalIpAddresses()
+        // Предпочитаем адреса частных подсетей (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+        return all.firstOrNull { it.startsWith("192.168.") }
+            ?: all.firstOrNull { it.startsWith("10.") }
+            ?: all.firstOrNull { it.startsWith("172.") }
+            ?: all.firstOrNull()
+            ?: "127.0.0.1"
+    }
+
+    /**
+     * Проверяет, свободен ли указанный порт, либо находит ближайший свободный.
+     */
+    fun findAvailablePort(preferredPort: Int = DEFAULT_PORT): Int {
+        for (port in preferredPort..(preferredPort + 50)) {
+            try {
+                ServerSocket(port).use { return port }
+            } catch (_: Exception) {}
+        }
+        return preferredPort
+    }
+
+    /**
+     * Генерирует запоминающийся 6-значный код комнаты (например, LK-5824).
+     */
+    fun generateRoomCode(): String {
+        val number = Random.nextInt(1000, 9999)
+        return "LK-$number"
+    }
+
+    /**
+     * Создает прямую веб-ссылку для браузера.
+     */
+    fun buildWebLink(ipOrHost: String, port: Int): String {
+        return "http://$ipOrHost:$port/"
+    }
+
+    /**
+     * Создает ссылку протокола для быстрого подключения второго клиента LKBoard.
+     */
+    fun buildAppLink(ipOrHost: String, port: Int): String {
+        return "lkboard://connect?host=$ipOrHost&port=$port"
+    }
+}
