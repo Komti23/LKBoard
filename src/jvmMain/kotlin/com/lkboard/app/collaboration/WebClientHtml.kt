@@ -339,6 +339,8 @@ object WebClientHtml {
                 drawMilestone(el);
             } else if (el.type === 'kanban_board') {
                 drawKanban(el);
+            } else if (el.type === 'document_frame' || el.totalPages !== undefined || el.currentPageIndex !== undefined) {
+                drawDocumentFrame(el);
             } else if (el.type === 'function_graph' || el.expressions !== undefined) {
                 drawFunctionGraph(el);
             } else if (el.type === 'shape' || el.shapeType !== undefined) {
@@ -506,11 +508,58 @@ object WebClientHtml {
             }
         }
 
+        function drawDocumentFrame(f) {
+            const x = f.x, y = f.y, w = f.width || 800, h = f.height || 450;
+            const fScale = Math.min(3.5, Math.max(0.6, w / 800));
+            const headH = Math.max(28, 38 * fScale);
+            const cr = 10 * fScale;
+
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, x, y, w, h, cr);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.2 * fScale;
+            ctx.stroke();
+
+            // Header
+            ctx.fillStyle = '#f1f5f9';
+            roundRect(ctx, x, y, w, headH, cr);
+            ctx.fill();
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.moveTo(x, y + headH); ctx.lineTo(x + w, y + headH);
+            ctx.stroke();
+
+            // Title
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold ' + Math.round(13 * fScale) + 'px Inter, sans-serif';
+            ctx.fillText(f.title || 'Презентация / PDF', x + 14 * fScale, y + headH * 0.65);
+
+            // Badge
+            const pageTxt = (f.totalPages && f.totalPages > 0) ? ((f.currentPageIndex || 0) + 1) + ' / ' + f.totalPages : 'Нет файла';
+            ctx.fillStyle = '#e0f2fe';
+            const badgeW = 75 * fScale, badgeH = 22 * fScale;
+            roundRect(ctx, x + w - badgeW - 12 * fScale, y + (headH - badgeH) / 2, badgeW, badgeH, badgeH / 2);
+            ctx.fill();
+            ctx.fillStyle = '#0284c7';
+            ctx.font = '600 ' + Math.round(11 * fScale) + 'px Inter, sans-serif';
+            ctx.fillText(pageTxt, x + w - badgeW + 8 * fScale, y + headH * 0.62);
+
+            // Placeholder content if no image
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(x, y + headH, w, h - headH);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 ' + Math.round(15 * fScale) + 'px Inter, sans-serif';
+            ctx.fillText('Область презентации / PDF', x + w / 2 - 95 * fScale, y + headH + (h - headH) / 2);
+        }
+
         function drawFunctionGraph(g) {
             const x = g.x, y = g.y, w = g.width || 440, h = g.height || 280;
-            const headH = 34;
+            const gScale = Math.min(3.5, Math.max(0.6, w / 440));
+            const headH = Math.max(28, 34 * gScale);
+
             ctx.fillStyle = '#ffffff';
-            roundRect(ctx, x, y, w, h, 12);
+            roundRect(ctx, x, y, w, h, 12 * gScale);
             ctx.fill();
             ctx.strokeStyle = '#cbd5e1';
             ctx.lineWidth = 1.2;
@@ -518,15 +567,15 @@ object WebClientHtml {
 
             // Header
             ctx.fillStyle = '#f8fafc';
-            roundRect(ctx, x, y, w, headH, 12);
+            roundRect(ctx, x, y, w, headH, 12 * gScale);
             ctx.fill();
             ctx.fillStyle = '#1e293b';
-            ctx.font = 'bold 12px Inter, sans-serif';
+            ctx.font = 'bold ' + Math.round(12 * gScale) + 'px Inter, sans-serif';
             const fTitle = (g.expressions && g.expressions.length > 0) ? g.expressions.map(e => 'f(x)=' + e).join(', ') : (g.title || 'График');
-            ctx.fillText(fTitle, x + 12, y + 22);
+            ctx.fillText(fTitle, x + 12 * gScale, y + headH * 0.65);
 
             // Inner plot clipping
-            const pad = 12;
+            const pad = 12 * gScale;
             const px = x + pad, py = y + headH + pad, pw = w - pad * 2, ph = h - headH - pad * 2;
             if (pw <= 10 || ph <= 10) return;
 
@@ -539,7 +588,6 @@ object WebClientHtml {
             ctx.fillStyle = '#f8fafc';
             ctx.fillRect(px, py, pw, ph);
 
-            // Axes
             const xMin = g.xMin !== undefined ? g.xMin : -10;
             const xMax = g.xMax !== undefined ? g.xMax : 10;
             const yMin = g.yMin !== undefined ? g.yMin : -5;
@@ -551,22 +599,54 @@ object WebClientHtml {
             const originX = Math.max(px, Math.min(px + pw, toScreenX(0)));
             const originY = Math.max(py, Math.min(py + ph, toScreenY(0)));
 
-            ctx.strokeStyle = '#cbd5e1';
+            // Grid lines and numbers
+            ctx.font = '600 ' + Math.round(9 * gScale) + 'px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.strokeStyle = '#e2e8f0';
             ctx.lineWidth = 1;
+
+            const xStep = Math.max(1, Math.round((xMax - xMin) / 8));
+            for (let gx = Math.ceil(xMin); gx <= Math.floor(xMax); gx += xStep) {
+                const sx = toScreenX(gx);
+                ctx.beginPath();
+                ctx.moveTo(sx, py); ctx.lineTo(sx, py + ph);
+                ctx.stroke();
+                if (gx !== 0) {
+                    ctx.fillText(gx.toString(), sx - 6, Math.min(py + ph - 4, Math.max(py + 12, originY + 12)));
+                }
+            }
+
+            const yStep = Math.max(1, Math.round((yMax - yMin) / 6));
+            for (let gy = Math.ceil(yMin); gy <= Math.floor(yMax); gy += yStep) {
+                const sy = toScreenY(gy);
+                ctx.beginPath();
+                ctx.moveTo(px, sy); ctx.lineTo(px + pw, sy);
+                ctx.stroke();
+                if (gy !== 0) {
+                    ctx.fillText(gy.toString(), Math.min(px + pw - 18, Math.max(px + 4, originX + 4)), sy + 3);
+                }
+            }
+
+            // Axes
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(px, originY); ctx.lineTo(px + pw, originY);
             ctx.moveTo(originX, py); ctx.lineTo(originX, py + ph);
             ctx.stroke();
+
+            // Zero label
+            ctx.fillText('0', originX + 4, originY + 12);
 
             // Simple parser/evaluator for graph curves f(x)
             if (g.expressions && g.expressions.length > 0) {
                 const colors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea'];
                 g.expressions.forEach((expr, idx) => {
                     ctx.strokeStyle = colors[idx % colors.length];
-                    ctx.lineWidth = 2.2;
+                    ctx.lineWidth = 2.4;
                     ctx.beginPath();
                     let started = false;
-                    const steps = 150;
+                    const steps = 180;
                     for (let s = 0; s <= steps; s++) {
                         const xv = xMin + (s / steps) * (xMax - xMin);
                         let yv = null;

@@ -45,9 +45,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.lkboard.app.model.BoardElement
@@ -64,6 +68,7 @@ fun FunctionGraphEditDialog(
     onSave: (BoardElement.FunctionGraph) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val textMeasurer = rememberTextMeasurer()
     var title by remember { mutableStateOf(element.title) }
 
     val initialExpressions = if (element.expressions.isEmpty()) listOf("sin(x)") else element.expressions
@@ -463,30 +468,110 @@ fun FunctionGraphEditDialog(
                                     val originX = toScreenX(0.0).coerceIn(0f, w)
                                     val originY = toScreenY(0.0).coerceIn(0f, h)
 
-                                    // Grid lines
-                                    val xStart = kotlin.math.ceil(xMin).toInt()
-                                    val xEnd = kotlin.math.floor(xMax).toInt()
-                                    for (gx in xStart..xEnd) {
-                                        val sx = toScreenX(gx.toDouble())
-                                        drawLine(
-                                            color = if (gx == 0) Color(0xFF94A3B8) else Color(0xFFE2E8F0),
-                                            start = Offset(sx, 0f),
-                                            end = Offset(sx, h),
-                                            strokeWidth = if (gx == 0) 1.5f else 1f
-                                        )
+                                    fun calculateNiceStep(span: Double, targetCount: Int = 8): Double {
+                                        if (span <= 0.0) return 1.0
+                                        val rawStep = span / targetCount.coerceAtLeast(1).toDouble()
+                                        val magnitude = java.lang.Math.pow(10.0, kotlin.math.floor(kotlin.math.log10(rawStep)))
+                                        val residual = rawStep / magnitude
+                                        val niceResidual = when {
+                                            residual < 1.5 -> 1.0
+                                            residual < 3.5 -> 2.0
+                                            residual < 7.5 -> 5.0
+                                            else -> 10.0
+                                        }
+                                        return niceResidual * magnitude
                                     }
 
-                                    val yStart = kotlin.math.ceil(yMin).toInt()
-                                    val yEnd = kotlin.math.floor(yMax).toInt()
-                                    for (gy in yStart..yEnd) {
-                                        val sy = toScreenY(gy.toDouble())
-                                        drawLine(
-                                            color = if (gy == 0) Color(0xFF94A3B8) else Color(0xFFE2E8F0),
-                                            start = Offset(0f, sy),
-                                            end = Offset(w, sy),
-                                            strokeWidth = if (gy == 0) 1.5f else 1f
-                                        )
+                                    fun formatCoord(value: Double): String {
+                                        return if (kotlin.math.abs(value - kotlin.math.round(value)) < 1e-5) {
+                                            value.roundToInt().toString()
+                                        } else {
+                                            String.format(java.util.Locale.US, "%.1f", value)
+                                        }
                                     }
+
+                                    val targetXCount = (w / 65f).toInt().coerceIn(4, 12)
+                                    val targetYCount = (h / 55f).toInt().coerceIn(4, 10)
+                                    val xStep = calculateNiceStep(xMax - xMin, targetXCount)
+                                    val yStep = calculateNiceStep(yMax - yMin, targetYCount)
+
+                                    val numStyle = TextStyle(
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF64748B)
+                                    )
+
+                                    // X Grid & Numbers
+                                    val startX = kotlin.math.ceil(xMin / xStep) * xStep
+                                    var currentX = startX
+                                    while (currentX <= xMax + 1e-6) {
+                                        val sx = toScreenX(currentX)
+                                        if (kotlin.math.abs(currentX) > 1e-5) {
+                                            drawLine(
+                                                color = Color(0xFFE2E8F0),
+                                                start = Offset(sx, 0f),
+                                                end = Offset(sx, h),
+                                                strokeWidth = 1f
+                                            )
+                                            drawLine(
+                                                color = Color(0xFF94A3B8),
+                                                start = Offset(sx, originY - 3.5f),
+                                                end = Offset(sx, originY + 3.5f),
+                                                strokeWidth = 1.2f
+                                            )
+                                            val textRes = textMeasurer.measure(formatCoord(currentX), style = numStyle)
+                                            val labelY = (originY + 5f).coerceIn(4f, h - textRes.size.height - 4f)
+                                            val labelX = (sx - textRes.size.width / 2f).coerceIn(4f, w - textRes.size.width - 4f)
+                                            drawText(textRes, topLeft = Offset(labelX, labelY))
+                                        }
+                                        currentX += xStep
+                                    }
+
+                                    // Y Grid & Numbers
+                                    val startY = kotlin.math.ceil(yMin / yStep) * yStep
+                                    var currentY = startY
+                                    while (currentY <= yMax + 1e-6) {
+                                        val sy = toScreenY(currentY)
+                                        if (kotlin.math.abs(currentY) > 1e-5) {
+                                            drawLine(
+                                                color = Color(0xFFE2E8F0),
+                                                start = Offset(0f, sy),
+                                                end = Offset(w, sy),
+                                                strokeWidth = 1f
+                                            )
+                                            drawLine(
+                                                color = Color(0xFF94A3B8),
+                                                start = Offset(originX - 3.5f, sy),
+                                                end = Offset(originX + 3.5f, sy),
+                                                strokeWidth = 1.2f
+                                            )
+                                            val textRes = textMeasurer.measure(formatCoord(currentY), style = numStyle)
+                                            val labelX = (originX - textRes.size.width - 5f).coerceIn(4f, w - textRes.size.width - 4f)
+                                            val labelY = (sy - textRes.size.height / 2f).coerceIn(4f, h - textRes.size.height - 4f)
+                                            drawText(textRes, topLeft = Offset(labelX, labelY))
+                                        }
+                                        currentY += yStep
+                                    }
+
+                                    // Axes
+                                    drawLine(
+                                        color = Color(0xFF94A3B8),
+                                        start = Offset(0f, originY),
+                                        end = Offset(w, originY),
+                                        strokeWidth = 1.5f
+                                    )
+                                    drawLine(
+                                        color = Color(0xFF94A3B8),
+                                        start = Offset(originX, 0f),
+                                        end = Offset(originX, h),
+                                        strokeWidth = 1.5f
+                                    )
+
+                                    // Zero
+                                    val zeroRes = textMeasurer.measure("0", style = numStyle)
+                                    val zeroX = (originX - zeroRes.size.width - 5f).coerceIn(4f, w - zeroRes.size.width - 4f)
+                                    val zeroY = (originY + 5f).coerceIn(4f, h - zeroRes.size.height - 4f)
+                                    drawText(zeroRes, topLeft = Offset(zeroX, zeroY))
 
                                     // Curves
                                     expressions.forEachIndexed { exprIdx, expr ->

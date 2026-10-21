@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import com.lkboard.app.model.BoardElement
 import com.lkboard.app.model.ShapeType
 import com.lkboard.app.model.ConnectorStyle
@@ -86,13 +87,14 @@ object ElementRenderer {
         frame: BoardElement.DocumentFrame,
         textMeasurer: TextMeasurer
     ) {
-        val headerH = 38f
-        val cr = CornerRadius(10f, 10f)
+        val fScale = (frame.width / 800f).coerceIn(0.6f, 3.5f)
+        val headerH = (38f * fScale).coerceAtLeast(28f)
+        val cr = CornerRadius(10f * fScale, 10f * fScale)
 
         // 1. Мягкая внешняя тень фрейма (Apple Card Shadow)
         drawScope.drawRoundRect(
             color = Color.Black.copy(alpha = 0.08f),
-            topLeft = Offset(frame.x + 3f, frame.y + 6f),
+            topLeft = Offset(frame.x + 3f * fScale, frame.y + 6f * fScale),
             size = Size(frame.width, frame.height),
             cornerRadius = cr
         )
@@ -110,13 +112,13 @@ object ElementRenderer {
             color = Color(0xFFF1F5F9),
             topLeft = Offset(frame.x, frame.y),
             size = Size(frame.width, headerH),
-            cornerRadius = CornerRadius(10f, 10f)
+            cornerRadius = CornerRadius(10f * fScale, 10f * fScale)
         )
         // Скрываем скругления в нижней части шапки прямоугольником
         drawScope.drawRect(
             color = Color(0xFFF1F5F9),
-            topLeft = Offset(frame.x, frame.y + headerH - 8f),
-            size = Size(frame.width, 8f)
+            topLeft = Offset(frame.x, frame.y + headerH - 8f * fScale),
+            size = Size(frame.width, 8f * fScale)
         )
 
         // Разделительная линия под шапкой
@@ -124,14 +126,14 @@ object ElementRenderer {
             color = Color(0xFFE2E8F0),
             start = Offset(frame.x, frame.y + headerH),
             end = Offset(frame.x + frame.width, frame.y + headerH),
-            strokeWidth = 1f
+            strokeWidth = 1f * fScale.coerceAtLeast(1f)
         )
 
-        // Заголовок фрейма
+        // Заголовок фрейма (масштабируется пропорционально)
         val titleResult = textMeasurer.measure(
             text = frame.title,
             style = TextStyle(
-                fontSize = 13.sp,
+                fontSize = (13f * fScale).sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF1E293B)
             ),
@@ -139,7 +141,7 @@ object ElementRenderer {
         )
         drawScope.drawText(
             textLayoutResult = titleResult,
-            topLeft = Offset(frame.x + 14f, frame.y + 10f)
+            topLeft = Offset(frame.x + 14f * fScale, frame.y + (headerH - titleResult.size.height) / 2f)
         )
 
         // Бейдж номера слайда / страницы (например: "1 / 15" или "Пустой фрейм")
@@ -151,22 +153,23 @@ object ElementRenderer {
         val badgeResult = textMeasurer.measure(
             text = pageText,
             style = TextStyle(
-                fontSize = 12.sp,
+                fontSize = (12f * fScale).sp,
                 fontWeight = FontWeight.Medium,
                 color = if (frame.totalPages > 0) Color(0xFF0284C7) else Color(0xFF64748B)
             )
         )
-        val badgeW = badgeResult.size.width + 16f
-        val badgeX = frame.x + frame.width - badgeW - 12f
+        val badgeH = (24f * fScale).coerceAtLeast(20f)
+        val badgeW = badgeResult.size.width + 16f * fScale
+        val badgeX = frame.x + frame.width - badgeW - 12f * fScale
         drawScope.drawRoundRect(
             color = if (frame.totalPages > 0) Color(0xFFE0F2FE) else Color(0xFFE2E8F0),
-            topLeft = Offset(badgeX, frame.y + 7f),
-            size = Size(badgeW, 24f),
-            cornerRadius = CornerRadius(12f, 12f)
+            topLeft = Offset(badgeX, frame.y + (headerH - badgeH) / 2f),
+            size = Size(badgeW, badgeH),
+            cornerRadius = CornerRadius(badgeH / 2f, badgeH / 2f)
         )
         drawScope.drawText(
             textLayoutResult = badgeResult,
-            topLeft = Offset(badgeX + 8f, frame.y + 11f)
+            topLeft = Offset(badgeX + (badgeW - badgeResult.size.width) / 2f, frame.y + (headerH - badgeResult.size.height) / 2f)
         )
 
         // 4. Область отображения содержимого слайда
@@ -188,10 +191,10 @@ object ElementRenderer {
                 )
             } catch (_: Exception) {
                 // Если картинка не отрисовалась, рисуем заглушку
-                drawEmptyFramePlaceholder(drawScope, frame, contentY, contentH, textMeasurer)
+                drawEmptyFramePlaceholder(drawScope, frame, contentY, contentH, textMeasurer, fScale)
             }
         } else {
-            drawEmptyFramePlaceholder(drawScope, frame, contentY, contentH, textMeasurer)
+            drawEmptyFramePlaceholder(drawScope, frame, contentY, contentH, textMeasurer, fScale)
         }
 
         // 5. Тонкая внешняя окантовка всего фрейма
@@ -200,7 +203,7 @@ object ElementRenderer {
             topLeft = Offset(frame.x, frame.y),
             size = Size(frame.width, frame.height),
             cornerRadius = cr,
-            style = Stroke(width = 1.2f)
+            style = Stroke(width = 1.2f * fScale.coerceAtLeast(1f))
         )
     }
 
@@ -209,7 +212,8 @@ object ElementRenderer {
         frame: BoardElement.DocumentFrame,
         contentY: Float,
         contentH: Float,
-        textMeasurer: TextMeasurer
+        textMeasurer: TextMeasurer,
+        fScale: Float = 1f
     ) {
         // Фоновая подсветка пустой области
         drawScope.drawRect(
@@ -221,7 +225,7 @@ object ElementRenderer {
         val mainMsg = textMeasurer.measure(
             text = "Область презентации / PDF",
             style = TextStyle(
-                fontSize = 16.sp,
+                fontSize = (16f * fScale).sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF475569)
             )
@@ -229,7 +233,7 @@ object ElementRenderer {
         val subMsg = textMeasurer.measure(
             text = "Нажмите на фрейм и выберите файл (PDF, PPTX или изображения)",
             style = TextStyle(
-                fontSize = 12.sp,
+                fontSize = (12f * fScale).sp,
                 color = Color(0xFF94A3B8)
             )
         )
@@ -239,11 +243,11 @@ object ElementRenderer {
 
         drawScope.drawText(
             textLayoutResult = mainMsg,
-            topLeft = Offset(centerX - mainMsg.size.width / 2f, centerY - 18f)
+            topLeft = Offset(centerX - mainMsg.size.width / 2f, centerY - 18f * fScale)
         )
         drawScope.drawText(
             textLayoutResult = subMsg,
-            topLeft = Offset(centerX - subMsg.size.width / 2f, centerY + 8f)
+            topLeft = Offset(centerX - subMsg.size.width / 2f, centerY + 8f * fScale)
         )
     }
 
@@ -961,12 +965,13 @@ object ElementRenderer {
         graph: BoardElement.FunctionGraph,
         textMeasurer: TextMeasurer
     ) {
-        val cr = CornerRadius(12f, 12f)
+        val gScale = (graph.width / 440f).coerceIn(0.6f, 3.5f)
+        val cr = CornerRadius(12f * gScale, 12f * gScale)
 
         // Тень
         drawScope.drawRoundRect(
             color = Color.Black.copy(alpha = 0.05f),
-            topLeft = Offset(graph.x + 2f, graph.y + 4f),
+            topLeft = Offset(graph.x + 2f * gScale, graph.y + 4f * gScale),
             size = Size(graph.width, graph.height),
             cornerRadius = cr
         )
@@ -983,36 +988,42 @@ object ElementRenderer {
             topLeft = Offset(graph.x, graph.y),
             size = Size(graph.width, graph.height),
             cornerRadius = cr,
-            style = Stroke(width = 1.2f)
+            style = Stroke(width = 1.2f * gScale.coerceAtLeast(1f))
         )
 
-        // Шапка с формулами
-        val headerH = 34f
+        // Шапка с формулами (масштабируется)
+        val headerH = (34f * gScale).coerceAtLeast(26f)
         drawScope.drawRoundRect(
             color = Color(0xFFF8FAFC),
             topLeft = Offset(graph.x, graph.y),
             size = Size(graph.width, headerH),
-            cornerRadius = CornerRadius(12f, 12f)
+            cornerRadius = CornerRadius(12f * gScale, 12f * gScale)
+        )
+        drawScope.drawRect(
+            color = Color(0xFFF8FAFC),
+            topLeft = Offset(graph.x, graph.y + headerH - 8f * gScale),
+            size = Size(graph.width, 8f * gScale)
         )
         drawScope.drawLine(
             color = Color(0xFFE2E8F0),
             start = Offset(graph.x, graph.y + headerH),
             end = Offset(graph.x + graph.width, graph.y + headerH),
-            strokeWidth = 1f
+            strokeWidth = 1f * gScale.coerceAtLeast(1f)
         )
 
         val headerText = graph.expressions.joinToString(", ") { "f(x)=$it" }.ifBlank { graph.title }
         val headerLayout = textMeasurer.measure(
             text = headerText,
-            style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+            style = TextStyle(fontSize = (11.5f * gScale).sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B)),
+            maxLines = 1
         )
         drawScope.drawText(
             textLayoutResult = headerLayout,
-            topLeft = Offset(graph.x + 12f, graph.y + 9f)
+            topLeft = Offset(graph.x + 12f * gScale, graph.y + (headerH - headerLayout.size.height) / 2f)
         )
 
         // Область построения графика
-        val pad = 12f
+        val pad = 12f * gScale
         val plotLeft = graph.x + pad
         val plotTop = graph.y + headerH + pad
         val plotW = graph.width - pad * 2
@@ -1036,7 +1047,7 @@ object ElementRenderer {
         val originX = toScreenX(0.0).coerceIn(plotLeft, plotLeft + plotW)
         val originY = toScreenY(0.0).coerceIn(plotTop, plotTop + plotH)
 
-        // Сетка, оси и кривые строго обрезаются внутри области графика (clipRect), предотвращая вылезание кривых наружу
+        // Сетка, оси, деления с цифрами и кривые строго обрезаются внутри области графика (clipRect)
         drawScope.clipRect(
             left = plotLeft,
             top = plotTop,
@@ -1050,26 +1061,96 @@ object ElementRenderer {
                 size = Size(plotW, plotH)
             )
 
-            // Сетка
-            for (gx in kotlin.math.ceil(xMin).toInt()..kotlin.math.floor(xMax).toInt()) {
-                if (gx == 0) continue
-                val sx = toScreenX(gx.toDouble())
-                drawLine(
-                    color = Color(0xFFF1F5F9),
-                    start = Offset(sx, plotTop),
-                    end = Offset(sx, plotTop + plotH),
-                    strokeWidth = 1f
-                )
+            // Расчет красивого шага делений (Desmos / GeoGebra style)
+            fun calculateNiceStep(span: Double, targetCount: Int = 8): Double {
+                if (span <= 0.0) return 1.0
+                val rawStep = span / targetCount.coerceAtLeast(1).toDouble()
+                val magnitude = java.lang.Math.pow(10.0, kotlin.math.floor(kotlin.math.log10(rawStep)))
+                val residual = rawStep / magnitude
+                val niceResidual = when {
+                    residual < 1.5 -> 1.0
+                    residual < 3.5 -> 2.0
+                    residual < 7.5 -> 5.0
+                    else -> 10.0
+                }
+                return niceResidual * magnitude
             }
-            for (gy in kotlin.math.ceil(yMin).toInt()..kotlin.math.floor(yMax).toInt()) {
-                if (gy == 0) continue
-                val sy = toScreenY(gy.toDouble())
-                drawLine(
-                    color = Color(0xFFF1F5F9),
-                    start = Offset(plotLeft, sy),
-                    end = Offset(plotLeft + plotW, sy),
-                    strokeWidth = 1f
-                )
+
+            fun formatCoord(value: Double): String {
+                return if (kotlin.math.abs(value - kotlin.math.round(value)) < 1e-5) {
+                    value.roundToInt().toString()
+                } else {
+                    String.format(java.util.Locale.US, "%.1f", value)
+                }
+            }
+
+            val targetXCount = (plotW / (60f * gScale)).toInt().coerceIn(4, 12)
+            val targetYCount = (plotH / (50f * gScale)).toInt().coerceIn(4, 10)
+            val xStep = calculateNiceStep(xMax - xMin, targetXCount)
+            val yStep = calculateNiceStep(yMax - yMin, targetYCount)
+
+            val numStyle = TextStyle(
+                fontSize = (9f * gScale).coerceIn(8f, 15f).sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF64748B)
+            )
+
+            // Сетка и деления по X
+            val startX = kotlin.math.ceil(xMin / xStep) * xStep
+            var currentX = startX
+            while (currentX <= xMax + 1e-6) {
+                val sx = toScreenX(currentX)
+                if (kotlin.math.abs(currentX) > 1e-5) {
+                    // Тонкая линия координатной сетки
+                    drawLine(
+                        color = Color(0xFFF1F5F9),
+                        start = Offset(sx, plotTop),
+                        end = Offset(sx, plotTop + plotH),
+                        strokeWidth = 1f
+                    )
+                    // Засечка на оси X
+                    drawLine(
+                        color = Color(0xFF94A3B8),
+                        start = Offset(sx, originY - 3f * gScale),
+                        end = Offset(sx, originY + 3f * gScale),
+                        strokeWidth = 1.2f
+                    )
+                    // Числовое значение на оси X
+                    val textRes = textMeasurer.measure(formatCoord(currentX), style = numStyle)
+                    val labelY = (originY + 4f * gScale).coerceIn(plotTop + 2f, plotTop + plotH - textRes.size.height - 2f)
+                    val labelX = (sx - textRes.size.width / 2f).coerceIn(plotLeft + 2f, plotLeft + plotW - textRes.size.width - 2f)
+                    drawText(textRes, topLeft = Offset(labelX, labelY))
+                }
+                currentX += xStep
+            }
+
+            // Сетка и деления по Y
+            val startY = kotlin.math.ceil(yMin / yStep) * yStep
+            var currentY = startY
+            while (currentY <= yMax + 1e-6) {
+                val sy = toScreenY(currentY)
+                if (kotlin.math.abs(currentY) > 1e-5) {
+                    // Тонкая линия координатной сетки
+                    drawLine(
+                        color = Color(0xFFF1F5F9),
+                        start = Offset(plotLeft, sy),
+                        end = Offset(plotLeft + plotW, sy),
+                        strokeWidth = 1f
+                    )
+                    // Засечка на оси Y
+                    drawLine(
+                        color = Color(0xFF94A3B8),
+                        start = Offset(originX - 3f * gScale, sy),
+                        end = Offset(originX + 3f * gScale, sy),
+                        strokeWidth = 1.2f
+                    )
+                    // Числовое значение на оси Y
+                    val textRes = textMeasurer.measure(formatCoord(currentY), style = numStyle)
+                    val labelX = (originX - textRes.size.width - 4f * gScale).coerceIn(plotLeft + 2f, plotLeft + plotW - textRes.size.width - 2f)
+                    val labelY = (sy - textRes.size.height / 2f).coerceIn(plotTop + 2f, plotTop + plotH - textRes.size.height - 2f)
+                    drawText(textRes, topLeft = Offset(labelX, labelY))
+                }
+                currentY += yStep
             }
 
             // Оси X и Y
@@ -1077,14 +1158,20 @@ object ElementRenderer {
                 color = Color(0xFF94A3B8),
                 start = Offset(plotLeft, originY),
                 end = Offset(plotLeft + plotW, originY),
-                strokeWidth = 1.5f
+                strokeWidth = 1.5f * gScale.coerceAtLeast(1f)
             )
             drawLine(
                 color = Color(0xFF94A3B8),
                 start = Offset(originX, plotTop),
                 end = Offset(originX, plotTop + plotH),
-                strokeWidth = 1.5f
+                strokeWidth = 1.5f * gScale.coerceAtLeast(1f)
             )
+
+            // Число 0 в начале координат
+            val zeroRes = textMeasurer.measure("0", style = numStyle)
+            val zeroX = (originX - zeroRes.size.width - 4f * gScale).coerceIn(plotLeft + 2f, plotLeft + plotW - zeroRes.size.width - 2f)
+            val zeroY = (originY + 4f * gScale).coerceIn(plotTop + 2f, plotTop + plotH - zeroRes.size.height - 2f)
+            drawText(zeroRes, topLeft = Offset(zeroX, zeroY))
 
             // Отрисовка кривых функций f(x)
             val colors = graph.strokeColorsHex.ifEmpty { listOf(0xFF2563EB) }
@@ -1115,7 +1202,7 @@ object ElementRenderer {
                 drawPath(
                     path = curvePath,
                     color = curveColor,
-                    style = Stroke(width = 2.4f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    style = Stroke(width = 2.4f * gScale.coerceAtLeast(1f), cap = StrokeCap.Round, join = StrokeJoin.Round)
                 )
             }
         }
