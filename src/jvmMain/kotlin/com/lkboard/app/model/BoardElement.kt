@@ -63,6 +63,8 @@ sealed interface BoardElement {
     val height: Float
     val zIndex: Int
     val isLocked: Boolean
+    val rotation: Float
+        get() = 0f
 
     /**
      * Прямоугольник границ элемента в мировых координатах доски.
@@ -86,6 +88,28 @@ sealed interface BoardElement {
     fun copyWithSize(newWidth: Float, newHeight: Float): BoardElement
 
     /**
+     * Создает копию элемента с новым углом поворота в градусах (0..360).
+     */
+    fun withRotation(newRotation: Float): BoardElement
+
+    /**
+     * Проверяет попадание точки курсора в элемент с учетом его поворота вокруг центра.
+     */
+    fun isPointInside(point: Offset): Boolean {
+        if (rotation == 0f) return bounds.contains(point)
+        val cx = x + width / 2f
+        val cy = y + height / 2f
+        val rad = -Math.toRadians(rotation.toDouble())
+        val cos = Math.cos(rad)
+        val sin = Math.sin(rad)
+        val dx = point.x - cx
+        val dy = point.y - cy
+        val rx = (dx * cos - dy * sin).toFloat() + cx
+        val ry = (dx * sin + dy * cos).toFloat() + cy
+        return bounds.contains(Offset(rx, ry))
+    }
+
+    /**
      * Стикер (Sticky Note) с текстом и настраиваемым цветом.
      */
     @Serializable
@@ -98,6 +122,7 @@ sealed interface BoardElement {
         override val height: Float = 210f,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val text: String = "Заметка\n- [ ] Первая задача\n- [ ] Вторая задача",
         val colorHex: Long = 0xFFFEF08A, // Пастельный солнечный желтый
         val fontSize: Float = 16f
@@ -105,6 +130,7 @@ sealed interface BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
 
         companion object {
             val PRESET_COLORS = listOf(
@@ -131,6 +157,7 @@ sealed interface BoardElement {
         override val height: Float = 100f,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val shapeType: ShapeType = ShapeType.ROUNDED_RECTANGLE,
         val strokeColorHex: Long = 0xFF1976D2,
         val fillColorHex: Long? = 0x221976D2,
@@ -142,6 +169,7 @@ sealed interface BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
 
     /**
@@ -157,6 +185,7 @@ sealed interface BoardElement {
         override val height: Float = 50f,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val text: String = "",
         val colorHex: Long = 0xFF1E1E1E,
         val fontSize: Float = 19f,
@@ -166,6 +195,7 @@ sealed interface BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
 
     /**
@@ -181,6 +211,7 @@ sealed interface BoardElement {
         override val height: Float = 0f,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val points: List<CanvasPoint> = emptyList(),
         val strokeColorHex: Long = 0xFF212121,
         val strokeWidth: Float = 3f,
@@ -222,6 +253,8 @@ sealed interface BoardElement {
             }
             return copy(width = newWidth, height = newHeight, points = newPoints)
         }
+
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
 
     /**
@@ -237,11 +270,13 @@ sealed interface BoardElement {
         override val height: Float,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val imageBase64: String
     ) : BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
 
     /**
@@ -258,6 +293,7 @@ sealed interface BoardElement {
         override val height: Float = 500f,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val title: String = "Презентация / PDF",
         val pages: List<String> = emptyList(), // Base64 PNG-слайды
         val currentPageIndex: Int = 0,
@@ -266,6 +302,7 @@ sealed interface BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
 
         val totalPages: Int get() = pages.size
         val currentPageBase64: String? get() = pages.getOrNull(currentPageIndex)
@@ -320,6 +357,7 @@ sealed interface BoardElement {
         }
 
         override fun copyWithSize(newWidth: Float, newHeight: Float): Connector = this
+        override fun withRotation(newRotation: Float): Connector = this
     }
 
     /**
@@ -335,6 +373,7 @@ sealed interface BoardElement {
         override val height: Float = 160f,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val title: String = "Новая веха",
         val description: String = "Описание этапа и ключевых результатов...",
         val status: MilestoneStatus = MilestoneStatus.IN_PROGRESS,
@@ -346,6 +385,7 @@ sealed interface BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
 
     /**
@@ -361,6 +401,7 @@ sealed interface BoardElement {
         override val height: Float = 320f,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val title: String = "График функции",
         val expressions: List<String> = listOf("sin(x)"),
         val xMin: Float = -10f,
@@ -372,6 +413,7 @@ sealed interface BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
 
     /**
@@ -388,12 +430,14 @@ sealed interface BoardElement {
         override val height: Float = 620f,
         override val zIndex: Int = 0,
         override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
         val title: String = "Канбан-доска проекта",
         val columnTitles: List<String> = listOf("Бэклог", "В работе", "На ревью", "Готово")
     ) : BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
 
         fun getColumnIndex(worldX: Float): Int {
             val colW = width / 4f

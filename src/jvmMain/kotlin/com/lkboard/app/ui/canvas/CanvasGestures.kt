@@ -76,6 +76,14 @@ sealed interface InteractionMode {
         var targetElementId: String? = null,
         var targetAnchor: AnchorPoint = AnchorPoint.AUTO
     ) : InteractionMode
+
+    data class Rotating(
+        val elementIds: Set<String>,
+        val centerWorld: Offset,
+        val initialPointerAngle: Float,
+        val initialRotations: Map<String, Float>,
+        var currentAngleDelta: Float = 0f
+    ) : InteractionMode
 }
 
 /**
@@ -90,6 +98,8 @@ data class CanvasGestureCallbacks(
     val onCommitMove: (ids: Set<String>, totalDeltaX: Float, totalDeltaY: Float) -> Unit,
     val onResizeElementLive: (elementId: String, newBounds: Rect) -> Unit,
     val onCommitResize: (elementId: String, initialBounds: Rect, finalBounds: Rect) -> Unit,
+    val onRotateElementsLive: (elementIds: Set<String>, initialRotations: Map<String, Float>, deltaAngle: Float) -> Unit = { _, _, _ -> },
+    val onCommitRotate: (elementIds: Set<String>, initialRotations: Map<String, Float>, deltaAngle: Float) -> Unit = { _, _, _ -> },
     val onDoubleTapElement: (BoardElement) -> Unit,
     val onCreateStickyNote: (Offset) -> Unit,
     val onCreateShape: (left: Float, top: Float, width: Float, height: Float) -> Unit,
@@ -232,8 +242,32 @@ class CanvasGestureHandler(
                                 callbacks.onDoubleTapElement(hitElement)
                                 interactionMode = InteractionMode.Idle
                             } else {
-                                // Проверка клика по маркеру ресайза (только если выделен 1 элемент)
                                 val bounds = GeometryUtils.computeBounds(boardState.selectedElements)
+                                val singleElement = if (boardState.selectedElements.size == 1) boardState.selectedElements.first() else null
+                                val currentRotation = singleElement?.rotation ?: 0f
+
+                                // 1. Проверка клика по маркеру вращения (Rotation Handle)
+                                val isRotationHandleHit = bounds != null && boardState.selectedElements.isNotEmpty() &&
+                                        GeometryUtils.hitTestRotationHandle(worldPos, bounds, currentRotation, boardState.transform.scale)
+
+                                if (isRotationHandleHit) {
+                                    val b = bounds!!
+                                    val centerWorld = b.center
+                                    val dx = worldPos.x - centerWorld.x
+                                    val dy = worldPos.y - centerWorld.y
+                                    val initialAngle = Math.toDegrees(kotlin.math.atan2(dy.toDouble(), dx.toDouble())).toFloat()
+                                    val initialRotations = boardState.selectedElements.associate { it.id to it.rotation }
+                                    interactionMode = InteractionMode.Rotating(
+                                        elementIds = boardState.selectedElementIds,
+                                        centerWorld = centerWorld,
+                                        initialPointerAngle = initialAngle,
+                                        initialRotations = initialRotations
+                                    )
+                                    change.consume()
+                                    return
+                                }
+
+                                // 2. Проверка клика по маркеру ресайза (только если выделен 1 элемент)
                                 val handle = if (bounds != null && boardState.selectedElements.size == 1) {
                                     val handleRadius = 8f / boardState.transform.scale
                                     GeometryUtils.hitTestHandle(worldPos, bounds, handleRadius)
@@ -446,6 +480,20 @@ class CanvasGestureHandler(
                         change.consume()
                     }
 
+                    is InteractionMode.Rotating -> {
+                        val dx = worldPos.x - mode.centerWorld.x
+                        val dy = worldPos.y - mode.centerWorld.y
+                        val currentPointerAngle = Math.toDegrees(kotlin.math.atan2(dy.toDouble(), dx.toDouble())).toFloat()
+                        var deltaAngle = currentPointerAngle - mode.initialPointerAngle
+                        if (isShift) {
+                            // При удержании Shift шаг привязки 15 градусов
+                            deltaAngle = kotlin.math.round(deltaAngle / 15f) * 15f
+                        }
+                        mode.currentAngleDelta = deltaAngle
+                        callbacks.onRotateElementsLive(mode.elementIds, mode.initialRotations, deltaAngle)
+                        change.consume()
+                    }
+
                     is InteractionMode.BoxSelecting -> {
                         mode.currentWorld = worldPos
                         change.consume()
@@ -518,6 +566,14 @@ class CanvasGestureHandler(
                             mode.elementId,
                             mode.initialBounds,
                             mode.currentBounds
+                        )
+                    }
+
+                    is InteractionMode.Rotating -> {
+                        callbacks.onCommitRotate(
+                            mode.elementIds,
+                            mode.initialRotations,
+                            mode.currentAngleDelta
                         )
                     }
 

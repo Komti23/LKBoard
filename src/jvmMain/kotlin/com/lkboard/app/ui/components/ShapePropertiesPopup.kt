@@ -69,6 +69,8 @@ fun ShapePropertiesPopup(
     settings: ShapeSettings,
     isEditingSelectedShape: Boolean = false,
     onSettingsChange: (ShapeSettings) -> Unit,
+    onRotateBy: ((Float) -> Unit)? = null,
+    onResetRotation: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val mainTitle = if (isEditingSelectedShape) "Свойства фигуры" else "Новая фигура"
@@ -621,6 +623,81 @@ fun ShapePropertiesPopup(
                             onClick = { onSettingsChange(settings.copy(strokeStyle = StrokeStyle.DOTTED)) },
                             modifier = Modifier.weight(1f)
                         )
+                    }
+                }
+            }
+
+            // 7. Поворот фигуры (Вращение)
+            if (isEditingSelectedShape && onRotateBy != null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Transparent),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "Вращение фигуры",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF6E6E73)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Transparent),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.Black.copy(alpha = 0.06f))
+                                .clickable { onRotateBy(-90f) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "↺ -90°",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF1E293B)
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.Black.copy(alpha = 0.06f))
+                                .clickable { onRotateBy(90f) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "↻ +90°",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF1E293B)
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.Black.copy(alpha = 0.06f))
+                                .clickable { onResetRotation?.invoke() ?: onRotateBy(0f) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "0° (сброс)",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF64748B)
+                            )
+                        }
                     }
                 }
             }

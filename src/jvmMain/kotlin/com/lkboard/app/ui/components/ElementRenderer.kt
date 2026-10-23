@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -41,21 +42,34 @@ object ElementRenderer {
         isSelected: Boolean,
         allElements: Map<String, BoardElement> = emptyMap()
     ) {
-        when (element) {
-            is BoardElement.StickyNote -> drawStickyNote(drawScope, element, textMeasurer)
-            is BoardElement.Shape -> drawShape(drawScope, element)
-            is BoardElement.Text -> drawTextBlock(drawScope, element, textMeasurer)
-            is BoardElement.DrawingPath -> drawDrawingPath(drawScope, element)
-            is BoardElement.ImageElement -> drawImageElement(drawScope, element)
-            is BoardElement.DocumentFrame -> drawDocumentFrame(drawScope, element, textMeasurer)
-            is BoardElement.Connector -> drawConnector(drawScope, element, allElements, textMeasurer)
-            is BoardElement.MilestoneCard -> drawMilestoneCard(drawScope, element, textMeasurer)
-            is BoardElement.FunctionGraph -> drawFunctionGraph(drawScope, element, textMeasurer)
-            is BoardElement.KanbanBoard -> drawKanbanBoard(drawScope, element, allElements, textMeasurer)
+        val renderBody = {
+            when (element) {
+                is BoardElement.StickyNote -> drawStickyNote(drawScope, element, textMeasurer)
+                is BoardElement.Shape -> drawShape(drawScope, element)
+                is BoardElement.Text -> drawTextBlock(drawScope, element, textMeasurer)
+                is BoardElement.DrawingPath -> drawDrawingPath(drawScope, element)
+                is BoardElement.ImageElement -> drawImageElement(drawScope, element)
+                is BoardElement.DocumentFrame -> drawDocumentFrame(drawScope, element, textMeasurer)
+                is BoardElement.Connector -> drawConnector(drawScope, element, allElements, textMeasurer)
+                is BoardElement.MilestoneCard -> drawMilestoneCard(drawScope, element, textMeasurer)
+                is BoardElement.FunctionGraph -> drawFunctionGraph(drawScope, element, textMeasurer)
+                is BoardElement.KanbanBoard -> drawKanbanBoard(drawScope, element, allElements, textMeasurer)
+            }
         }
 
-        if (isSelected) {
-            drawSelectionOutline(drawScope, element)
+        if (element.rotation != 0f) {
+            val pivot = Offset(element.x + element.width / 2f, element.y + element.height / 2f)
+            drawScope.rotate(degrees = element.rotation, pivot = pivot) {
+                renderBody()
+                if (isSelected) {
+                    drawSelectionOutline(this, element)
+                }
+            }
+        } else {
+            renderBody()
+            if (isSelected) {
+                drawSelectionOutline(drawScope, element)
+            }
         }
     }
 

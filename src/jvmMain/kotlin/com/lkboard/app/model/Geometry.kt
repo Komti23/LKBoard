@@ -81,18 +81,46 @@ object GeometryUtils {
     }
 
     /**
-     * Проверяет попадание точки курсора в элемент доски (сверху вниз по z-index).
+     * Проверяет попадание точки курсора в элемент доски (сверху вниз по z-index с учетом вращения).
      */
     fun hitTestElement(
         worldPoint: Offset,
         elements: List<BoardElement>
     ): BoardElement? {
         for (element in elements.reversed()) {
-            if (element.bounds.contains(worldPoint)) {
+            if (element.isPointInside(worldPoint)) {
                 return element
             }
         }
         return null
+    }
+
+    /**
+     * Проверяет попадание точки курсора в верхний маркер вращения (Rotation Handle).
+     */
+    fun hitTestRotationHandle(
+        worldPoint: Offset,
+        bounds: Rect,
+        rotation: Float,
+        scale: Float
+    ): Boolean {
+        val stemLength = 26f / scale
+        val handleRadius = 12f / scale
+        val center = bounds.center
+
+        // Обратный поворот точки клика на -rotation относительно центра
+        val rad = -Math.toRadians(rotation.toDouble())
+        val cos = Math.cos(rad)
+        val sin = Math.sin(rad)
+        val dx = worldPoint.x - center.x
+        val dy = worldPoint.y - center.y
+        val unrotatedX = (dx * cos - dy * sin).toFloat() + center.x
+        val unrotatedY = (dx * sin + dy * cos).toFloat() + center.y
+
+        val handleX = center.x
+        val handleY = bounds.top - stemLength
+        val distSq = (unrotatedX - handleX) * (unrotatedX - handleX) + (unrotatedY - handleY) * (unrotatedY - handleY)
+        return distSq <= handleRadius * handleRadius
     }
 
     /**

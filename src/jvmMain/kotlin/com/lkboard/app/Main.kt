@@ -165,6 +165,20 @@ fun main() = application {
                         viewModel.duplicateSelectedElements()
                         true
                     }
+                    // Вращение выбранных элементов (R / Ctrl+R на 90°, [ / ] на 15°)
+                    (isCtrl && (keyEvent.key == Key.R || rawKeyCode == java.awt.event.KeyEvent.VK_R)) ||
+                    (!isCtrl && boardState.selectedElementIds.isNotEmpty() && (keyEvent.key == Key.R || rawKeyCode == java.awt.event.KeyEvent.VK_R)) -> {
+                        viewModel.rotateSelectedBy(if (isShift) -90f else 90f)
+                        true
+                    }
+                    boardState.selectedElementIds.isNotEmpty() && (keyEvent.key == Key.LeftBracket || rawKeyCode == java.awt.event.KeyEvent.VK_OPEN_BRACKET) -> {
+                        viewModel.rotateSelectedBy(-15f)
+                        true
+                    }
+                    boardState.selectedElementIds.isNotEmpty() && (keyEvent.key == Key.RightBracket || rawKeyCode == java.awt.event.KeyEvent.VK_CLOSE_BRACKET) -> {
+                        viewModel.rotateSelectedBy(15f)
+                        true
+                    }
                     // Выделить всё (Ctrl+A / Ctrl+Ф)
                     isCtrl && (keyEvent.key == Key.A || rawKeyCode == java.awt.event.KeyEvent.VK_A) -> {
                         viewModel.selectAll()
@@ -288,6 +302,8 @@ fun main() = application {
                             onCommitMove = viewModel::commitMove,
                             onResizeElementLive = viewModel::resizeElementLive,
                             onCommitResize = viewModel::commitResize,
+                            onRotateElementsLive = viewModel::rotateElementsLive,
+                            onCommitRotate = viewModel::commitRotate,
                             onDoubleTapElement = { element ->
                                 when (element) {
                                     is BoardElement.DocumentFrame -> {
@@ -393,6 +409,7 @@ fun main() = application {
                             onToolSelect = viewModel::selectTool,
                             onPenSettingsChange = viewModel::updatePenSettings,
                             onShapeSettingsChange = viewModel::updateShapeSettings,
+                            onRotateSelectedBy = viewModel::rotateSelectedBy,
                             onUndo = viewModel::undo,
                             onRedo = viewModel::redo,
                             onCopy = viewModel::copySelected,

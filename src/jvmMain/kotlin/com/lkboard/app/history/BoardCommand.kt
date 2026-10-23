@@ -223,3 +223,31 @@ class UpdateShapePropertiesCommand(
     }
 }
 
+/**
+ * Команда вращения элементов (с поддержкой Undo/Redo).
+ */
+class RotateElementsCommand(
+    val oldRotations: Map<String, Float>,
+    val newRotations: Map<String, Float>
+) : BoardCommand {
+    override val description: String = "Вращение элементов"
+
+    override fun execute(state: BoardState): BoardState {
+        var updated = state
+        for ((id, rot) in newRotations) {
+            val el = updated.elements[id] ?: continue
+            updated = updated.withElement(el.withRotation(rot))
+        }
+        return updated
+    }
+
+    override fun undo(state: BoardState): BoardState {
+        var updated = state
+        for ((id, rot) in oldRotations) {
+            val el = updated.elements[id] ?: continue
+            updated = updated.withElement(el.withRotation(rot))
+        }
+        return updated
+    }
+}
+

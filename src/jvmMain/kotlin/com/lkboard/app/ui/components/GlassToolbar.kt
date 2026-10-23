@@ -101,6 +101,7 @@ fun GlassToolbar(
     onToolSelect: (CanvasTool) -> Unit,
     onPenSettingsChange: (PenSettings) -> Unit,
     onShapeSettingsChange: (com.lkboard.app.model.ShapeSettings) -> Unit = {},
+    onRotateSelectedBy: ((Float) -> Unit)? = null,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onCopy: () -> Unit,
@@ -284,6 +285,8 @@ fun GlassToolbar(
             onToolSelect = onToolSelect,
             onPenSettingsChange = onPenSettingsChange,
             onShapeSettingsChange = onShapeSettingsChange,
+            onRotateShapeBy = onRotateSelectedBy,
+            onResetShapeRotation = { onRotateSelectedBy?.invoke(0f) },
             gridType = gridType,
             onGridTypeChange = onGridTypeChange,
             modifier = Modifier.align(Alignment.CenterStart)

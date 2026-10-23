@@ -457,12 +457,13 @@
         <button class="tool-btn" id="toolDesmos" title="График функции Desmos (G)">📈</button>
         <button class="tool-btn" id="toolKanban" title="Канбан-доска (K)">📋</button>
         <button class="tool-btn" id="toolMilestone" title="Карточка вехи (M)">🗺️</button>
-        <button class="tool-btn" id="toolShape" title="Фигуры (R)">🔲</button>
+        <button class="tool-btn" id="toolShape" title="Фигуры (F)">🔲</button>
         <button class="tool-btn" id="toolText" title="Текстовый блок (T)">🔤</button>
         <button class="tool-btn" id="toolLaser" title="Лазерная указка (L)">🎯</button>
         <div class="tool-divider"></div>
         <button class="tool-btn" id="btnUndo" title="Отменить (Ctrl+Z)">↩️</button>
         <button class="tool-btn" id="btnRedo" title="Повторить (Ctrl+Y)">↪️</button>
+        <button class="tool-btn" id="btnRotate" title="Повернуть фигуру на 90° (R)" style="font-weight: bold; font-size: 15px;">↻</button>
         <button class="tool-btn" id="btnDelete" title="Удалить выделенное (Del)" style="color: #ef4444;">🗑️</button>
         <div class="tool-divider"></div>
         <!-- Color Palette -->
@@ -621,6 +622,9 @@
         let elements = {};
         let selectedElementId = null;
         let isDraggingElement = false;
+        let isRotatingElement = false;
+        let rotateStartAngle = 0;
+        let elementInitialRotation = 0;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
 
@@ -740,16 +744,69 @@
                 drawElement(el);
             }
 
-            // Draw selection box
+            // Draw selection box & rotation handle
             if (selectedElementId && elements[selectedElementId]) {
                 const sel = elements[selectedElementId];
                 const sx = sel.x, sy = sel.y, sw = sel.width || 200, sh = sel.height || 100;
+                const cx = sx + sw / 2;
+                const cy = sy + sh / 2;
+                const rotRad = (sel.rotation || 0) * Math.PI / 180;
+
                 ctx.save();
+                if (sel.rotation) {
+                    ctx.translate(cx, cy);
+                    ctx.rotate(rotRad);
+                    ctx.translate(-cx, -cy);
+                }
+
+                // Dotted selection frame
                 ctx.strokeStyle = '#2563eb';
                 ctx.lineWidth = 2 / scale;
                 ctx.setLineDash([6 / scale, 6 / scale]);
                 roundRect(ctx, sx - 6, sy - 6, sw + 12, sh + 12, 10);
                 ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 4 Corner handles
+                const corners = [
+                    { x: sx - 6, y: sy - 6 },
+                    { x: sx + sw + 6, y: sy - 6 },
+                    { x: sx + sw + 6, y: sy + sh + 6 },
+                    { x: sx - 6, y: sy + sh + 6 }
+                ];
+                corners.forEach(c => {
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, 4 / scale, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                    ctx.strokeStyle = '#2563eb';
+                    ctx.lineWidth = 1.5 / scale;
+                    ctx.stroke();
+                });
+
+                // Top rotation stem & circular knob
+                const stemLen = 26 / scale;
+                const rotKnobY = sy - 6 - stemLen;
+                ctx.beginPath();
+                ctx.moveTo(cx, sy - 6);
+                ctx.lineTo(cx, rotKnobY);
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 1.5 / scale;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(cx, rotKnobY, 5.5 / scale, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 2 / scale;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(cx, rotKnobY, 2.5 / scale, 0, Math.PI * 2);
+                ctx.fillStyle = '#2563eb';
+                ctx.fill();
+
                 ctx.restore();
             }
 
@@ -786,6 +843,15 @@
 
         function drawElement(el) {
             ctx.save();
+            if (el.rotation) {
+                const w = el.width || 0;
+                const h = el.height || 0;
+                const cx = (el.x || 0) + w / 2;
+                const cy = (el.y || 0) + h / 2;
+                ctx.translate(cx, cy);
+                ctx.rotate((el.rotation * Math.PI) / 180);
+                ctx.translate(-cx, -cy);
+            }
             const type = el.type;
             if (type === 'drawing_path' || el.points) drawStroke(el);
             else if (type === 'sticky_note' || (el.text && el.colorHex && type !== 'text')) drawSticky(el);
@@ -1114,12 +1180,48 @@
             }
 
             if (activeTool === 'select') {
-                // Check if clicked element
+                // 1. Проверка клика по маркеру вращения (Rotation Handle)
+                if (selectedElementId && elements[selectedElementId]) {
+                    const sel = elements[selectedElementId];
+                    const sx = sel.x, sy = sel.y, sw = sel.width || 200, sh = sel.height || 100;
+                    const cx = sx + sw / 2;
+                    const cy = sy + sh / 2;
+                    const rot = (sel.rotation || 0) * Math.PI / 180;
+                    const stemLen = 26 / scale;
+                    const knobY = sy - 6 - stemLen;
+
+                    // Обратный поворот точки клика вокруг центра
+                    const cos = Math.cos(-rot);
+                    const sin = Math.sin(-rot);
+                    const dx = worldPos.x - cx;
+                    const dy = worldPos.y - cy;
+                    const unrotX = dx * cos - dy * sin + cx;
+                    const unrotY = dx * sin + dy * cos + cy;
+
+                    if (Math.hypot(unrotX - cx, unrotY - knobY) <= 12 / scale) {
+                        isRotatingElement = true;
+                        rotateStartAngle = Math.atan2(worldPos.y - cy, worldPos.x - cx);
+                        elementInitialRotation = sel.rotation || 0;
+                        return;
+                    }
+                }
+
+                // 2. Поиск элемента с учетом вращения (Unrotated hit-test)
                 let foundId = null;
                 const sorted = Object.values(elements).reverse();
                 for (const el of sorted) {
                     const ex = el.x || 0, ey = el.y || 0, ew = el.width || 200, eh = el.height || 100;
-                    if (worldPos.x >= ex && worldPos.x <= ex + ew && worldPos.y >= ey && worldPos.y <= ey + eh) {
+                    const rot = (el.rotation || 0) * Math.PI / 180;
+                    const cx = ex + ew / 2;
+                    const cy = ey + eh / 2;
+                    const cos = Math.cos(-rot);
+                    const sin = Math.sin(-rot);
+                    const dx = worldPos.x - cx;
+                    const dy = worldPos.y - cy;
+                    const unrotX = dx * cos - dy * sin + cx;
+                    const unrotY = dx * sin + dy * cos + cy;
+
+                    if (unrotX >= ex && unrotX <= ex + ew && unrotY >= ey && unrotY <= ey + eh) {
                         foundId = el.id;
                         break;
                     }
@@ -1182,6 +1284,23 @@
                 return;
             }
 
+            if (isRotatingElement && selectedElementId && elements[selectedElementId]) {
+                const sel = elements[selectedElementId];
+                const sw = sel.width || 200, sh = sel.height || 100;
+                const cx = sel.x + sw / 2;
+                const cy = sel.y + sh / 2;
+                const curAngle = Math.atan2(worldPos.y - cy, worldPos.x - cx);
+                let deltaDeg = (curAngle - rotateStartAngle) * 180 / Math.PI;
+                if (e.shiftKey) {
+                    deltaDeg = Math.round(deltaDeg / 15) * 15;
+                }
+                let newRot = Math.round(elementInitialRotation + deltaDeg) % 360;
+                if (newRot < 0) newRot += 360;
+                sel.rotation = newRot;
+                render();
+                return;
+            }
+
             if (isDraggingElement && selectedElementId && elements[selectedElementId]) {
                 elements[selectedElementId].x = worldPos.x - dragOffsetX;
                 elements[selectedElementId].y = worldPos.y - dragOffsetY;
@@ -1201,6 +1320,16 @@
 
         canvas.addEventListener('mouseup', () => {
             isPanning = false;
+
+            if (isRotatingElement && selectedElementId && elements[selectedElementId]) {
+                isRotatingElement = false;
+                sendAction({
+                    type: 'upsert_element',
+                    element: elements[selectedElementId],
+                    senderId: clientId
+                });
+                render();
+            }
 
             if (isDraggingElement && selectedElementId && elements[selectedElementId]) {
                 isDraggingElement = false;
@@ -1423,18 +1552,56 @@
             };
         });
 
-        // Delete Element
+        // Rotate & Delete Element
+        document.getElementById('btnRotate').onclick = () => rotateSelectedBy(90);
         document.getElementById('btnDelete').onclick = () => deleteSelected();
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
                     deleteSelected();
                 }
+            } else if (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') {
+                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    if (selectedElementId && elements[selectedElementId]) {
+                        e.preventDefault();
+                        rotateSelectedBy(e.shiftKey ? -90 : 90);
+                    }
+                }
+            } else if (e.key === '[' || e.key === 'х' || e.key === 'Х') {
+                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    if (selectedElementId && elements[selectedElementId]) {
+                        e.preventDefault();
+                        rotateSelectedBy(-15);
+                    }
+                }
+            } else if (e.key === ']' || e.key === 'ъ' || e.key === 'Ъ') {
+                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    if (selectedElementId && elements[selectedElementId]) {
+                        e.preventDefault();
+                        rotateSelectedBy(15);
+                    }
+                }
             } else if (e.key === 'F5') {
                 e.preventDefault();
                 togglePresentationMode();
             }
         });
+
+        function rotateSelectedBy(deltaDeg) {
+            if (selectedElementId && elements[selectedElementId]) {
+                const sel = elements[selectedElementId];
+                let newRot = Math.round((sel.rotation || 0) + deltaDeg) % 360;
+                if (newRot < 0) newRot += 360;
+                sel.rotation = newRot;
+                sendAction({
+                    type: 'upsert_element',
+                    element: sel,
+                    senderId: clientId
+                });
+                render();
+                showToast(`Поворот: ${newRot}°`);
+            }
+        }
 
         function deleteSelected() {
             if (selectedElementId && elements[selectedElementId]) {

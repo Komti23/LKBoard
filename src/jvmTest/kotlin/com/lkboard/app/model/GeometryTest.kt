@@ -98,4 +98,52 @@ class GeometryTest {
         val miss = GeometryUtils.hitTestEraser(Offset(0f, 0f), elements, eraserRadiusWorld = 10f)
         assertTrue(miss.isEmpty())
     }
+
+    @Test
+    fun testHitTestRotatedElement() {
+        // Квадрат 100x100 в позиции (100, 100) с центром в (150, 150), повернутый на 45 градусов
+        val shape = BoardElement.Shape(
+            id = "rotated-diamond",
+            x = 100f,
+            y = 100f,
+            width = 100f,
+            height = 100f,
+            rotation = 45f
+        )
+        val elements = listOf(shape)
+
+        // Центр квадрата всегда попадает
+        val hitCenter = GeometryUtils.hitTestElement(Offset(150f, 150f), elements)
+        assertNotNull(hitCenter)
+        assertEquals("rotated-diamond", hitCenter.id)
+
+        // Верхний угол ромба при 45°: (150, 150 - 50 * sqrt(2)) ≈ (150, 79.29)
+        // Точка (150, 85) лежит внутри повернутого ромба, хотя y < 100 (вне исходного bounds)!
+        val hitTopCorner = GeometryUtils.hitTestElement(Offset(150f, 85f), elements)
+        assertNotNull(hitTopCorner)
+        assertEquals("rotated-diamond", hitTopCorner.id)
+
+        // Точка (102, 102) лежала бы внутри исходного квадрата, но в повернутом на 45° ромбе она СНАРУЖИ!
+        val missCorner = GeometryUtils.hitTestElement(Offset(102f, 102f), elements)
+        assertNull(missCorner)
+    }
+
+    @Test
+    fun testHitTestRotationHandle() {
+        val bounds = Rect(100f, 100f, 300f, 300f) // center = (200, 200), top = 100
+        val scale = 1.0f
+        // Rotation handle at (200, 100 - 26) = (200, 74)
+
+        // Прямой клик по маркеру вращения
+        val hit = GeometryUtils.hitTestRotationHandle(Offset(200f, 74f), bounds, rotation = 0f, scale = scale)
+        assertTrue(hit)
+
+        // Небольшое смещение в пределах радиуса
+        val hitSlightOffset = GeometryUtils.hitTestRotationHandle(Offset(204f, 76f), bounds, rotation = 0f, scale = scale)
+        assertTrue(hitSlightOffset)
+
+        // Клик далеко мимо
+        val miss = GeometryUtils.hitTestRotationHandle(Offset(200f, 200f), bounds, rotation = 0f, scale = scale)
+        assertTrue(!miss)
+    }
 }

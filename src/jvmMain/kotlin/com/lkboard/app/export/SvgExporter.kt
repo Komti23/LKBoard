@@ -39,6 +39,12 @@ object SvgExporter {
         sb.appendLine("""  <rect x="$viewBoxX" y="$viewBoxY" width="$viewBoxW" height="$viewBoxH" fill="$bgHex" />""")
 
         for (el in elements) {
+            val hasRotation = el.rotation != 0f
+            if (hasRotation) {
+                val cx = el.x + el.width / 2f
+                val cy = el.y + el.height / 2f
+                sb.appendLine("""  <g transform="rotate(${el.rotation} $cx $cy)">""")
+            }
             when (el) {
                 is BoardElement.StickyNote -> {
                     val fill = String.format("#%06X", el.colorHex and 0xFFFFFFL)
@@ -207,6 +213,9 @@ object SvgExporter {
                 }
 
                 else -> {}
+            }
+            if (hasRotation) {
+                sb.appendLine("""  </g>""")
             }
         }
 

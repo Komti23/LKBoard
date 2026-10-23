@@ -77,6 +77,8 @@ fun LeftToolbar(
     onToolSelect: (CanvasTool) -> Unit,
     onPenSettingsChange: (PenSettings) -> Unit,
     onShapeSettingsChange: (ShapeSettings) -> Unit = {},
+    onRotateShapeBy: ((Float) -> Unit)? = null,
+    onResetShapeRotation: (() -> Unit)? = null,
     gridType: GridType = GridType.DOTS,
     onGridTypeChange: ((GridType) -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -325,7 +327,9 @@ fun LeftToolbar(
             ShapePropertiesPopup(
                 settings = effectiveShape,
                 isEditingSelectedShape = hasSelectedShape,
-                onSettingsChange = onShapeSettingsChange
+                onSettingsChange = onShapeSettingsChange,
+                onRotateBy = onRotateShapeBy,
+                onResetRotation = onResetShapeRotation
             )
         }
     }

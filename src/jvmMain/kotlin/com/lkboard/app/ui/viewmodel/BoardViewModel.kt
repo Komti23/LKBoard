@@ -9,6 +9,7 @@ import com.lkboard.app.history.DuplicateElementsCommand
 import com.lkboard.app.history.HistoryManager
 import com.lkboard.app.history.MoveElementsCommand
 import com.lkboard.app.history.ResizeElementCommand
+import com.lkboard.app.history.RotateElementsCommand
 import com.lkboard.app.history.UpdateTextCommand
 import com.lkboard.app.model.BoardElement
 import com.lkboard.app.model.BoardState
@@ -724,6 +725,72 @@ class BoardViewModel {
         updateHistoryFlags()
         triggerAutoSave(immediate = false)
         _state.value.elements[elementId]?.let { collabManager.broadcastElementUpsert(it) }
+    }
+
+    // --- Вращение элементов (Rotate) ---
+
+    fun rotateElementsLive(elementIds: Set<String>, initialRotations: Map<String, Float>, deltaAngle: Float) {
+        _state.update { current ->
+            var updated = current
+            for (id in elementIds) {
+                val el = updated.elements[id] ?: continue
+                val base = initialRotations[id] ?: el.rotation
+                var newRot = (base + deltaAngle) % 360f
+                if (newRot < 0f) newRot += 360f
+                updated = updated.withElement(el.withRotation(newRot))
+            }
+            updated
+        }
+    }
+
+    fun commitRotate(elementIds: Set<String>, initialRotations: Map<String, Float>, deltaAngle: Float) {
+        if (deltaAngle == 0f) return
+        val finalRotations = elementIds.associateWith { id ->
+            val base = initialRotations[id] ?: 0f
+            var newRot = (base + deltaAngle) % 360f
+            if (newRot < 0f) newRot += 360f
+            newRot
+        }
+        val cmd = RotateElementsCommand(
+            oldRotations = initialRotations,
+            newRotations = finalRotations
+        )
+        _state.update { current ->
+            var revertedState = current
+            for ((id, rot) in initialRotations) {
+                val el = revertedState.elements[id] ?: continue
+                revertedState = revertedState.withElement(el.withRotation(rot))
+            }
+            historyManager.execute(cmd, revertedState)
+        }
+        updateHistoryFlags()
+        triggerAutoSave(immediate = false)
+        elementIds.forEach { id ->
+            _state.value.elements[id]?.let { collabManager.broadcastElementUpsert(it) }
+        }
+    }
+
+    /**
+     * Быстрый поворот выделенных элементов на угол [deltaDegrees] (например, +90° или -90°).
+     */
+    fun rotateSelectedBy(deltaDegrees: Float) {
+        val selectedIds = _state.value.selectedElementIds
+        if (selectedIds.isEmpty()) return
+        val currentElements = _state.value.elements
+        val initialRotations = selectedIds.associateWith { currentElements[it]?.rotation ?: 0f }
+        val finalRotations = initialRotations.mapValues { (_, rot) ->
+            var newRot = (rot + deltaDegrees) % 360f
+            if (newRot < 0f) newRot += 360f
+            newRot
+        }
+        val cmd = RotateElementsCommand(
+            oldRotations = initialRotations,
+            newRotations = finalRotations
+        )
+        executeCommand(cmd)
+        selectedIds.forEach { id ->
+            _state.value.elements[id]?.let { collabManager.broadcastElementUpsert(it) }
+        }
     }
 
     // --- Создание элементов ---

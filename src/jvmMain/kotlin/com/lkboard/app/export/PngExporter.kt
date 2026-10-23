@@ -53,6 +53,11 @@ object PngExporter {
         val defaultTypeface = Typeface.makeDefault()
 
         for (element in elementsToRender) {
+            val hasRotation = element.rotation != 0f
+            if (hasRotation) {
+                canvas.save()
+                canvas.rotate(element.rotation, element.x + element.width / 2f, element.y + element.height / 2f)
+            }
             when (element) {
                 is BoardElement.StickyNote -> renderStickyNote(canvas, element, defaultTypeface)
                 is BoardElement.Shape -> renderShape(canvas, element)
@@ -64,6 +69,9 @@ object PngExporter {
                 is BoardElement.MilestoneCard -> renderMilestoneCard(canvas, element, defaultTypeface)
                 is BoardElement.FunctionGraph -> renderFunctionGraph(canvas, element, defaultTypeface)
                 is BoardElement.KanbanBoard -> renderKanbanBoard(canvas, element, defaultTypeface, state)
+            }
+            if (hasRotation) {
+                canvas.restore()
             }
         }
 

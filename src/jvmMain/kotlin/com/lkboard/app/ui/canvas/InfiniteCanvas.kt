@@ -103,6 +103,8 @@ fun InfiniteCanvas(
     onCommitMove: (ids: Set<String>, totalDeltaX: Float, totalDeltaY: Float) -> Unit,
     onResizeElementLive: (elementId: String, newBounds: Rect) -> Unit,
     onCommitResize: (elementId: String, initialBounds: Rect, finalBounds: Rect) -> Unit,
+    onRotateElementsLive: (elementIds: Set<String>, initialRotations: Map<String, Float>, deltaAngle: Float) -> Unit = { _, _, _ -> },
+    onCommitRotate: (elementIds: Set<String>, initialRotations: Map<String, Float>, deltaAngle: Float) -> Unit = { _, _, _ -> },
     onDoubleTapElement: (BoardElement) -> Unit,
     onCreateStickyNote: (Offset) -> Unit,
     onCreateShape: (x: Float, y: Float, width: Float, height: Float) -> Unit,
@@ -177,6 +179,8 @@ fun InfiniteCanvas(
     val currentOnCommitMove by rememberUpdatedState(onCommitMove)
     val currentOnResizeElementLive by rememberUpdatedState(onResizeElementLive)
     val currentOnCommitResize by rememberUpdatedState(onCommitResize)
+    val currentOnRotateElementsLive by rememberUpdatedState(onRotateElementsLive)
+    val currentOnCommitRotate by rememberUpdatedState(onCommitRotate)
     val currentOnDoubleTapElement by rememberUpdatedState(onDoubleTapElement)
     val currentOnCreateStickyNote by rememberUpdatedState(onCreateStickyNote)
     val currentOnCreateShape by rememberUpdatedState(onCreateShape)
@@ -202,6 +206,8 @@ fun InfiniteCanvas(
         currentOnCommitMove,
         currentOnResizeElementLive,
         currentOnCommitResize,
+        currentOnRotateElementsLive,
+        currentOnCommitRotate,
         currentOnDoubleTapElement,
         currentOnCreateStickyNote,
         currentOnCreateShape,
@@ -227,6 +233,8 @@ fun InfiniteCanvas(
             onCommitMove = currentOnCommitMove,
             onResizeElementLive = currentOnResizeElementLive,
             onCommitResize = currentOnCommitResize,
+            onRotateElementsLive = currentOnRotateElementsLive,
+            onCommitRotate = currentOnCommitRotate,
             onDoubleTapElement = currentOnDoubleTapElement,
             onCreateStickyNote = currentOnCreateStickyNote,
             onCreateShape = currentOnCreateShape,
@@ -595,11 +603,14 @@ fun InfiniteCanvas(
 
                 // 3. Отрисовка Bounding Box и маркеров для выделенных элементов (для инструмента SELECT или при активном выделении)
                 if (selectedBounds != null && (state.activeTool == CanvasTool.SELECT || state.selectedElementIds.isNotEmpty())) {
+                    val singleElement = if (selectedElements.size == 1) selectedElements.first() else null
+                    val currentRotation = singleElement?.rotation ?: 0f
                     SelectionRenderer.drawBoundingBox(
                         drawScope = this,
                         bounds = selectedBounds,
                         scale = state.transform.scale,
-                        isMultiSelection = selectedElements.size > 1
+                        isMultiSelection = selectedElements.size > 1,
+                        rotation = currentRotation
                     )
                 }
 
