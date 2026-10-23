@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LKBoard Web Studio — Бесконечная доска онлайн</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-canvas: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.82);
+            --glass-border: rgba(255, 255, 255, 0.95);
+            --glass-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04);
+            --accent: #2563eb;
+            --accent-gradient: linear-gradient(135deg, #2563eb 0%, #4facfe 100%);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-canvas);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            touch-action: none;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: default;
+        }
+
+        /* Glass Panels */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: var(--radius-md);
+        }
+
+        /* Header Bar */
+        .header {
+            position: fixed;
+            top: 14px;
+            left: 16px;
+            right: 16px;
+            height: 54px;
+            padding: 0 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 800;
+            font-size: 1.05rem;
+        }
+
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+        }
+
+        .board-title-input {
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            padding: 4px 8px;
+            border-radius: 6px;
+            outline: none;
+            max-width: 240px;
+        }
+
+        .board-title-input:focus {
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .room-pill {
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            background: rgba(37, 99, 235, 0.08);
+            border: 1px solid rgba(37, 99, 235, 0.18);
+            border-radius: 999px;
+            color: var(--accent);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-header:hover {
+            background: rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .btn-header.primary {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-header.primary:hover {
+            background: #1d4ed8;
+        }
+
+        /* Left Floating Main Toolbar */
+        .toolbar {
+            position: fixed;
+            left: 16px;
+            top: 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 10px 8px;
+            z-index: 100;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .tool-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+            transform: scale(1.05);
+        }
+
+        .tool-btn.active {
+            background: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+        }
+
+        .tool-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.08);
+            margin: 4px 2px;
+        }
+
+        /* Color Palette in Toolbar */
+        .palette-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.15s ease;
+        }
+
+        .color-dot:hover {
+            transform: scale(1.2);
+        }
+
+        .color-dot.active {
+            border-color: #0f172a;
+            transform: scale(1.25);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Zoom & View Controls */
+        .bottom-bar {
+            position: fixed;
+            bottom: 18px;
+            right: 18px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            z-index: 100;
+        }
+
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(0, 0, 0, 0.04);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .zoom-display {
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 0 8px;
+            min-width: 50px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        /* Floating Pomodoro Workshop Timer */
+        .timer-widget {
+            position: fixed;
+            top: 80px;
+            right: 16px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 100;
+            transition: all 0.2s ease;
+        }
+
+        .timer-clock {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        .timer-btn {
+            border: none;
+            background: rgba(0, 0, 0, 0.05);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .timer-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Modals & Dialogs */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+            animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .modal-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(50px);
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 999px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.25s var(--ease-spring);
+            z-index: 300;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Presentation Mode */
+        body.presentation-mode .header,
+        body.presentation-mode .toolbar,
+        body.presentation-mode .bottom-bar {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Infinite Inking Canvas -->
+    <canvas id="canvas"></canvas>
+
+    <!-- Header Glass Bar -->
+    <div class="header glass-panel">
+        <div class="header-left">
+            <a href="/" class="brand-pill">
+                <img src="/images/logo.png" alt="LKBoard" class="brand-logo">
+                <span>LKBoard</span>
+            </a>
+            <input type="text" id="boardTitleInput" class="board-title-input" value="LKBoard Live" title="Нажмите, чтобы переименовать доску">
+            <div class="room-pill" id="btnShareRoom" title="Скопировать ссылку для совместной работы">
+                <span>🔗</span>
+                <span id="roomCodeText">LK-ROOM-PLACEHOLDER</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="btn-header" id="btnTemplates" title="Готовые шаблоны создания доски">📑 Шаблоны</button>
+            <button class="btn-header" id="btnToggleTimer" title="Плавающий таймер Pomodoro">⏱️ Таймер</button>
+            <button class="btn-header" id="btnExport" title="Экспорт доски в изображение или PDF">📤 Экспорт</button>
+            <button class="btn-header primary" id="btnPresentation" title="Полноэкранный режим презентации (F5)">🖥️ Презентация (F5)</button>
+        </div>
+    </div>
+
+    <!-- Left Main Tool & Inking Toolbar -->
+    <div class="toolbar glass-panel">
+        <button class="tool-btn active" id="toolSelect" title="Выделение и перемещение (V)">👆</button>
+        <button class="tool-btn" id="toolHand" title="Панорамирование холста (H)">✋</button>
+        <button class="tool-btn" id="toolPen" title="Стилус / Перо (P)">✏️</button>
+        <button class="tool-btn" id="toolHighlighter" title="Маркер (Q)">🖍️</button>
+        <button class="tool-btn" id="toolEraser" title="Ластик (E)">🧹</button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" id="toolSticky" title="Создать стикер To-Do (S)">🗂️</button>
+        <button class="tool-btn" id="toolDesmos" title="График функции Desmos (G)">📈</button>
+        <button class="tool-btn" id="toolKanban" title="Канбан-доска (K)">📋</button>
+        <button class="tool-btn" id="toolMilestone" title="Карточка вехи (M)">🗺️</button>
+        <button class="tool-btn" id="toolShape" title="Фигуры (R)">🔲</button>
+        <button class="tool-btn" id="toolText" title="Текстовый блок (T)">🔤</button>
+        <button class="tool-btn" id="toolLaser" title="Лазерная указка (L)">🎯</button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" id="btnUndo" title="Отменить (Ctrl+Z)">↩️</button>
+        <button class="tool-btn" id="btnRedo" title="Повторить (Ctrl+Y)">↪️</button>
+        <button class="tool-btn" id="btnDelete" title="Удалить выделенное (Del)" style="color: #ef4444;">🗑️</button>
+        <div class="tool-divider"></div>
+        <!-- Color Palette -->
+        <div class="palette-group">
+            <div class="color-dot active" style="background: #2563eb;" data-color="#2563eb"></div>
+            <div class="color-dot" style="background: #00f2fe;" data-color="#00f2fe"></div>
+            <div class="color-dot" style="background: #ef4444;" data-color="#ef4444"></div>
+            <div class="color-dot" style="background: #10b981;" data-color="#10b981"></div>
+            <div class="color-dot" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+            <div class="color-dot" style="background: #f59e0b;" data-color="#f59e0b"></div>
+            <div class="color-dot" style="background: #0f172a;" data-color="#0f172a"></div>
+        </div>
+    </div>
+
+    <!-- Floating Pomodoro Workshop Timer -->
+    <div class="timer-widget glass-panel" id="timerWidget">
+        <span style="font-size: 1.1rem;">⏱️</span>
+        <div class="timer-clock" id="timerClock">25:00</div>
+        <button class="timer-btn" id="btnTimerPlay" title="Старт / Пауза">▶️</button>
+        <button class="timer-btn" id="btnTimerReset" title="Сброс на 25 минут">🔄</button>
+        <button class="timer-btn" id="btnTimerAdd" title="+1 минута">+1</button>
+    </div>
+
+    <!-- Bottom Zoom Controls -->
+    <div class="bottom-bar glass-panel">
+        <button class="zoom-btn" id="btnZoomOut" title="Уменьшить">−</button>
+        <span class="zoom-display" id="zoomValue" title="Сбросить масштаб">100%</span>
+        <button class="zoom-btn" id="btnZoomIn" title="Увеличить">+</button>
+        <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.1); margin: 0 4px;"></div>
+        <button class="zoom-btn" id="btnFit" title="Подогнать под всё содержимое (Ctrl+1)">⛶</button>
+        <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.1); margin: 0 4px;"></div>
+        <span id="peersCountText" style="font-size: 0.76rem; font-weight: 600; color: #10b981;">🟢 1 онлайн</span>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Modal: Desmos Math Graph -->
+    <div class="modal-overlay" id="modalGraph">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">📈 Вставить график функции (Desmos)</div>
+                <button class="modal-close" onclick="closeModal('modalGraph')">✕</button>
+            </div>
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Уравнение функции f(x):</label>
+            <input type="text" id="inputGraphFormula" class="modal-input" value="sin(x) * 2" placeholder="Например: sin(x) + cos(2*x)">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;">
+                <button class="btn-header" onclick="setGraphPreset('sin(x) * 2')">sin(x) * 2</button>
+                <button class="btn-header" onclick="setGraphPreset('x^2 - 4')">x² - 4</button>
+                <button class="btn-header" onclick="setGraphPreset('x^3 - 3*x')">x³ - 3x</button>
+                <button class="btn-header" onclick="setGraphPreset('sqrt(abs(x))')">sqrt(|x|)</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label style="font-size: 0.8rem; color: #64748b;">X min:</label>
+                    <input type="number" id="inputGraphXMin" class="modal-input" value="-10">
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: #64748b;">X max:</label>
+                    <input type="number" id="inputGraphXMax" class="modal-input" value="10">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-header" onclick="closeModal('modalGraph')">Отмена</button>
+                <button class="btn-header primary" id="btnConfirmGraph">Вставить на доску</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Sticky Note Editor -->
+    <div class="modal-overlay" id="modalSticky">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">🗂️ Редактор стикера</div>
+                <button class="modal-close" onclick="closeModal('modalSticky')">✕</button>
+            </div>
+            <textarea id="inputStickyText" class="modal-input" style="height: 140px; resize: none;"></textarea>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <div class="color-dot active" style="background: #fef08a;" onclick="selectStickyColor(0xFFFEF08A)"></div>
+                <div class="color-dot" style="background: #bbf7d0;" onclick="selectStickyColor(0xFFBBF7D0)"></div>
+                <div class="color-dot" style="background: #bae6fd;" onclick="selectStickyColor(0xFFBAE6FD)"></div>
+                <div class="color-dot" style="background: #fed7aa;" onclick="selectStickyColor(0xFFFED7AA)"></div>
+                <div class="color-dot" style="background: #fbcfe8;" onclick="selectStickyColor(0xFFFBCFE8)"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-header" onclick="closeModal('modalSticky')">Отмена</button>
+                <button class="btn-header primary" id="btnSaveSticky">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Templates Generator -->
+    <div class="modal-overlay" id="modalTemplates">
+        <div class="modal-card" style="max-width: 540px;">
+            <div class="modal-header">
+                <div class="modal-title">📑 Выберите готовый шаблон</div>
+                <button class="modal-close" onclick="closeModal('modalTemplates')">✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="glass-panel" style="padding: 16px; cursor: pointer;" onclick="loadTemplate('math')">
+                    <div style="font-size: 1.4rem; margin-bottom: 6px;">📈</div>
+                    <div style="font-weight: 700; font-size: 0.95rem;">Математика (Desmos)</div>
+                    <div style="font-size: 0.78rem; color: #64748b;">Тригонометрия, полиномы и памятка формул</div>
+                </div>
+                <div class="glass-panel" style="padding: 16px; cursor: pointer;" onclick="loadTemplate('kanban')">
+                    <div style="font-size: 1.4rem; margin-bottom: 6px;">📋</div>
+                    <div style="font-weight: 700; font-size: 0.95rem;">Канбан-спринт</div>
+                    <div style="font-size: 0.78rem; color: #64748b;">4 колонки этапов и карточки задач</div>
+                </div>
+                <div class="glass-panel" style="padding: 16px; cursor: pointer;" onclick="loadTemplate('roadmap')">
+                    <div style="font-size: 1.4rem; margin-bottom: 6px;">🗺️</div>
+                    <div style="font-weight: 700; font-size: 0.95rem;">Дорожная карта (Roadmap)</div>
+                    <div style="font-size: 0.78rem; color: #64748b;">Кварталы Q1–Q3, вехи и зависимости</div>
+                </div>
+                <div class="glass-panel" style="padding: 16px; cursor: pointer;" onclick="loadTemplate('blank')">
+                    <div style="font-size: 1.4rem; margin-bottom: 6px;">📄</div>
+                    <div style="font-weight: 700; font-size: 0.95rem;">Чистый холст</div>
+                    <div style="font-size: 0.78rem; color: #64748b;">Очистить доску и начать с чистого листа</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Export -->
+    <div class="modal-overlay" id="modalExport">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">📤 Экспорт доски</div>
+                <button class="modal-close" onclick="closeModal('modalExport')">✕</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-header" style="justify-content: flex-start; padding: 12px;" onclick="exportAsPNG()">
+                    <span>🖼️</span> <span>Экспорт в изображение PNG (4K)</span>
+                </button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 12px;" onclick="copyBoardToClipboard()">
+                    <span>📋</span> <span>Скопировать снимок в буфер обмена</span>
+                </button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 12px;" onclick="exportAsJSON()">
+                    <span>💾</span> <span>Сохранить файл проекта (.lkboard)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Действие выполнено</div>
+
+    <!-- Core Web Studio Engine -->
+    <script>
+        // Parameters & State
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room') || 'LK-MAIN';
+        document.getElementById('roomCodeText').textContent = roomCode;
+
+        let clientId = 'web-' + Math.random().toString(36).substring(2, 9);
+        let clientName = 'Участник ' + Math.floor(100 + Math.random() * 900);
+
+        let elements = {};
+        let selectedElementId = null;
+        let isDraggingElement = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        let scale = 1.0;
+        let panX = window.innerWidth / 2;
+        let panY = window.innerHeight / 2;
+
+        let activeTool = 'select';
+        let currentColor = '#2563eb';
+        let currentWidth = 3.5;
+
+        let isDrawing = false;
+        let currentStroke = null;
+        let remotePointers = {};
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth * window.devicePixelRatio;
+            canvas.height = window.innerHeight * window.devicePixelRatio;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            render();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function worldToScreen(wx, wy) {
+            return { x: wx * scale + panX, y: wy * scale + panY };
+        }
+
+        function screenToWorld(sx, sy) {
+            return { x: (sx - panX) / scale, y: (sy - panY) / scale };
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+            if (ctx.roundRect) {
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, r);
+                return;
+            }
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+
+        function hexToColor(hex) {
+            if (typeof hex === 'string') return hex;
+            if (typeof hex === 'number') {
+                const clean = (hex & 0xFFFFFF).toString(16).padStart(6, '0');
+                return '#' + clean;
+            }
+            return '#2563eb';
+        }
+
+        function updateZoomPill() {
+            document.getElementById('zoomValue').textContent = Math.round(scale * 100) + '%';
+        }
+
+        function fitToContent() {
+            const list = Object.values(elements);
+            if (list.length === 0) {
+                panX = window.innerWidth / 2;
+                panY = window.innerHeight / 2;
+                scale = 1.0;
+                render();
+                updateZoomPill();
+                return;
+            }
+
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const el of list) {
+                let ex = el.x || 0, ey = el.y || 0, ew = el.width || 200, eh = el.height || 100;
+                if (el.points && el.points.length > 0) {
+                    for (const p of el.points) {
+                        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+                        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+                    }
+                } else {
+                    minX = Math.min(minX, ex); minY = Math.min(minY, ey);
+                    maxX = Math.max(maxX, ex + ew); maxY = Math.max(maxY, ey + eh);
+                }
+            }
+
+            const boxW = Math.max(maxX - minX, 100);
+            const boxH = Math.max(maxY - minY, 100);
+            const availW = Math.max(window.innerWidth - 160, 200);
+            const availH = Math.max(window.innerHeight - 200, 200);
+
+            scale = Math.max(0.2, Math.min(availW / boxW, availH / boxH, 1.4));
+            panX = (window.innerWidth - boxW * scale) / 2 - minX * scale;
+            panY = (window.innerHeight - boxH * scale) / 2 - minY * scale;
+            render();
+            updateZoomPill();
+        }
+
+        // Main Render Loop
+        function render() {
+            const dpr = window.devicePixelRatio;
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawGrid();
+
+            ctx.scale(dpr, dpr);
+            ctx.translate(panX, panY);
+            ctx.scale(scale, scale);
+
+            const sorted = Object.values(elements).sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            for (const el of sorted) {
+                drawElement(el);
+            }
+
+            // Draw selection box
+            if (selectedElementId && elements[selectedElementId]) {
+                const sel = elements[selectedElementId];
+                const sx = sel.x, sy = sel.y, sw = sel.width || 200, sh = sel.height || 100;
+                ctx.save();
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 2 / scale;
+                ctx.setLineDash([6 / scale, 6 / scale]);
+                roundRect(ctx, sx - 6, sy - 6, sw + 12, sh + 12, 10);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            if (currentStroke && currentStroke.points && currentStroke.points.length > 1) {
+                drawStroke(currentStroke);
+            }
+
+            for (const pid in remotePointers) {
+                drawPointer(remotePointers[pid]);
+            }
+
+            ctx.restore();
+        }
+
+        function drawGrid() {
+            const dpr = window.devicePixelRatio;
+            ctx.save();
+            ctx.scale(dpr, dpr);
+            ctx.fillStyle = '#cbd5e1';
+            const step = 32 * scale;
+            if (step > 9) {
+                const startX = (panX % step + step) % step;
+                const startY = (panY % step + step) % step;
+                for (let x = startX; x < window.innerWidth; x += step) {
+                    for (let y = startY; y < window.innerHeight; y += step) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+            ctx.restore();
+        }
+
+        function drawElement(el) {
+            ctx.save();
+            const type = el.type;
+            if (type === 'drawing_path' || el.points) drawStroke(el);
+            else if (type === 'sticky_note' || (el.text && el.colorHex && type !== 'text')) drawSticky(el);
+            else if (type === 'milestone_card' || el.status !== undefined) drawMilestone(el);
+            else if (type === 'kanban_board') drawKanban(el);
+            else if (type === 'function_graph' || el.expressions !== undefined) drawFunctionGraph(el);
+            else if (type === 'shape' || el.shapeType !== undefined) drawShape(el);
+            else if (type === 'connector' || el.startPoint !== undefined) drawConnector(el);
+            else if (type === 'text') drawText(el);
+            ctx.restore();
+        }
+
+        function drawStroke(s) {
+            if (!s.points || s.points.length < 1) return;
+            ctx.beginPath();
+            const color = s.strokeColorHex ? hexToColor(s.strokeColorHex) : (s.color || '#2563eb');
+            ctx.strokeStyle = s.isHighlighter ? (color + '55') : color;
+            ctx.lineWidth = s.strokeWidth || 3.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.moveTo(s.points[0].x, s.points[0].y);
+            for (let i = 1; i < s.points.length; i++) {
+                ctx.lineTo(s.points[i].x, s.points[i].y);
+            }
+            ctx.stroke();
+        }
+
+        function drawSticky(note) {
+            const x = note.x, y = note.y, w = note.width || 210, h = note.height || 210;
+            const bg = note.colorHex ? hexToColor(note.colorHex) : '#fef08a';
+
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetY = 4;
+            ctx.fillStyle = bg;
+            roundRect(ctx, x, y, w, h, 14);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+
+            // Paper peel fold
+            const fold = Math.min(20, w * 0.12);
+            ctx.beginPath();
+            ctx.moveTo(x + w - fold, y + h);
+            ctx.lineTo(x + w, y + h - fold);
+            ctx.lineTo(x + w - fold, y + h - fold);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.fill();
+
+            // Text & Checkboxes
+            const text = note.text || '';
+            const lines = text.split('\n');
+            const autoFontSize = Math.max(11, Math.min(16, w / 14));
+            const lineH = autoFontSize * 1.5;
+            let ty = y + 18;
+
+            for (let i = 0; i < lines.length; i++) {
+                if (ty + lineH > y + h - 14) break;
+                const rawLine = lines[i];
+                const trimmed = rawLine.trim();
+                const isChecked = trimmed.startsWith('- [x] ') || trimmed.startsWith('[x] ') || trimmed.startsWith('- [X] ');
+                const isUnchecked = trimmed.startsWith('- [ ] ') || trimmed.startsWith('[ ] ');
+
+                if (isChecked || isUnchecked) {
+                    const todoText = trimmed.startsWith('- ') ? trimmed.substring(6) : trimmed.substring(4);
+                    const cbSize = Math.max(13, autoFontSize * 1.05);
+                    const cbX = x + 14;
+                    const cbY = ty;
+
+                    if (isChecked) {
+                        ctx.fillStyle = '#16a34a';
+                        roundRect(ctx, cbX, cbY, cbSize, cbSize, 4);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.6;
+                        ctx.beginPath();
+                        ctx.moveTo(cbX + cbSize * 0.22, cbY + cbSize * 0.52);
+                        ctx.lineTo(cbX + cbSize * 0.44, cbY + cbSize * 0.74);
+                        ctx.lineTo(cbX + cbSize * 0.78, cbY + cbSize * 0.26);
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.font = autoFontSize + 'px Inter, sans-serif';
+                        ctx.fillText(todoText, cbX + cbSize + 8, ty + cbSize * 0.85);
+                    } else {
+                        ctx.fillStyle = '#ffffff';
+                        roundRect(ctx, cbX, cbY, cbSize, cbSize, 4);
+                        ctx.fill();
+                        ctx.strokeStyle = '#94a3b8';
+                        ctx.lineWidth = 1.3;
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#1e293b';
+                        ctx.font = '500 ' + autoFontSize + 'px Inter, sans-serif';
+                        ctx.fillText(todoText, cbX + cbSize + 8, ty + cbSize * 0.85);
+                    }
+                } else {
+                    const isFirstHeader = (i === 0 && lines.length > 1 && !rawLine.startsWith('- '));
+                    ctx.fillStyle = isFirstHeader ? '#0f172a' : '#1e293b';
+                    ctx.font = (isFirstHeader ? 'bold ' : '500 ') + autoFontSize + 'px Inter, sans-serif';
+                    ctx.fillText(rawLine, x + 14, ty + autoFontSize * 0.85);
+                }
+                ty += lineH;
+            }
+        }
+
+        function drawFunctionGraph(g) {
+            const x = g.x, y = g.y, w = g.width || 420, h = g.height || 320;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+            ctx.shadowBlur = 16;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, x, y, w, h, 16);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1.2;
+            roundRect(ctx, x, y, w, h, 16);
+            ctx.stroke();
+
+            // Header
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 13px Inter, sans-serif';
+            ctx.fillText('📈 ' + (g.title || 'График Desmos'), x + 16, y + 26);
+
+            // Graph Plot Area
+            const px = x + 12, py = y + 42, pw = w - 24, ph = h - 54;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(px, py, pw, ph);
+            ctx.clip();
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(px, py, pw, ph);
+
+            const xMin = g.xMin || -10, xMax = g.xMax || 10;
+            const yMin = g.yMin || -6, yMax = g.yMax || 6;
+
+            const toScreenX = (val) => px + ((val - xMin) / (xMax - xMin)) * pw;
+            const toScreenY = (val) => py + ((yMax - val) / (yMax - yMin)) * ph;
+
+            const originX = Math.max(px, Math.min(px + pw, toScreenX(0)));
+            const originY = Math.max(py, Math.min(py + ph, toScreenY(0)));
+
+            // Axes
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(px, originY); ctx.lineTo(px + pw, originY);
+            ctx.moveTo(originX, py); ctx.lineTo(originX, py + ph);
+            ctx.stroke();
+
+            // Curves
+            if (g.expressions && g.expressions.length > 0) {
+                const colors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea'];
+                g.expressions.forEach((expr, idx) => {
+                    ctx.strokeStyle = colors[idx % colors.length];
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    let started = false;
+                    const steps = 180;
+                    for (let s = 0; s <= steps; s++) {
+                        const xv = xMin + (s / steps) * (xMax - xMin);
+                        let yv = null;
+                        try {
+                            let jsExpr = expr.replace(/\^/g, '**')
+                                             .replace(/sin\(/g, 'Math.sin(')
+                                             .replace(/cos\(/g, 'Math.cos(')
+                                             .replace(/tan\(/g, 'Math.tan(')
+                                             .replace(/sqrt\(/g, 'Math.sqrt(')
+                                             .replace(/abs\(/g, 'Math.abs(');
+                            const fn = new Function('x', 'return ' + jsExpr);
+                            yv = fn(xv);
+                        } catch(e) {}
+
+                        if (yv !== null && !isNaN(yv) && isFinite(yv)) {
+                            const sx = toScreenX(xv);
+                            const sy = toScreenY(yv);
+                            if (!started) { ctx.moveTo(sx, sy); started = true; }
+                            else { ctx.lineTo(sx, sy); }
+                        } else {
+                            started = false;
+                        }
+                    }
+                    ctx.stroke();
+                });
+            }
+            ctx.restore();
+        }
+
+        function drawKanban(kb) {
+            const x = kb.x, y = kb.y, w = kb.width || 760, h = kb.height || 440;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.06)';
+            ctx.shadowBlur = 16;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, x, y, w, h, 18);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1.2;
+            roundRect(ctx, x, y, w, h, 18);
+            ctx.stroke();
+
+            // Header
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 15px Inter, sans-serif';
+            ctx.fillText('📋 ' + (kb.title || 'Канбан-доска'), x + 20, y + 32);
+
+            const cols = ['🔴 Бэклог', '🟡 В работе', '🟣 На ревью', '🟢 Готово'];
+            const colW = (w - 40) / 4;
+            cols.forEach((colTitle, i) => {
+                const cx = x + 20 + i * colW;
+                ctx.fillStyle = '#f8fafc';
+                roundRect(ctx, cx, y + 48, colW - 10, h - 68, 10);
+                ctx.fill();
+
+                ctx.fillStyle = '#475569';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText(colTitle, cx + 10, y + 70);
+            });
+        }
+
+        function drawMilestone(card) {
+            const x = card.x, y = card.y, w = card.width || 260, h = card.height || 140;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+            ctx.shadowBlur = 14;
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, x, y, w, h, 14);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            roundRect(ctx, x, y, w, h, 14);
+            ctx.stroke();
+
+            // Status stripe
+            ctx.fillStyle = '#2563eb';
+            roundRect(ctx, x, y, w, 6, 4);
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.fillText(card.title || 'Веха', x + 14, y + 32);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Inter, sans-serif';
+            ctx.fillText(card.description || 'Описание задачи...', x + 14, y + 54);
+
+            // Progress bar
+            ctx.fillStyle = '#e2e8f0';
+            roundRect(ctx, x + 14, y + 90, w - 28, 6, 3);
+            ctx.fill();
+
+            ctx.fillStyle = '#10b981';
+            roundRect(ctx, x + 14, y + 90, (w - 28) * 0.75, 6, 3);
+            ctx.fill();
+        }
+
+        function drawShape(s) {
+            const x = s.x, y = s.y, w = s.width || 120, h = s.height || 80;
+            ctx.fillStyle = s.fillColorHex ? hexToColor(s.fillColorHex) : 'rgba(37, 99, 235, 0.1)';
+            ctx.strokeStyle = s.strokeColorHex ? hexToColor(s.strokeColorHex) : '#2563eb';
+            ctx.lineWidth = s.strokeWidth || 2;
+
+            ctx.beginPath();
+            if (s.shapeType === 'ELLIPSE') {
+                ctx.ellipse(x + w / 2, y + h / 2, Math.abs(w / 2), Math.abs(h / 2), 0, 0, Math.PI * 2);
+            } else {
+                roundRect(ctx, x, y, w, h, s.cornerRadius || 10);
+            }
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function drawConnector(c) {
+            const sx = c.startPoint ? c.startPoint.x : c.x;
+            const sy = c.startPoint ? c.startPoint.y : c.y;
+            const ex = c.endPoint ? c.endPoint.x : (c.x + 120);
+            const ey = c.endPoint ? c.endPoint.y : (c.y + 60);
+
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(ex, ey);
+            ctx.stroke();
+        }
+
+        function drawText(t) {
+            ctx.fillStyle = t.colorHex ? hexToColor(t.colorHex) : '#0f172a';
+            ctx.font = (t.isBold ? 'bold ' : '') + (t.fontSize || 18) + 'px Inter, sans-serif';
+            ctx.fillText(t.text || '', t.x, t.y + (t.fontSize || 18));
+        }
+
+        function drawPointer(p) {
+            const s = worldToScreen(p.x, p.y);
+            ctx.save();
+            ctx.fillStyle = p.isLaser ? '#ef4444' : '#2563eb';
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, p.isLaser ? 8 : 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (p.peerName) {
+                ctx.fillStyle = '#0f172a';
+                ctx.font = 'bold 11px Inter, sans-serif';
+                ctx.fillText(p.peerName, s.x + 10, s.y + 4);
+            }
+            ctx.restore();
+        }
+
+        // Mouse & Touch Gestures
+        let lastMouseX = 0, lastMouseY = 0;
+        let isPanning = false;
+
+        canvas.addEventListener('mousedown', (e) => {
+            const mouseX = e.clientX, mouseY = e.clientY;
+            const worldPos = screenToWorld(mouseX, mouseY);
+
+            if (activeTool === 'hand' || e.button === 1 || e.spaceKey) {
+                isPanning = true;
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+                return;
+            }
+
+            if (activeTool === 'select') {
+                // Check if clicked element
+                let foundId = null;
+                const sorted = Object.values(elements).reverse();
+                for (const el of sorted) {
+                    const ex = el.x || 0, ey = el.y || 0, ew = el.width || 200, eh = el.height || 100;
+                    if (worldPos.x >= ex && worldPos.x <= ex + ew && worldPos.y >= ey && worldPos.y <= ey + eh) {
+                        foundId = el.id;
+                        break;
+                    }
+                }
+
+                if (foundId) {
+                    selectedElementId = foundId;
+                    isDraggingElement = true;
+                    dragOffsetX = worldPos.x - elements[foundId].x;
+                    dragOffsetY = worldPos.y - elements[foundId].y;
+
+                    // Check if sticky checkbox clicked
+                    if (elements[foundId].type === 'sticky_note') {
+                        checkStickyClick(elements[foundId], worldPos.x, worldPos.y);
+                    }
+                } else {
+                    selectedElementId = null;
+                    isPanning = true;
+                    lastMouseX = mouseX;
+                    lastMouseY = mouseY;
+                }
+                render();
+                return;
+            }
+
+            if (activeTool === 'pen' || activeTool === 'highlighter') {
+                isDrawing = true;
+                currentStroke = {
+                    id: 'stroke-' + Math.random().toString(36).substring(2, 9),
+                    type: 'drawing_path',
+                    points: [{ x: worldPos.x, y: worldPos.y }],
+                    strokeColorHex: parseInt(currentColor.replace('#', '0xFF'), 16),
+                    strokeWidth: activeTool === 'highlighter' ? 14 : currentWidth,
+                    isHighlighter: activeTool === 'highlighter',
+                    zIndex: 10
+                };
+            } else if (activeTool === 'sticky') {
+                createStickyAt(worldPos.x, worldPos.y);
+            } else if (activeTool === 'kanban') {
+                createKanbanAt(worldPos.x, worldPos.y);
+            } else if (activeTool === 'milestone') {
+                createMilestoneAt(worldPos.x, worldPos.y);
+            } else if (activeTool === 'shape') {
+                createShapeAt(worldPos.x, worldPos.y);
+            } else if (activeTool === 'text') {
+                createTextAt(worldPos.x, worldPos.y);
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX, mouseY = e.clientY;
+            const worldPos = screenToWorld(mouseX, mouseY);
+
+            if (isPanning) {
+                panX += mouseX - lastMouseX;
+                panY += mouseY - lastMouseY;
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+                render();
+                return;
+            }
+
+            if (isDraggingElement && selectedElementId && elements[selectedElementId]) {
+                elements[selectedElementId].x = worldPos.x - dragOffsetX;
+                elements[selectedElementId].y = worldPos.y - dragOffsetY;
+                render();
+                return;
+            }
+
+            if (isDrawing && currentStroke) {
+                currentStroke.points.push({ x: worldPos.x, y: worldPos.y });
+                render();
+            }
+
+            if (activeTool === 'laser') {
+                sendPointer(worldPos.x, worldPos.y, true);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isPanning = false;
+
+            if (isDraggingElement && selectedElementId && elements[selectedElementId]) {
+                isDraggingElement = false;
+                sendAction({
+                    type: 'upsert_element',
+                    element: elements[selectedElementId],
+                    senderId: clientId
+                });
+            }
+
+            if (isDrawing && currentStroke && currentStroke.points.length > 1) {
+                isDrawing = false;
+                elements[currentStroke.id] = currentStroke;
+                sendAction({
+                    type: 'upsert_element',
+                    element: currentStroke,
+                    senderId: clientId
+                });
+                currentStroke = null;
+                render();
+            }
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+            const newScale = Math.max(0.15, Math.min(4.5, scale * zoomFactor));
+            const mouseX = e.clientX, mouseY = e.clientY;
+            panX = mouseX - (mouseX - panX) * (newScale / scale);
+            panY = mouseY - (mouseY - panY) * (newScale / scale);
+            scale = newScale;
+            render();
+            updateZoomPill();
+        }, { passive: false });
+
+        // Double click to edit element
+        canvas.addEventListener('dblclick', (e) => {
+            const worldPos = screenToWorld(e.clientX, e.clientY);
+            for (const id in elements) {
+                const el = elements[id];
+                const ex = el.x || 0, ey = el.y || 0, ew = el.width || 200, eh = el.height || 100;
+                if (worldPos.x >= ex && worldPos.x <= ex + ew && worldPos.y >= ey && worldPos.y <= ey + eh) {
+                    if (el.type === 'sticky_note') {
+                        openStickyModal(el);
+                    } else if (el.type === 'function_graph') {
+                        openGraphModal(el);
+                    }
+                    return;
+                }
+            }
+        });
+
+        function checkStickyClick(el, wx, wy) {
+            const lines = (el.text || '').split('\n');
+            const autoFontSize = Math.max(11, Math.min(16, (el.width || 210) / 14));
+            const lineH = autoFontSize * 1.5;
+            let ty = el.y + 18;
+
+            for (let i = 0; i < lines.length; i++) {
+                const trimmed = lines[i].trim();
+                if (trimmed.startsWith('- [ ] ') || trimmed.startsWith('- [x] ') || trimmed.startsWith('- [X] ')) {
+                    if (wx >= el.x + 10 && wx <= el.x + 36 && wy >= ty - 4 && wy <= ty + lineH) {
+                        sendAction({
+                            type: 'toggle_sticky_todo',
+                            noteId: el.id,
+                            lineIndex: i,
+                            senderId: clientId
+                        });
+                        if (trimmed.startsWith('- [ ] ')) {
+                            lines[i] = '- [x] ' + trimmed.substring(6);
+                        } else {
+                            lines[i] = '- [ ] ' + trimmed.substring(6);
+                        }
+                        el.text = lines.join('\n');
+                        render();
+                        showToast('Чекбокс обновлен');
+                        return;
+                    }
+                }
+                ty += lineH;
+            }
+        }
+
+        // Element Creators
+        function createStickyAt(x, y) {
+            const note = {
+                id: 'note-' + Math.random().toString(36).substring(2, 9),
+                type: 'sticky_note',
+                x: x - 105,
+                y: y - 105,
+                width: 210,
+                height: 210,
+                text: 'Стикер ' + clientName + '\n- [ ] Задача 1\n- [ ] Задача 2',
+                colorHex: 0xFFFEF08A,
+                zIndex: 50
+            };
+            elements[note.id] = note;
+            sendAction({ type: 'upsert_element', element: note, senderId: clientId });
+            selectedElementId = note.id;
+            setTool('select');
+            render();
+            showToast('Стикер добавлен');
+        }
+
+        function createKanbanAt(x, y) {
+            const kb = {
+                id: 'kb-' + Math.random().toString(36).substring(2, 9),
+                type: 'kanban_board',
+                x: x - 380,
+                y: y - 220,
+                width: 760,
+                height: 440,
+                title: 'Канбан-спринт',
+                zIndex: 5
+            };
+            elements[kb.id] = kb;
+            sendAction({ type: 'upsert_element', element: kb, senderId: clientId });
+            selectedElementId = kb.id;
+            setTool('select');
+            render();
+            showToast('Канбан-доска добавлена');
+        }
+
+        function createMilestoneAt(x, y) {
+            const ms = {
+                id: 'ms-' + Math.random().toString(36).substring(2, 9),
+                type: 'milestone_card',
+                x: x - 130,
+                y: y - 70,
+                width: 260,
+                height: 140,
+                title: 'Новая веха',
+                description: 'Ключевой этап проекта...',
+                zIndex: 20
+            };
+            elements[ms.id] = ms;
+            sendAction({ type: 'upsert_element', element: ms, senderId: clientId });
+            selectedElementId = ms.id;
+            setTool('select');
+            render();
+            showToast('Веха создана');
+        }
+
+        function createShapeAt(x, y) {
+            const sh = {
+                id: 'shape-' + Math.random().toString(36).substring(2, 9),
+                type: 'shape',
+                x: x - 80,
+                y: y - 50,
+                width: 160,
+                height: 100,
+                shapeType: 'ROUNDED_RECTANGLE',
+                strokeColorHex: parseInt(currentColor.replace('#', '0xFF'), 16),
+                fillColorHex: 0x1A2563EB,
+                zIndex: 15
+            };
+            elements[sh.id] = sh;
+            sendAction({ type: 'upsert_element', element: sh, senderId: clientId });
+            selectedElementId = sh.id;
+            setTool('select');
+            render();
+            showToast('Фигура добавлена');
+        }
+
+        function createTextAt(x, y) {
+            const txt = prompt('Введите текст:', 'Заголовок блока');
+            if (txt) {
+                const t = {
+                    id: 'text-' + Math.random().toString(36).substring(2, 9),
+                    type: 'text',
+                    x: x,
+                    y: y,
+                    width: 240,
+                    height: 40,
+                    text: txt,
+                    fontSize: 20,
+                    isBold: true,
+                    colorHex: parseInt(currentColor.replace('#', '0xFF'), 16),
+                    zIndex: 30
+                };
+                elements[t.id] = t;
+                sendAction({ type: 'upsert_element', element: t, senderId: clientId });
+                selectedElementId = t.id;
+                setTool('select');
+                render();
+            }
+        }
+
+        // Toolbar Selectors
+        document.getElementById('toolSelect').onclick = () => setTool('select');
+        document.getElementById('toolHand').onclick = () => setTool('hand');
+        document.getElementById('toolPen').onclick = () => setTool('pen');
+        document.getElementById('toolHighlighter').onclick = () => setTool('highlighter');
+        document.getElementById('toolEraser').onclick = () => setTool('eraser');
+        document.getElementById('toolSticky').onclick = () => setTool('sticky');
+        document.getElementById('toolDesmos').onclick = () => openModal('modalGraph');
+        document.getElementById('toolKanban').onclick = () => setTool('kanban');
+        document.getElementById('toolMilestone').onclick = () => setTool('milestone');
+        document.getElementById('toolShape').onclick = () => setTool('shape');
+        document.getElementById('toolText').onclick = () => setTool('text');
+        document.getElementById('toolLaser').onclick = () => setTool('laser');
+
+        function setTool(tool) {
+            activeTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            const map = {
+                select: 'toolSelect', hand: 'toolHand', pen: 'toolPen',
+                highlighter: 'toolHighlighter', eraser: 'toolEraser',
+                sticky: 'toolSticky', kanban: 'toolKanban', milestone: 'toolMilestone',
+                shape: 'toolShape', text: 'toolText', laser: 'toolLaser'
+            };
+            if (map[tool]) document.getElementById(map[tool]).classList.add('active');
+        }
+
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            dot.onclick = () => {
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+                currentColor = dot.dataset.color;
+            };
+        });
+
+        // Delete Element
+        document.getElementById('btnDelete').onclick = () => deleteSelected();
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    deleteSelected();
+                }
+            } else if (e.key === 'F5') {
+                e.preventDefault();
+                togglePresentationMode();
+            }
+        });
+
+        function deleteSelected() {
+            if (selectedElementId && elements[selectedElementId]) {
+                const id = selectedElementId;
+                delete elements[id];
+                selectedElementId = null;
+                sendAction({ type: 'delete_elements', elementIds: [id], senderId: clientId });
+                render();
+                showToast('Элемент удален');
+            }
+        }
+
+        // Modals control
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        // Desmos Modal Confirm
+        document.getElementById('btnConfirmGraph').onclick = () => {
+            const formula = document.getElementById('inputGraphFormula').value || 'sin(x)';
+            const xMin = parseFloat(document.getElementById('inputGraphXMin').value) || -10;
+            const xMax = parseFloat(document.getElementById('inputGraphXMax').value) || 10;
+            const center = screenToWorld(window.innerWidth / 2, window.innerHeight / 2);
+
+            const graph = {
+                id: 'graph-' + Math.random().toString(36).substring(2, 9),
+                type: 'function_graph',
+                x: center.x - 210,
+                y: center.y - 160,
+                width: 420,
+                height: 320,
+                title: 'f(x) = ' + formula,
+                expressions: [formula],
+                xMin: xMin,
+                xMax: xMax,
+                zIndex: 25
+            };
+
+            elements[graph.id] = graph;
+            sendAction({ type: 'upsert_element', element: graph, senderId: clientId });
+            closeModal('modalGraph');
+            selectedElementId = graph.id;
+            setTool('select');
+            render();
+            showToast('График Desmos добавлен');
+        };
+
+        function setGraphPreset(f) {
+            document.getElementById('inputGraphFormula').value = f;
+        }
+
+        // Templates
+        document.getElementById('btnTemplates').onclick = () => openModal('modalTemplates');
+
+        function loadTemplate(name) {
+            closeModal('modalTemplates');
+            const center = screenToWorld(window.innerWidth / 2, window.innerHeight / 2);
+
+            if (name === 'blank') {
+                elements = {};
+                sendAction({ type: 'clear_board', senderId: clientId });
+                render();
+                showToast('Холст очищен');
+                return;
+            }
+
+            if (name === 'math') {
+                const g1 = {
+                    id: 'math-1', type: 'function_graph',
+                    x: center.x - 440, y: center.y - 160, width: 420, height: 320,
+                    title: 'Тригонометрия', expressions: ['sin(x)', 'cos(x) * 0.5'],
+                    xMin: -10, xMax: 10, zIndex: 10
+                };
+                const g2 = {
+                    id: 'math-2', type: 'function_graph',
+                    x: center.x + 20, y: center.y - 160, width: 420, height: 320,
+                    title: 'Полиномы', expressions: ['x^2', 'x^3 - 3*x'],
+                    xMin: -5, xMax: 5, zIndex: 10
+                };
+                elements[g1.id] = g1; elements[g2.id] = g2;
+                sendAction({ type: 'upsert_element', element: g1, senderId: clientId });
+                sendAction({ type: 'upsert_element', element: g2, senderId: clientId });
+                fitToContent();
+                showToast('Шаблон «Математика» загружен');
+            } else if (name === 'kanban') {
+                createKanbanAt(center.x, center.y);
+            } else if (name === 'roadmap') {
+                const ms1 = { id: 'rm-1', type: 'milestone_card', x: center.x - 300, y: center.y - 80, width: 260, height: 140, title: 'Фаза 1: Архитектура', description: 'Core Skia & Networking', zIndex: 10 };
+                const ms2 = { id: 'rm-2', type: 'milestone_card', x: center.x + 40, y: center.y - 80, width: 260, height: 140, title: 'Фаза 2: Релиз', description: 'Web Client & Deploy', zIndex: 10 };
+                elements[ms1.id] = ms1; elements[ms2.id] = ms2;
+                sendAction({ type: 'upsert_element', element: ms1, senderId: clientId });
+                sendAction({ type: 'upsert_element', element: ms2, senderId: clientId });
+                fitToContent();
+                showToast('Шаблон «Roadmap» загружен');
+            }
+        }
+
+        // Export Menu
+        document.getElementById('btnExport').onclick = () => openModal('modalExport');
+
+        function exportAsPNG() {
+            closeModal('modalExport');
+            const dataUrl = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.download = (document.getElementById('boardTitleInput').value || 'LKBoard') + '.png';
+            a.href = dataUrl;
+            a.click();
+            showToast('PNG успешно скачан');
+        }
+
+        function copyBoardToClipboard() {
+            closeModal('modalExport');
+            canvas.toBlob((blob) => {
+                if (blob && navigator.clipboard) {
+                    navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+                        .then(() => showToast('Снимок скопирован в буфер!'))
+                        .catch(() => showToast('Ошибка копирования'));
+                }
+            });
+        }
+
+        function exportAsJSON() {
+            closeModal('modalExport');
+            const data = JSON.stringify({
+                title: document.getElementById('boardTitleInput').value,
+                elements: Object.values(elements),
+                version: 1
+            }, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.download = (document.getElementById('boardTitleInput').value || 'board') + '.lkboard';
+            a.href = URL.createObjectURL(blob);
+            a.click();
+            showToast('.lkboard файл сохранен');
+        }
+
+        // Presentation Mode (F5)
+        document.getElementById('btnPresentation').onclick = () => togglePresentationMode();
+        function togglePresentationMode() {
+            document.body.classList.toggle('presentation-mode');
+            if (document.body.classList.contains('presentation-mode')) {
+                showToast('Режим презентации включен (Esc для выхода)');
+            }
+        }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.body.classList.contains('presentation-mode')) {
+                document.body.classList.remove('presentation-mode');
+            }
+        });
+
+        // Pomodoro Workshop Timer with Synthesized Harmonic Chime
+        let timerSeconds = 25 * 60;
+        let timerRunning = false;
+        let timerInterval = null;
+
+        const timerClock = document.getElementById('timerClock');
+        const btnTimerPlay = document.getElementById('btnTimerPlay');
+
+        document.getElementById('btnToggleTimer').onclick = () => {
+            const w = document.getElementById('timerWidget');
+            w.style.display = (w.style.display === 'none') ? 'flex' : 'none';
+        };
+
+        btnTimerPlay.onclick = () => {
+            timerRunning = !timerRunning;
+            btnTimerPlay.textContent = timerRunning ? '⏸️' : '▶️';
+            if (timerRunning) {
+                timerInterval = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        updateTimerClock();
+                        if (timerSeconds === 0) {
+                            playHarmonicChime();
+                            showToast('⏱️ Время вышло!');
+                            timerRunning = false;
+                            btnTimerPlay.textContent = '▶️';
+                            clearInterval(timerInterval);
+                        }
+                    }
+                }, 1000);
+            } else {
+                clearInterval(timerInterval);
+            }
+        };
+
+        document.getElementById('btnTimerReset').onclick = () => {
+            timerSeconds = 25 * 60;
+            updateTimerClock();
+        };
+
+        document.getElementById('btnTimerAdd').onclick = () => {
+            timerSeconds += 60;
+            updateTimerClock();
+        };
+
+        function updateTimerClock() {
+            const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            timerClock.textContent = `${m}:${s}`;
+        }
+
+        // Web Audio API Synthesized Bell (C5 + E5 + G5)
+        function playHarmonicChime() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const actx = new AudioCtx();
+                const now = actx.currentTime;
+                [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                    const osc = actx.createOscillator();
+                    const gain = actx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.25, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 2.5);
+                    osc.connect(gain);
+                    gain.connect(actx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 2.6);
+                });
+            } catch(e) {}
+        }
+
+        // Sharing link
+        document.getElementById('btnShareRoom').onclick = () => {
+            navigator.clipboard.writeText(window.location.href);
+            showToast('Ссылка на комнату скопирована в буфер!');
+        };
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        // Zoom Controls
+        document.getElementById('btnZoomIn').onclick = () => {
+            scale = Math.min(4.5, scale * 1.25);
+            render(); updateZoomPill();
+        };
+        document.getElementById('btnZoomOut').onclick = () => {
+            scale = Math.max(0.15, scale * 0.8);
+            render(); updateZoomPill();
+        };
+        document.getElementById('zoomValue').onclick = () => {
+            scale = 1.0;
+            render(); updateZoomPill();
+        };
+        document.getElementById('btnFit').onclick = () => fitToContent();
+
+        // SSE Realtime Sync
+        function sendAction(action) {
+            fetch('/api/action?room=' + encodeURIComponent(roomCode), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(action)
+            }).catch(() => {});
+        }
+
+        function sendPointer(x, y, isLaser) {
+            sendAction({
+                type: 'pointer_move',
+                senderId: clientId,
+                senderName: clientName,
+                x: x, y: y,
+                colorHex: 0xFF2563EB,
+                isLaser: isLaser
+            });
+        }
+
+        let evtSource = null;
+        function connectLiveStream() {
+            if (evtSource) { try { evtSource.close(); } catch(e) {} }
+            evtSource = new EventSource('/api/events?room=' + encodeURIComponent(roomCode));
+
+            evtSource.onmessage = (e) => {
+                try {
+                    const action = JSON.parse(e.data);
+                    handleRemoteAction(action);
+                } catch(err) {}
+            };
+            evtSource.onerror = () => {
+                setTimeout(connectLiveStream, 3000);
+            };
+        }
+
+        function handleRemoteAction(action) {
+            if (!action || action.senderId === clientId) return;
+
+            if (action.type === 'snapshot') {
+                elements = {};
+                if (action.document && action.document.elements) {
+                    for (const el of action.document.elements) elements[el.id] = el;
+                    if (action.document.title) {
+                        document.getElementById('boardTitleInput').value = action.document.title;
+                    }
+                }
+                fitToContent();
+            } else if (action.type === 'upsert_element') {
+                if (action.element) {
+                    elements[action.element.id] = action.element;
+                    render();
+                }
+            } else if (action.type === 'delete_elements') {
+                if (action.elementIds) {
+                    for (const id of action.elementIds) delete elements[id];
+                    render();
+                }
+            } else if (action.type === 'toggle_sticky_todo') {
+                const note = elements[action.noteId];
+                if (note && note.text) {
+                    const lines = note.text.split('\n');
+                    const idx = action.lineIndex;
+                    if (idx >= 0 && idx < lines.length) {
+                        if (lines[idx].startsWith('- [ ] ')) lines[idx] = '- [x] ' + lines[idx].substring(6);
+                        else lines[idx] = '- [ ] ' + lines[idx].substring(6);
+                        note.text = lines.join('\n');
+                        render();
+                    }
+                }
+            }
+        }
+
+        // Initial snapshot
+        fetch('/api/snapshot?room=' + encodeURIComponent(roomCode))
+            .then(r => r.json())
+            .then(doc => {
+                if (doc && doc.elements) {
+                    for (const el of doc.elements) elements[el.id] = el;
+                    if (doc.title) document.getElementById('boardTitleInput').value = doc.title;
+                    fitToContent();
+                }
+            })
+            .catch(() => {});
+
+        connectLiveStream();
+    </script>
+</body>
+</html>

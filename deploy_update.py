@@ -77,6 +77,11 @@ NGINX_CONF = """server {
         proxy_read_timeout 86400s;
     }
 
+    # Direct Web App fallback
+    location = /app {
+        alias /var/www/html/canvas.html;
+    }
+
     # Real-Time Collaboration Events & Actions
     location ~ ^/api/(events|snapshot|sync|action|status) {
         proxy_pass http://127.0.0.1:8765;
@@ -122,10 +127,17 @@ def main():
     sftp = ssh.open_sftp()
     print("      ✓ Connected successfully.")
 
-    # 2. Upload Web Assets
-    print("[2/6] Uploading website landing page assets to /var/www/html/...")
+    # 2. Upload Web Assets & Web Client
+    print("[2/6] Uploading website landing page assets and Full Web Studio...")
     local_web_dir = os.path.join(LOCAL_DIR, "web")
     upload_dir_recursive(sftp, local_web_dir, REMOTE_WEB_DIR)
+    
+    # Also upload client.html directly to relay server
+    local_client_html = os.path.join(LOCAL_DIR, "client.html")
+    if os.path.exists(local_client_html):
+        sftp.put(local_client_html, "/opt/lkboard-relay/client.html")
+        ssh.exec_command("systemctl restart lkboard-relay")
+        print("      ✓ Full Web Client deployed to /opt/lkboard-relay/ and relay restarted.")
     print("      ✓ Web assets uploaded.")
 
     # 3. Create downloads directory & upload .exe

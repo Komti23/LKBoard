@@ -43,6 +43,37 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('scroll', handleScroll, { passive: true });
   handleScroll();
 
+  // Global Spotlight tracking following cursor
+  window.addEventListener('mousemove', (e) => {
+    document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+    document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+  });
+
+  // Sound Preview for Pomodoro Chime
+  const chimeBtn = document.getElementById('btn-preview-chime');
+  if (chimeBtn) {
+    chimeBtn.addEventListener('click', () => {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.25, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 2.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 2.6);
+        });
+      } catch(_) {}
+    });
+  }
+
   // Mouse move glow on the window
   if (canvasWindow) {
     canvasWindow.addEventListener('mousemove', (e) => {
