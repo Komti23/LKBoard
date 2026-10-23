@@ -48,6 +48,9 @@ import com.lkboard.app.collaboration.CollabManager
 import com.lkboard.app.collaboration.CollabSessionState
 import com.lkboard.app.collaboration.NetworkUtils
 import com.lkboard.app.data.BoardSerializer
+import com.lkboard.app.update.UpdateCheckState
+import com.lkboard.app.update.UpdateChecker
+import com.lkboard.app.update.UpdateInfo
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -129,6 +132,12 @@ class BoardViewModel {
     private val _isShareDialogOpen = MutableStateFlow(false)
     val isShareDialogOpen: StateFlow<Boolean> = _isShareDialogOpen.asStateFlow()
 
+    private val _updateState = MutableStateFlow(UpdateCheckState())
+    val updateState: StateFlow<UpdateCheckState> = _updateState.asStateFlow()
+
+    private val _showUpdateDialog = MutableStateFlow(false)
+    val showUpdateDialog: StateFlow<Boolean> = _showUpdateDialog.asStateFlow()
+
     val collabManager: CollabManager = CollabManager(
         snapshotProvider = { BoardSerializer.stateToDocument(_state.value) },
         onRemoteElementUpsert = { el ->
@@ -180,6 +189,51 @@ class BoardViewModel {
                 }
             }
         }
+
+        // Автоматическая проверка обновлений в фоновом потоке при старте
+        ioScope.launch {
+            delay(1500L)
+            checkForUpdates(isManual = false)
+        }
+    }
+
+    fun checkForUpdates(isManual: Boolean = false) {
+        ioScope.launch {
+            _updateState.update { it.copy(isChecking = true, isManualCheck = isManual, errorMessage = null) }
+            val newUpdate = UpdateChecker.checkForUpdates()
+            if (newUpdate != null) {
+                _updateState.update {
+                    it.copy(
+                        isChecking = false,
+                        updateAvailable = true,
+                        updateInfo = newUpdate,
+                        isManualCheck = isManual
+                    )
+                }
+                _showUpdateDialog.value = true
+            } else {
+                _updateState.update {
+                    it.copy(
+                        isChecking = false,
+                        updateAvailable = false,
+                        updateInfo = null,
+                        isManualCheck = isManual,
+                        isUpToDateMessageShown = isManual
+                    )
+                }
+                if (isManual) {
+                    _showUpdateDialog.value = true
+                }
+            }
+        }
+    }
+
+    fun dismissUpdateDialog() {
+        _showUpdateDialog.value = false
+    }
+
+    fun openUpdateDialog() {
+        _showUpdateDialog.value = true
     }
 
     val selectionManager: SelectionManager = SelectionManager(

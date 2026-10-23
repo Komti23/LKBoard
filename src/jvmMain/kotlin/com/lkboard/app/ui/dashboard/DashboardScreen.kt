@@ -43,6 +43,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import com.lkboard.app.update.AppVersion
+import com.lkboard.app.update.UpdateCheckState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +86,9 @@ fun DashboardScreen(
     onRenameBoard: (String, String) -> Unit,
     onDeleteBoard: (String) -> Unit,
     onImportBoard: () -> Unit,
+    updateState: UpdateCheckState = UpdateCheckState(),
+    onCheckUpdates: () -> Unit = {},
+    onOpenUpdateDialog: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -114,7 +120,10 @@ fun DashboardScreen(
                 onCreateClick = {
                     newBoardTemplate = BoardTemplate.BLANK
                     showCreateDialog = true
-                }
+                },
+                updateState = updateState,
+                onCheckUpdates = onCheckUpdates,
+                onOpenUpdateDialog = onOpenUpdateDialog
             )
 
             Spacer(modifier = Modifier.height(28.dp))
@@ -245,7 +254,10 @@ private fun DashboardHeader(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onImportClick: () -> Unit,
-    onCreateClick: () -> Unit
+    onCreateClick: () -> Unit,
+    updateState: UpdateCheckState,
+    onCheckUpdates: () -> Unit,
+    onOpenUpdateDialog: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -282,6 +294,20 @@ private fun DashboardHeader(
                             color = Color(0xFF0F172A),
                             letterSpacing = (-0.5).sp
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFEFF6FF))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "v${AppVersion.VERSION_NAME}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB)
+                            )
+                        }
                     }
                     Text(
                         text = "Бесконечные доски, дорожные карты & презентации",
@@ -296,6 +322,41 @@ private fun DashboardHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Кнопка проверки обновлений / индикатор новой версии
+                val hasUpdate = updateState.updateAvailable && updateState.updateInfo != null
+                Button(
+                    onClick = if (hasUpdate) onOpenUpdateDialog else onCheckUpdates,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (hasUpdate) Color(0xFFFEF3C7) else Color(0xFFF1F5F9),
+                        contentColor = if (hasUpdate) Color(0xFFB45309) else Color(0xFF475569)
+                    ),
+                    border = if (hasUpdate) BorderStroke(1.5.dp, Color(0xFFF59E0B)) else null,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    if (updateState.isChecking) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            strokeWidth = 2.dp,
+                            color = Color(0xFF2563EB)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Проверка...", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    } else if (hasUpdate) {
+                        Text("🚀", fontSize = 13.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            "Доступно v${updateState.updateInfo!!.version}!",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        Text("🔄", fontSize = 12.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Обновления", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
+
                 // Поле поиска
                 Box(
                     modifier = Modifier

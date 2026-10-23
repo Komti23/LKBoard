@@ -30,6 +30,7 @@ import com.lkboard.app.ui.components.FunctionGraphEditDialog
 import com.lkboard.app.ui.components.ShareBoardDialog
 import com.lkboard.app.ui.components.StickyNoteEditDialog
 import com.lkboard.app.ui.components.TextEditDialog
+import com.lkboard.app.ui.components.UpdateDialog
 import com.lkboard.app.ui.dashboard.DashboardScreen
 import com.lkboard.app.ui.theme.LkboardTheme
 import com.lkboard.app.ui.viewmodel.AppScreen
@@ -54,6 +55,8 @@ fun main() = application {
     val workshopTimerState by viewModel.workshopTimerState.collectAsState()
     val collabState by viewModel.collabState.collectAsState()
     val isShareDialogOpen by viewModel.isShareDialogOpen.collectAsState()
+    val updateState by viewModel.updateState.collectAsState()
+    val showUpdateDialog by viewModel.showUpdateDialog.collectAsState()
     val isPresentationMode by viewModel.isPresentationMode.collectAsState()
     val isLaserPointerActive by viewModel.isLaserPointerActive.collectAsState()
     val laserTrail by viewModel.laserTrail.collectAsState()
@@ -264,7 +267,10 @@ fun main() = application {
                             if (file != null) {
                                 viewModel.importExternalBoard(file)
                             }
-                        }
+                        },
+                        updateState = updateState,
+                        onCheckUpdates = { viewModel.checkForUpdates(isManual = true) },
+                        onOpenUpdateDialog = viewModel::openUpdateDialog
                     )
                 }
 
@@ -529,6 +535,13 @@ fun main() = application {
                         }
                     }
                 }
+            }
+
+            if (showUpdateDialog) {
+                UpdateDialog(
+                    state = updateState,
+                    onDismiss = viewModel::dismissUpdateDialog
+                )
             }
         }
 

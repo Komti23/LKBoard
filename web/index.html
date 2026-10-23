@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LKBoard — Интерактивная бесконечная доска, Roadmaps & Desmos Studio</title>
+  <meta name="description" content="Бесконечная доска нового поколения с поддержкой стилусного рисования, совместной работы в реальном времени, канбан-досок и интерактивных математических графиков.">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#" class="brand-link">
+        <img src="images/logo.png" alt="LKBoard Logo" class="brand-logo">
+        <span>LKBoard</span>
+        <span class="version-badge">v1.0.0</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features">Возможности</a></li>
+        <li><a href="#showcase">Интерфейс</a></li>
+        <li><a href="#updates">Автообновления</a></li>
+        <li><a href="#hotkeys">Горячие клавиши</a></li>
+        <li><a href="#download">Скачать</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="/canvas" class="btn btn-secondary" target="_blank">🌐 Онлайн-доска</a>
+        <a href="#download" class="btn btn-primary">📥 Скачать</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-pill">
+        <span>✨ Официальный релиз v1.0.0</span>
+        <span>•</span>
+        <span id="server-status-pill">🟢 Облачная синхронизация онлайн</span>
+      </div>
+
+      <h1 class="hero-title">
+        Бесконечный холст для идей, <br>
+        <span class="gradient-text">командных воркшопов</span> и математики
+      </h1>
+
+      <p class="hero-subtitle">
+        Объединяет возможности интерактивной доски Miro, математической лаборатории Desmos и естественного стилусного рукописного ввода. Создавайте дорожные карты, ведите канбан-спринты и решайте уравнения вместе в реальном времени.
+      </p>
+
+      <div class="hero-cta">
+        <a href="/downloads/Lkboard-1.0.0.exe" class="btn btn-primary btn-lg" id="btn-hero-download">
+          <span>📥 Скачать для Windows</span>
+          <span style="font-size: 0.8rem; opacity: 0.8;">(.exe · 119 МБ)</span>
+        </a>
+        <a href="/canvas" class="btn btn-secondary btn-lg" target="_blank">
+          <span>🌐 Запустить в браузере</span>
+        </a>
+        <a href="https://github.com/Komti23/LKBoard" class="btn btn-secondary btn-lg" target="_blank">
+          <span>⭐ GitHub</span>
+        </a>
+      </div>
+
+      <div class="os-compatibility">
+        <span>✓ Windows 10/11 x64 (Встроенный изолированный JDK 21)</span>
+        <span>✓ Web-клиент для iPad, Mac, Android, Chrome</span>
+        <span>✓ Встроенная система автообновлений</span>
+        <span>✓ Открытый исходный код MIT</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Mockup Section -->
+  <section class="preview-section" id="showcase">
+    <div class="container">
+      <div class="mockup-window">
+        <div class="mockup-header">
+          <div class="window-dots">
+            <span class="dot-red"></span>
+            <span class="dot-yellow"></span>
+            <span class="dot-green"></span>
+          </div>
+
+          <div class="mockup-tabs">
+            <button class="tab-btn active" data-tab="math">📈 Графики Desmos</button>
+            <button class="tab-btn" data-tab="stickies">🗂️ Стикеры & To-Do</button>
+            <button class="tab-btn" data-tab="kanban">📋 Канбан-спринт</button>
+            <button class="tab-btn" data-tab="roadmap">🗺️ Дорожная карта</button>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-dim);">LKBoard Desktop v1.0.0</div>
+        </div>
+
+        <div class="mockup-body">
+          <!-- Tab 1: Math Studio -->
+          <div class="tab-content active" id="tab-math">
+            <div class="math-demo-grid">
+              <div class="math-card">
+                <div class="math-card-header">
+                  <span style="color: #60a5fa;">f(x) = sin(x) + cos(2x) · 0.5</span>
+                  <span style="color: #38bdf8; font-size: 0.75rem;">[-10, 10]</span>
+                </div>
+                <svg class="svg-graph" viewBox="0 0 400 200">
+                  <!-- Axes -->
+                  <line x1="20" y1="100" x2="380" y2="100" stroke="#334155" stroke-width="1.5" />
+                  <line x1="200" y1="20" x2="200" y2="180" stroke="#334155" stroke-width="1.5" />
+                  <!-- Grid marks -->
+                  <circle cx="200" cy="100" r="3" fill="#64748b" />
+                  <!-- Trig Curve -->
+                  <path d="M 20 100 Q 65 30 110 100 T 200 100 T 290 100 T 380 100" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" />
+                  <path d="M 20 80 Q 65 130 110 80 T 200 80 T 290 80 T 380 80" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="4,4" />
+                </svg>
+              </div>
+
+              <div class="math-card">
+                <div class="math-card-header">
+                  <span style="color: #a855f7;">f(x) = x³ - 3x (Полином)</span>
+                  <span style="color: #c084fc; font-size: 0.75rem;">[-5, 5]</span>
+                </div>
+                <svg class="svg-graph" viewBox="0 0 400 200">
+                  <!-- Axes -->
+                  <line x1="20" y1="100" x2="380" y2="100" stroke="#334155" stroke-width="1.5" />
+                  <line x1="200" y1="20" x2="200" y2="180" stroke="#334155" stroke-width="1.5" />
+                  <!-- Cubic Curve -->
+                  <path d="M 60 170 C 130 180, 140 30, 200 100 C 260 170, 270 20, 340 30" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" />
+                  <circle cx="160" cy="55" r="4" fill="#a855f7" />
+                  <circle cx="240" cy="145" r="4" fill="#a855f7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Sticky Notes & To-Do -->
+          <div class="tab-content" id="tab-stickies">
+            <div class="stickies-demo-grid">
+              <div class="sticky-note sticky-yellow">
+                <div class="sticky-title">💡 Брейншторм фичей</div>
+                <ul class="todo-list">
+                  <li class="todo-item done">
+                    <input type="checkbox" checked>
+                    <span>Стеклянный дизайн Apple</span>
+                  </li>
+                  <li class="todo-item done">
+                    <input type="checkbox" checked>
+                    <span>Бесконечный холст Skia</span>
+                  </li>
+                  <li class="todo-item">
+                    <input type="checkbox">
+                    <span>Поддержка формул Desmos</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="sticky-note sticky-mint">
+                <div class="sticky-title">⏱️ Таймер воркшопа</div>
+                <ul class="todo-list">
+                  <li class="todo-item done">
+                    <input type="checkbox" checked>
+                    <span>25 минут Помодоро</span>
+                  </li>
+                  <li class="todo-item done">
+                    <input type="checkbox" checked>
+                    <span>Звуковой офлайн-гонг C5-E5</span>
+                  </li>
+                  <li class="todo-item">
+                    <input type="checkbox">
+                    <span>Презентационный режим F5</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="sticky-note sticky-blue">
+                <div class="sticky-title">🚀 Задачи релиза</div>
+                <ul class="todo-list">
+                  <li class="todo-item done">
+                    <input type="checkbox" checked>
+                    <span>Собрать Windows .exe</span>
+                  </li>
+                  <li class="todo-item done">
+                    <input type="checkbox" checked>
+                    <span>Сайт и деплой обновлений</span>
+                  </li>
+                  <li class="todo-item done">
+                    <input type="checkbox" checked>
+                    <span>Проверить экспорт PDF/SVG</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Kanban Sprint -->
+          <div class="tab-content" id="tab-kanban">
+            <div class="kanban-demo-grid">
+              <div class="kanban-col">
+                <div class="kanban-col-title" style="color: #ef4444;">
+                  <span>🔴 Бэклог</span>
+                  <span>2</span>
+                </div>
+                <div class="kanban-item">
+                  <strong>AI-распознавание формул</strong>
+                  <div class="kanban-progress"><div class="kanban-progress-bar" style="width: 15%;"></div></div>
+                </div>
+                <div class="kanban-item">
+                  <strong>Плагины для Obsidian</strong>
+                  <div class="kanban-progress"><div class="kanban-progress-bar" style="width: 5%;"></div></div>
+                </div>
+              </div>
+
+              <div class="kanban-col">
+                <div class="kanban-col-title" style="color: #f59e0b;">
+                  <span>🟡 В работе</span>
+                  <span>1</span>
+                </div>
+                <div class="kanban-item">
+                  <strong>Оптимизация экспорта 4K</strong>
+                  <div class="kanban-progress"><div class="kanban-progress-bar" style="width: 75%;"></div></div>
+                </div>
+              </div>
+
+              <div class="kanban-col">
+                <div class="kanban-col-title" style="color: #8b5cf6;">
+                  <span>🟣 На ревью</span>
+                  <span>1</span>
+                </div>
+                <div class="kanban-item">
+                  <strong>Умные магнитные стрелки</strong>
+                  <div class="kanban-progress"><div class="kanban-progress-bar" style="width: 90%;"></div></div>
+                </div>
+              </div>
+
+              <div class="kanban-col">
+                <div class="kanban-col-title" style="color: #10b981;">
+                  <span>🟢 Готово</span>
+                  <span>3</span>
+                </div>
+                <div class="kanban-item">
+                  <strong>Релиз LKBoard v1.0.0</strong>
+                  <div class="kanban-progress"><div class="kanban-progress-bar" style="width: 100%;"></div></div>
+                </div>
+                <div class="kanban-item">
+                  <strong>Деплой автообновлений</strong>
+                  <div class="kanban-progress"><div class="kanban-progress-bar" style="width: 100%;"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 4: Roadmap -->
+          <div class="tab-content" id="tab-roadmap">
+            <div style="background: rgba(15,23,42,0.8); padding: 24px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h4 style="color: #60a5fa;">🗺️ Стратегический план развития LKBoard 2026</h4>
+                <span style="color: #10b981; font-weight: 700;">80% завершено</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                <div style="background: rgba(30,41,59,0.7); padding: 14px; border-radius: 10px; border-left: 4px solid #3b82f6;">
+                  <div style="font-weight: 700; margin-bottom: 6px;">Q1: Inking & Skia Core</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Субпиксельное перо, ластик, умные фигуры и бесконечный зум</div>
+                </div>
+                <div style="background: rgba(30,41,59,0.7); padding: 14px; border-radius: 10px; border-left: 4px solid #10b981;">
+                  <div style="font-weight: 700; margin-bottom: 6px;">Q2: Collab & Relay</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Синхронизация комнат, курсоры участников и Web-клиент</div>
+                </div>
+                <div style="background: rgba(30,41,59,0.7); padding: 14px; border-radius: 10px; border-left: 4px solid #8b5cf6;">
+                  <div style="font-weight: 700; margin-bottom: 6px;">Q3: Math & Release</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Desmos-графики, To-Do стикеры, Windows .exe инсталлятор</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Features Grid -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Преимущества</div>
+        <h2 class="section-title">Создано для максимальной продуктивности</h2>
+        <p class="section-desc">Всё необходимое для обучения, проектирования систем и командной работы в одном приложении.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">✍️</div>
+          <h3 class="feature-title">Ультра-плавный стилус</h3>
+          <p class="feature-desc">Субпиксельное сглаживание штрихов на базе Безье, поддержка графических планшетов и сенсорных экранов с минимальной задержкой.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <h3 class="feature-title">Математическая лаборатория</h3>
+          <p class="feature-desc">Встроенный анализатор выражений в стиле Desmos: тригонометрия, полиномы, корни, модули, настраиваемые оси и сетка.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <h3 class="feature-title">Живая совместная работа</h3>
+          <p class="feature-desc">Мгновенный шеринг ссылки на доску: участники могут подключаться прямо через браузер без установки софта и рисовать вместе.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🗂️</div>
+          <h3 class="feature-title">Стикеры с To-Do задачами</h3>
+          <p class="feature-desc">Цветные пастельные карточки с умным авто-масштабом шрифта и интерактивными кликабельными чекбоксами прямо на холсте.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📋</div>
+          <h3 class="feature-title">Канбан-доски на холсте</h3>
+          <p class="feature-desc">4 фирменные колонки статусов (Бэклог, В работе, На ревью, Готово) с автоматическим переключением статусов вех.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⏱️</div>
+          <h3 class="feature-title">Плавающий таймер воркшопов</h3>
+          <p class="feature-desc">Стеклянная капсула с обратным отсчетом, пресетами Помодоро и синтезированным звуковым гонгом через Java Sound API.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📤</div>
+          <h3 class="feature-title">Экспорт студийного качества</h3>
+          <p class="feature-desc">Кривые векторного SVG, печатный PDF для методичек, 4K PNG и мгновенное копирование скриншота в буфер обмена (Ctrl+Shift+C).</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📄</div>
+          <h3 class="feature-title">PDF и слайды PPTX</h3>
+          <p class="feature-desc">Вставка презентаций PowerPoint и документов в виде интерактивных интерактивных фреймов с листанием слайдов во время урока.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Auto-update System Showcase -->
+  <section class="updates-showcase" id="updates">
+    <div class="container">
+      <div class="update-box">
+        <div class="update-badge">🚀</div>
+        <div class="update-content">
+          <h3>Встроенная система обновлений (Live In-App Updates)</h3>
+          <p>
+            Вам не нужно вручную проверять сайт: как только выходит новая версия LKBoard с новыми функциями или улучшениями, приложение при запуске автоматически мягко предложит обновиться в 1 клик, показывая подробный список изменений.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hotkeys Cheatsheet -->
+  <section class="hotkeys-section" id="hotkeys">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Эргономика</div>
+        <h2 class="section-title">Горячие клавиши для быстрой работы</h2>
+        <p class="section-desc">Управляйте всеми инструментами не отрывая рук от пера и клавиатуры.</p>
+      </div>
+
+      <table class="hotkeys-table">
+        <thead>
+          <tr>
+            <th>Инструмент / Действие</th>
+            <th>Сочетание клавиш</th>
+            <th>Назначение</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Выделение (Select)</strong></td>
+            <td><kbd>V</kbd> или <kbd>1</kbd></td>
+            <td>Выбор, перемещение и трансформация объектов</td>
+          </tr>
+          <tr>
+            <td><strong>Стилус / Перо (Pen)</strong></td>
+            <td><kbd>P</kbd> или <kbd>Q</kbd></td>
+            <td>Рисование плавных штрихов с нажимом</td>
+          </tr>
+          <tr>
+            <td><strong>Стикер с To-Do (Sticky Note)</strong></td>
+            <td><kbd>S</kbd></td>
+            <td>Создать цветную заметку с кликабельными задачами</td>
+          </tr>
+          <tr>
+            <td><strong>График функции (Function Graph)</strong></td>
+            <td><kbd>G</kbd></td>
+            <td>Открыть редактор графиков и вставить Desmos-кривую</td>
+          </tr>
+          <tr>
+            <td><strong>Канбан-доска (Kanban)</strong></td>
+            <td><kbd>K</kbd></td>
+            <td>Создать рамку задач с колонками этапов</td>
+          </tr>
+          <tr>
+            <td><strong>Умный коннектор (Connector)</strong></td>
+            <td><kbd>C</kbd></td>
+            <td>Магнитная стрелка или соединительная линия между фигурами</td>
+          </tr>
+          <tr>
+            <td><strong>Карточка вехи (Milestone)</strong></td>
+            <td><kbd>M</kbd></td>
+            <td>Карточка с прогресс-баром и цветным статусом</td>
+          </tr>
+          <tr>
+            <td><strong>Презентационный режим</strong></td>
+            <td><kbd>F5</kbd></td>
+            <td>Полноэкранный режим без панелей с лазерной указкой</td>
+          </tr>
+          <tr>
+            <td><strong>Скопировать доску в буфер</strong></td>
+            <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd></td>
+            <td>Снимок высокого разрешения прямо в Telegram / Discord</td>
+          </tr>
+          <tr>
+            <td><strong>Подогнать масштаб (Zoom to Fit)</strong></td>
+            <td><kbd>Ctrl</kbd> + <kbd>1</kbd></td>
+            <td>Автоматически уместить всё содержимое в окно</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <section class="download-section" id="download">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Дистрибутивы</div>
+        <h2 class="section-title">Скачайте LKBoard бесплатно</h2>
+        <p class="section-desc">Доступно для Windows, а также мгновенно в браузере на любом устройстве.</p>
+      </div>
+
+      <div class="download-grid">
+        <!-- Windows Installer -->
+        <div class="download-card highlight" id="dl-win-card">
+          <div class="badge-featured">Рекомендуется</div>
+          <div>
+            <div class="dl-card-icon">🪟</div>
+            <h3 class="dl-card-title">Windows Installer</h3>
+            <p class="dl-card-desc">Автономный инсталлятор со встроенным изолированным срезом JDK 21.</p>
+            <ul class="dl-specs">
+              <li>Windows 10 / Windows 11 (64-bit)</li>
+              <li>Не требует отдельной установки Java</li>
+              <li>Встроенная фирменная иконка</li>
+              <li>Автоматическая проверка обновлений</li>
+              <li>Размер файла: ~119 МБ</li>
+            </ul>
+          </div>
+          <a href="/downloads/Lkboard-1.0.0.exe" class="btn btn-primary btn-lg" style="width: 100%;">
+            <span>📥 Скачать Lkboard-1.0.0.exe</span>
+          </a>
+        </div>
+
+        <!-- Web Canvas -->
+        <div class="download-card">
+          <div>
+            <div class="dl-card-icon">🌐</div>
+            <h3 class="dl-card-title">Веб-версия Онлайн</h3>
+            <p class="dl-card-desc">Откройте доску прямо в браузере без скачивания и авторизации.</p>
+            <ul class="dl-specs">
+              <li>Работает в Chrome, Safari, Edge, Firefox</li>
+              <li>Идеально для iPad, планшетов и смартфонов</li>
+              <li>Полная синхронизация с настольным приложением</li>
+              <li>Поддержка стилусов Apple Pencil и S-Pen</li>
+              <li>Нулевая задержка через SSE Relay</li>
+            </ul>
+          </div>
+          <a href="/canvas" class="btn btn-secondary btn-lg" target="_blank" style="width: 100%;">
+            <span>🚀 Открыть в браузере</span>
+          </a>
+        </div>
+
+        <!-- Open Source -->
+        <div class="download-card">
+          <div>
+            <div class="dl-card-icon">💻</div>
+            <h3 class="dl-card-title">Исходный код (Git)</h3>
+            <p class="dl-card-desc">Соберите проект из исходников или запустите через готовые скрипты.</p>
+            <ul class="dl-specs">
+              <li>Открытая лицензия MIT</li>
+              <li>Kotlin 2.0 & Compose Desktop</li>
+              <li>Скрипты run.bat и build-exe.bat</li>
+              <li>Юнит-тесты и чистая архитектура MVVM</li>
+            </ul>
+          </div>
+          <a href="https://github.com/Komti23/LKBoard" class="btn btn-secondary btn-lg" target="_blank" style="width: 100%;">
+            <span>⭐ GitHub Репозиторий</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <a href="#" class="brand-link">
+          <img src="images/logo.png" alt="LKBoard Logo" class="brand-logo" style="width: 32px; height: 32px;">
+          <span>LKBoard</span>
+        </a>
+
+        <ul class="footer-links">
+          <li><a href="#features">Возможности</a></li>
+          <li><a href="#showcase">Интерфейс</a></li>
+          <li><a href="#updates">Обновления</a></li>
+          <li><a href="#download">Скачать</a></li>
+          <li><a href="https://github.com/Komti23/LKBoard" target="_blank">GitHub</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 LKBoard Team. Открытое программное обеспечение под лицензией MIT.</p>
+        <p style="margin-top: 6px; font-size: 0.8rem;">Разработано для онлайн-репетиторства, воркшопов, дорожных карт и математических исследований.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
