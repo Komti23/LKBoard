@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UBoard — Бесконечный вычислительный холст для инженеров и исследователей</title>
-  <meta name="description" content="Бесконечный холст для физико-математических расчетов, алгоритмических схем и инженерного проектирования.">
+  <title>LKBoard — Бесконечный инженерный холст с Desmos, To-Do, Kanban и Pomodoro</title>
+  <meta name="description" content="Аппаратно-ускоренная среда для вычислений, инженерных схем и совместной работы. Desmos-графики, To-Do стикеры, канбан-спринты, 360° вращение и нативная производительность.">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   
   <!-- Fonts -->
@@ -108,28 +108,29 @@
               <path d="M12 7v10"/>
             </svg>
           </div>
-          <span class="font-bold text-sm tracking-tight text-content-primary group-hover:text-white transition-colors">UBoard</span>
+          <span class="font-bold text-sm tracking-tight text-content-primary group-hover:text-white transition-colors">LKBoard</span>
         </a>
         <div class="h-4 w-px bg-line"></div>
         <span class="font-mono text-[11px] text-content-muted bg-bg-surface px-2 py-0.5 rounded border border-line">
-          v1.4.2-kernel
+          v1.0.0-release
         </span>
       </div>
 
       <!-- Center Nav Links -->
       <nav class="hidden md:flex items-center space-x-6 text-xs font-medium text-content-secondary">
-        <a href="#features" class="hover:text-content-primary transition-colors">Архитектура</a>
-        <a href="#sandbox" class="hover:text-content-primary transition-colors">Песочница RK4</a>
+        <a href="#features" class="hover:text-content-primary transition-colors">Возможности</a>
+        <a href="#sandbox" class="hover:text-content-primary transition-colors">Интерактивная песочница</a>
         <a href="#benchmark" class="hover:text-content-primary transition-colors">Бенчмарки</a>
+        <a href="#hotkeys" class="hover:text-content-primary transition-colors">Хоткеи</a>
         <a href="#download" class="hover:text-content-primary transition-colors">Дистрибутивы</a>
       </nav>
 
       <!-- Right Action Group -->
       <div class="flex items-center space-x-3">
-        <!-- Kernel Status Badge -->
+        <!-- Engine Status Badge -->
         <div class="hidden sm:flex items-center space-x-2 text-[11px] font-mono text-content-muted bg-bg-surface/80 px-2.5 py-1 rounded border border-line">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Core 0.8ms</span>
+          <span>Skia 120 FPS</span>
         </div>
 
         <a href="/canvas" target="_blank" class="text-xs font-mono text-content-secondary hover:text-content-primary px-3 py-1.5 rounded border border-line hover:border-line-bright transition-all">
@@ -149,7 +150,7 @@
   </header>
 
   <!-- =========================================================================
-       2. Hero Section: Technical Precision
+       2. Hero Section: Technical Precision & Real LKBoard Architecture
        ========================================================================= -->
   <section class="relative pt-16 pb-12 overflow-hidden border-b border-line">
     <div class="max-w-[1400px] mx-auto px-6">
@@ -157,19 +158,19 @@
       <!-- Top Pre-heading Monospace Pill -->
       <div class="flex items-center justify-center mb-6">
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded bg-bg-surface border border-line text-[11px] font-mono text-content-secondary">
-          <span class="text-accent-sky font-semibold">[KERNEL RK45]</span>
+          <span class="text-accent-sky font-semibold">[LKBOARD V1.0]</span>
           <span>·</span>
-          <span>ВЕКТОРНЫЙ ВЫЧИСЛИТЕЛЬНЫЙ ДВИЖОК ДЛЯ ИНЖЕНЕРОВ</span>
+          <span>БЕСКОНЕЧНЫЙ ИНЖЕНЕРНЫЙ ХОЛСТ С DESMOS & СОВМЕСТНОЙ РАБОТОЙ</span>
         </div>
       </div>
 
       <!-- Main Heading (High Density, Tight Tracking) -->
       <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-center tracking-tight text-content-primary max-w-4xl mx-auto leading-[1.08] mb-6">
-        Бесконечный холст для вычислений, схем и алгоритмов.
+        Инженерный холст для математики, задач и архитектуры систем.
       </h1>
 
       <p class="text-sm sm:text-base text-content-secondary text-center max-w-2xl mx-auto leading-relaxed mb-8">
-        Аппаратно-ускоренная среда нового поколения. Объединяет аналитические графики функций, реактивные вычислительные узлы и субпиксельное перо Skia с нулевой задержкой.
+        Аппаратно-ускоренная среда на Kotlin & Skia. Интерактивные графики Desmos, To-Do стикеры с авто-чекбоксами, канбан-спринты, свободное 360° вращение элементов и живая Web-синхронизация с нулевой задержкой.
       </p>
 
       <!-- Action Row & Metadata -->
@@ -180,7 +181,7 @@
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          <span>Загрузить для Windows (114 MB)</span>
+          <span>Загрузить для Windows (114 MB .exe)</span>
         </a>
 
         <a href="/canvas" target="_blank" class="flex items-center space-x-2 text-xs font-mono text-content-primary bg-bg-surface hover:bg-bg-elevated border border-line px-5 py-2.5 rounded transition-all">
@@ -210,20 +211,20 @@
           <!-- Window Controls & Tabs -->
           <div class="flex items-center space-x-3">
             <div class="flex items-center space-x-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-line-bright inline-block"></span>
-              <span class="w-2.5 h-2.5 rounded-full bg-line inline-block"></span>
-              <span class="w-2.5 h-2.5 rounded-full bg-line inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444] inline-block opacity-80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B] inline-block opacity-80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] inline-block opacity-80"></span>
             </div>
 
             <!-- Tab strip -->
             <div class="flex items-center space-x-1 ml-2 text-[11px] font-mono">
               <div class="bg-bg-surface border-t border-x border-line px-3 py-1 rounded-t text-content-primary flex items-center space-x-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-accent-sky"></span>
-                <span>harmonic_damping.ub</span>
+                <span>sprint_kinematics_rk4.lkb</span>
                 <span class="text-content-muted hover:text-white cursor-pointer ml-1">×</span>
               </div>
               <div class="px-3 py-1 text-content-muted hover:text-content-secondary cursor-pointer">
-                kinematics_rk4.mat
+                architecture_v2.lkb
               </div>
             </div>
           </div>
@@ -234,150 +235,235 @@
             <span>·</span>
             <span>FPS: 120</span>
             <span>·</span>
+            <span class="text-accent-sky">RELAY: ONLINE</span>
+            <span>·</span>
             <span class="text-emerald-400">SYNC OK</span>
           </div>
         </div>
 
-        <!-- App Body Layout (3-Column Workspace) -->
-        <div class="grid grid-cols-12 min-h-[460px] bg-bg-base">
+        <!-- App Body Layout (Toolbar + Canvas + Inspector) -->
+        <div class="grid grid-cols-12 min-h-[500px] bg-bg-base">
           
-          <!-- Left Workspace Sidebar: Node Inspector Tree -->
+          <!-- Left Workspace Sidebar: LKBoard Tools & Tree -->
           <div class="col-span-12 md:col-span-3 border-r border-line bg-bg-surface/50 p-4 font-mono text-xs flex flex-col justify-between">
             <div>
-              <div class="text-[10px] uppercase font-bold text-content-muted tracking-wider mb-3">Структура узлов (Graph Tree)</div>
+              <div class="text-[10px] uppercase font-bold text-content-muted tracking-wider mb-3">Инструменты холста</div>
+              
+              <!-- Quick tool icons strip -->
+              <div class="grid grid-cols-4 gap-1.5 mb-4">
+                <div class="flex flex-col items-center p-2 rounded bg-bg-elevated border border-accent-sky/50 text-accent-sky" title="Выделение (V)">
+                  <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+                  <span class="text-[9px]">V</span>
+                </div>
+                <div class="flex flex-col items-center p-2 rounded bg-bg-elevated/40 border border-line text-content-secondary hover:text-content-primary" title="Перо / Стилус (P)">
+                  <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 2 4 4-12 12H6v-4L18 2z"/></svg>
+                  <span class="text-[9px]">P</span>
+                </div>
+                <div class="flex flex-col items-center p-2 rounded bg-bg-elevated/40 border border-line text-content-secondary hover:text-content-primary" title="Desmos График (G)">
+                  <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                  <span class="text-[9px]">G</span>
+                </div>
+                <div class="flex flex-col items-center p-2 rounded bg-bg-elevated/40 border border-line text-content-secondary hover:text-content-primary" title="To-Do Стикер (S)">
+                  <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/><path d="m9 13 2 2 4-4"/></svg>
+                  <span class="text-[9px]">S</span>
+                </div>
+              </div>
+
+              <div class="text-[10px] uppercase font-bold text-content-muted tracking-wider mb-2">Объекты на холсте (42)</div>
               
               <div class="space-y-1.5 text-content-secondary">
                 <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/70 border border-line text-content-primary">
                   <span class="flex items-center space-x-2">
-                    <span class="text-accent-sky">λ</span>
-                    <span>Параметры системы</span>
+                    <span class="text-accent-sky">📈</span>
+                    <span>Desmos: sin(2x)·e^(-0.1x)</span>
                   </span>
-                  <span class="text-[10px] text-content-muted">in: 3</span>
-                </div>
-
-                <div class="pl-4 space-y-1 text-[11px]">
-                  <div class="flex justify-between py-0.5">
-                    <span class="text-content-muted">ω₀ (частота):</span>
-                    <span class="text-accent-sky">3.1415 rad/s</span>
-                  </div>
-                  <div class="flex justify-between py-0.5">
-                    <span class="text-content-muted">γ (затухание):</span>
-                    <span class="text-content-primary">0.125</span>
-                  </div>
-                  <div class="flex justify-between py-0.5">
-                    <span class="text-content-muted">m (масса):</span>
-                    <span class="text-content-primary">1.000 kg</span>
-                  </div>
-                </div>
-
-                <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/40 border border-line/60 mt-3">
-                  <span class="flex items-center space-x-2">
-                    <span class="text-emerald-400">∫</span>
-                    <span>Решатель RK-45</span>
-                  </span>
-                  <span class="text-[10px] text-emerald-400">Active</span>
+                  <span class="text-[10px] text-accent-sky font-semibold">Active</span>
                 </div>
 
                 <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/40 border border-line/60">
                   <span class="flex items-center space-x-2">
-                    <span class="text-amber-400">⛶</span>
-                    <span>Канбан-статусы</span>
+                    <span class="text-amber-400">📝</span>
+                    <span>To-Do: Спринт 42</span>
                   </span>
-                  <span class="text-[10px] text-content-muted">4 cols</span>
+                  <span class="text-[10px] text-content-muted">θ = +12°</span>
+                </div>
+
+                <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/40 border border-line/60">
+                  <span class="flex items-center space-x-2">
+                    <span class="text-emerald-400">⏱</span>
+                    <span>Apple Glass Pomodoro</span>
+                  </span>
+                  <span class="text-[10px] text-emerald-400">18:42</span>
+                </div>
+
+                <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/40 border border-line/60">
+                  <span class="flex items-center space-x-2">
+                    <span class="text-sky-400">⛶</span>
+                    <span>Канбан: In Review</span>
+                  </span>
+                  <span class="text-[10px] text-content-muted">4 карты</span>
                 </div>
               </div>
             </div>
 
             <!-- Terminal status snippet -->
-            <div class="border-t border-line pt-3 mt-4 text-[10px] text-content-muted">
+            <div class="border-t border-line pt-3 mt-4 text-[10px] text-content-muted space-y-1">
               <div>Движок: <span class="text-content-primary font-semibold">Skia / Compose Desktop</span></div>
-              <div>Интерполяция: <span class="text-accent-sky">Adaptive Bézier C²</span></div>
+              <div>Вращение: <span class="text-accent-sky">Free 360° + 15° Snap</span></div>
+              <div>Синхронизация: <span class="text-emerald-400">WebSocket Relay v2</span></div>
             </div>
           </div>
 
-          <!-- Center Workspace: Vector Coordinate Canvas -->
+          <!-- Center Workspace: Real LKBoard Canvas Scene -->
           <div class="col-span-12 md:col-span-9 relative subtle-dots p-6 flex flex-col justify-between overflow-hidden">
             
             <!-- Floating Canvas Header Pill -->
             <div class="flex items-center justify-between z-10">
               <div class="bg-bg-elevated/90 border border-line px-3 py-1.5 rounded flex items-center space-x-3 text-xs font-mono">
-                <span class="text-accent-sky">x(t) = A·e^(-γt)·cos(ωt + φ)</span>
+                <span class="text-accent-sky font-bold">f(x) = sin(2x)·e^(-0.12x)</span>
                 <span class="text-line-bright">|</span>
-                <span class="text-content-muted">t ∈ [0, 20π]</span>
+                <span class="text-content-muted">x ∈ [0, 8π]</span>
+                <span class="text-line-bright">|</span>
+                <span class="text-emerald-400">Roots: x = kπ/2</span>
               </div>
 
-              <!-- Mini Toolbar -->
-              <div class="flex items-center space-x-1 bg-bg-elevated border border-line p-1 rounded">
-                <button class="p-1 text-content-muted hover:text-content-primary hover:bg-bg-surface rounded">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                </button>
-                <button class="p-1 text-content-muted hover:text-content-primary hover:bg-bg-surface rounded">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
-                </button>
-                <button class="p-1 text-accent-sky bg-bg-surface rounded">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/></svg>
-                </button>
+              <!-- Mini Controls & Rotation Quick Actions -->
+              <div class="flex items-center space-x-1.5 bg-bg-elevated border border-line p-1 rounded font-mono text-xs">
+                <span class="text-content-muted px-1.5">Вращение:</span>
+                <button class="px-2 py-0.5 bg-bg-surface hover:bg-bg-hover text-content-primary rounded border border-line text-[11px]" title="Повернуть влево на 90°">↺ -90°</button>
+                <button class="px-2 py-0.5 bg-bg-surface hover:bg-bg-hover text-content-primary rounded border border-line text-[11px]" title="Повернуть вправо на 90°">↻ +90°</button>
+                <button class="px-2 py-0.5 bg-bg-surface hover:bg-bg-hover text-accent-sky rounded border border-line text-[11px]" title="Сбросить угол">0°</button>
               </div>
             </div>
 
-            <!-- Vector Harmonic Curve Graph SVG -->
+            <!-- Collaborative Multi-Node Canvas Graphic (SVG) -->
             <div class="my-6 relative">
-              <svg class="w-full h-48" viewBox="0 0 800 200" fill="none">
-                <!-- Axes -->
-                <line x1="20" y1="100" x2="780" y2="100" stroke="#242830" stroke-width="1.5"/>
-                <line x1="100" y1="20" x2="100" y2="180" stroke="#242830" stroke-width="1.5"/>
+              <svg class="w-full h-[260px]" viewBox="0 0 850 260" fill="none">
+                <defs>
+                  <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#38BDF8"/>
+                    <stop offset="100%" stop-color="#3B82F6"/>
+                  </linearGradient>
+                  <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+                    <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
+                  </filter>
+                </defs>
+
+                <!-- Subgrid coordinate lines -->
+                <line x1="20" y1="130" x2="520" y2="130" stroke="#1F242C" stroke-width="1.5"/>
+                <line x1="60" y1="20" x2="60" y2="240" stroke="#1F242C" stroke-width="1.5"/>
                 
-                <!-- Zero point -->
-                <text x="88" y="115" fill="#71717A" font-size="10" font-family="monospace">0</text>
-                <text x="770" y="92" fill="#71717A" font-size="10" font-family="monospace">t</text>
-                <text x="108" y="28" fill="#71717A" font-size="10" font-family="monospace">x(t)</text>
-
-                <!-- Damping Envelope (dashed red-zinc) -->
-                <path d="M 100 30 Q 300 70 760 96" stroke="#363C48" stroke-width="1" stroke-dasharray="4,4"/>
-                <path d="M 100 170 Q 300 130 760 104" stroke="#363C48" stroke-width="1" stroke-dasharray="4,4"/>
-
-                <!-- Main damped oscillation curve (Sky Blue) -->
-                <path d="M 100 100 
-                         C 120 20, 140 20, 160 100 
-                         C 180 160, 200 160, 220 100 
-                         C 240 45, 260 45, 280 100 
-                         C 300 140, 320 140, 340 100 
-                         C 360 65, 380 65, 400 100 
-                         C 420 125, 440 125, 460 100 
-                         C 480 80, 500 80, 520 100 
-                         C 540 115, 560 115, 580 100 
-                         C 600 90, 620 90, 640 100 
-                         C 660 106, 680 106, 700 100 
-                         L 760 100" 
-                      stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round"/>
-
-                <!-- Tracer Node & Coordinate Callout -->
-                <circle cx="280" cy="100" r="4.5" fill="#38BDF8" stroke="#0D0F12" stroke-width="2"/>
-                <circle cx="280" cy="100" r="9" stroke="#38BDF8" stroke-width="1" opacity="0.4"/>
+                <!-- Desmos Function Plot Card Box -->
+                <rect x="20" y="20" width="500" height="220" rx="6" fill="#13161A" stroke="#242830" filter="url(#cardShadow)"/>
                 
-                <rect x="290" y="70" width="105" height="22" rx="3" fill="#181B20" stroke="#242830"/>
-                <text x="296" y="85" fill="#F4F4F5" font-size="10" font-family="monospace">t=2.84s x=0.00m</text>
+                <!-- Card Header -->
+                <rect x="20" y="20" width="500" height="28" rx="6" fill="#181B20"/>
+                <text x="35" y="38" fill="#F4F4F5" font-size="11" font-family="monospace" font-weight="600">📈 Desmos Engine: Гармоническое колебание с затуханием</text>
+                <circle cx="505" cy="34" r="3" fill="#38BDF8"/>
+
+                <!-- Plot Axes inside Card -->
+                <line x1="40" y1="135" x2="495" y2="135" stroke="#242830" stroke-width="1"/>
+                <line x1="75" y1="50" x2="75" y2="225" stroke="#242830" stroke-width="1"/>
+                <text x="65" y="148" fill="#71717A" font-size="9" font-family="monospace">0</text>
+                <text x="485" y="148" fill="#71717A" font-size="9" font-family="monospace">t</text>
+                <text x="82" y="60" fill="#71717A" font-size="9" font-family="monospace">f(t)</text>
+
+                <!-- Exponential envelopes (dashed) -->
+                <path d="M 75 70 Q 250 110 495 130" stroke="#363C48" stroke-width="1" stroke-dasharray="3,3"/>
+                <path d="M 75 200 Q 250 160 495 140" stroke="#363C48" stroke-width="1" stroke-dasharray="3,3"/>
+
+                <!-- Sine damping wave curve -->
+                <path d="M 75 135 
+                         C 95 60, 115 60, 135 135 
+                         C 155 195, 175 195, 195 135 
+                         C 215 80, 235 80, 255 135 
+                         C 275 180, 295 180, 315 135 
+                         C 335 100, 355 100, 375 135 
+                         C 395 165, 415 165, 435 135 
+                         C 455 115, 475 115, 495 135" 
+                      stroke="url(#curveGrad)" stroke-width="2.5" stroke-linecap="round"/>
+
+                <!-- Extrema marker -->
+                <circle cx="105" cy="62" r="4.5" fill="#38BDF8" stroke="#0D0F12" stroke-width="2"/>
+                <rect x="115" y="50" width="80" height="18" rx="2" fill="#181B20" stroke="#242830"/>
+                <text x="120" y="62" fill="#F4F4F5" font-size="9" font-family="monospace">max (0.72, 0.91)</text>
+
+                <!-- Orthogonal Connector Line snapping from Desmos to Kanban -->
+                <path d="M 520 120 L 550 120 L 550 65 L 565 65" stroke="#38BDF8" stroke-width="2" stroke-dasharray="4,4" fill="none"/>
+                <polygon points="565,61 573,65 565,69" fill="#38BDF8"/>
+
+                <!-- Kanban Sprint Task Card -->
+                <rect x="575" y="25" width="250" height="85" rx="6" fill="#13161A" stroke="#242830" filter="url(#cardShadow)"/>
+                <rect x="575" y="25" width="250" height="22" rx="6" fill="#181B20"/>
+                <text x="585" y="39" fill="#F4F4F5" font-size="10" font-family="monospace" font-weight="600">⛶ Спринт 42 · Калибровка RK4</text>
+                <rect x="765" y="29" width="52" height="14" rx="2" fill="#EF4444" opacity="0.2"/>
+                <text x="770" y="40" fill="#EF4444" font-size="9" font-family="monospace" font-weight="700">CRITICAL</text>
+                <text x="585" y="65" fill="#A1A1AA" font-size="10" font-family="sans-serif">Оптимизировать шаг интерполяции</text>
+                <text x="585" y="80" fill="#71717A" font-size="9" font-family="monospace">Ответственный: Alexander K. · 120 FPS</text>
+                <circle cx="805" cy="80" r="10" fill="#242830"/>
+                <text x="800" y="84" fill="#38BDF8" font-size="9" font-family="monospace">AK</text>
+
+                <!-- Rotated Sticky To-Do Note (Angle θ = +12°) with Rotation Handle -->
+                <g transform="translate(670, 140) rotate(10)">
+                  <!-- Stem Line & Rotation Knob Handle -->
+                  <line x1="75" y1="0" x2="75" y2="-22" stroke="#38BDF8" stroke-width="1.5"/>
+                  <circle cx="75" cy="-22" r="4.5" fill="#38BDF8" stroke="#0D0F12" stroke-width="2"/>
+                  <text x="85" y="-20" fill="#38BDF8" font-size="9" font-family="monospace">θ = +10°</text>
+
+                  <!-- Sticky Card Body -->
+                  <rect x="0" y="0" width="155" height="100" rx="4" fill="#181B20" stroke="#38BDF8" stroke-width="1.2" filter="url(#cardShadow)"/>
+                  <rect x="0" y="0" width="155" height="18" rx="4" fill="#1F2329"/>
+                  <text x="8" y="12" fill="#FBBF24" font-size="9" font-family="monospace" font-weight="700">📝 Задачи спринта</text>
+                  
+                  <!-- Checkboxes -->
+                  <text x="8" y="34" fill="#10B981" font-size="9" font-family="monospace">☑ Вращение 360°</text>
+                  <text x="8" y="52" fill="#10B981" font-size="9" font-family="monospace">☑ Desmos графики</text>
+                  <text x="8" y="70" fill="#A1A1AA" font-size="9" font-family="monospace">☐ Pomodoro гонг</text>
+                  <text x="8" y="88" fill="#A1A1AA" font-size="9" font-family="monospace">☐ 4K SVG экспорт</text>
+                </g>
+
+                <!-- Floating Apple Liquid Glass Pomodoro Capsule -->
+                <g transform="translate(545, 190)">
+                  <rect x="0" y="0" width="105" height="50" rx="25" fill="#13161A" stroke="#363C48" stroke-width="1" filter="url(#cardShadow)"/>
+                  <circle cx="25" cy="25" r="14" stroke="#242830" stroke-width="3" fill="none"/>
+                  <circle cx="25" cy="25" r="14" stroke="#38BDF8" stroke-width="3" stroke-dasharray="60, 30" fill="none"/>
+                  <text x="47" y="24" fill="#F4F4F5" font-size="12" font-family="monospace" font-weight="700">18:42</text>
+                  <text x="47" y="37" fill="#10B981" font-size="8" font-family="monospace">ФОКУС · GONG</text>
+                </g>
+
+                <!-- Collaborator Cursors -->
+                <g transform="translate(320, 115)">
+                  <polygon points="0,0 0,14 4,11 7,17 9,16 6,10 11,10" fill="#38BDF8"/>
+                  <rect x="12" y="10" width="85" height="16" rx="2" fill="#0284C7"/>
+                  <text x="16" y="21" fill="#FFFFFF" font-size="8" font-family="monospace">Alex (Desktop)</text>
+                </g>
+
+                <g transform="translate(610, 75)">
+                  <polygon points="0,0 0,14 4,11 7,17 9,16 6,10 11,10" fill="#10B981"/>
+                  <rect x="12" y="10" width="95" height="16" rx="2" fill="#059669"/>
+                  <text x="16" y="21" fill="#FFFFFF" font-size="8" font-family="monospace">Maria (Web Studio)</text>
+                </g>
               </svg>
             </div>
 
             <!-- Bottom Floating Node Blocks -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 z-10 text-xs font-mono">
               <div class="bg-bg-elevated/80 border border-line p-3 rounded">
-                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">Спектральный анализ</div>
-                <div class="text-content-primary">f₀ = 0.500 Hz</div>
-                <div class="text-[11px] text-accent-sky">Q-factor: 12.57</div>
+                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">Свободное вращение</div>
+                <div class="text-content-primary">Штанга + рукоятка 360°</div>
+                <div class="text-[11px] text-accent-sky">Shift: шаг 15° · Hotkey [ R ]</div>
               </div>
 
               <div class="bg-bg-elevated/80 border border-line p-3 rounded">
-                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">Энергия системы</div>
-                <div class="text-content-primary">E(t) = 4.821 J</div>
-                <div class="text-[11px] text-emerald-400">ΔE = -0.012 J/s</div>
+                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">Pomodoro таймер</div>
+                <div class="text-content-primary">Focus 25m / Break 5m</div>
+                <div class="text-[11px] text-emerald-400">Тибетская чаша (Web Audio)</div>
               </div>
 
               <div class="bg-bg-elevated/80 border border-line p-3 rounded">
-                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">Интегратор</div>
-                <div class="text-content-primary">Runge-Kutta 4th</div>
-                <div class="text-[11px] text-content-muted">Tol: 1.0e-7</div>
+                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">Совместный Relay</div>
+                <div class="text-content-primary">Desktop + Web Браузер</div>
+                <div class="text-[11px] text-content-muted">Задержка sync: 1.1 ms</div>
               </div>
             </div>
 
@@ -398,60 +484,64 @@
       <!-- Section Header -->
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-line">
         <div>
-          <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Интерактивная песочница</div>
+          <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Интерактивная песочница LKBoard</div>
           <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-content-primary">
-            Живой реактивный вычислитель
+            Живой реактивный движок в браузере
           </h2>
         </div>
         <p class="text-xs font-mono text-content-muted mt-2 md:mt-0">
-          Изменяйте параметры гармонического осциллятора — кривая и логи пересчитываются на лету.
+          Управляйте графиком Desmos, вращайте элементы на 360°, переключайте To-Do задачи и проверьте звук тибетской чаши.
         </p>
       </div>
 
       <!-- 12-Column Interactive Grid -->
       <div class="grid grid-cols-12 gap-6 items-start">
         
-        <!-- Left: Interactive Canvas Plotter (7 cols) -->
+        <!-- Left: Interactive Canvas Plotter & Rotatable Element (7 cols) -->
         <div class="col-span-12 lg:col-span-7 bg-bg-surface border border-line rounded-lg p-5">
           <div class="flex items-center justify-between mb-3 text-xs font-mono text-content-secondary">
             <div class="flex items-center space-x-2">
               <span class="w-2 h-2 rounded-full bg-accent-sky"></span>
-              <span class="font-bold text-content-primary">График функции x(t)</span>
+              <span class="font-bold text-content-primary">Интерактивный холст: Desmos & 360° Вращение</span>
             </div>
             <div class="text-[11px] text-content-muted">
-              Шаг dt = 0.005s · 60 FPS
+              60 FPS · Pure HTML5 Canvas
             </div>
           </div>
 
           <!-- HTML5 Canvas -->
           <div class="relative bg-bg-base border border-line rounded p-2">
-            <canvas id="sandboxCanvas" class="w-full h-[280px] block cursor-crosshair"></canvas>
+            <canvas id="sandboxCanvas" class="w-full h-[300px] block cursor-crosshair"></canvas>
             
             <div class="absolute bottom-4 right-4 text-[10px] font-mono text-content-muted bg-bg-surface/80 px-2 py-1 rounded border border-line">
-              Hover to sample coordinates
+              Наведите мышь для замеров координат
             </div>
           </div>
 
-          <!-- Formula Legend -->
-          <div class="mt-4 flex flex-wrap items-center justify-between text-xs font-mono text-content-muted">
-            <div>Уравнение: <span class="text-accent-sky font-semibold" id="eqLabel">x(t) = 1.0·e^(-0.10t)·cos(3.00t)</span></div>
+          <!-- Formula & Status Legend -->
+          <div class="mt-4 flex flex-wrap items-center justify-between text-xs font-mono text-content-muted gap-2">
+            <div>Функция: <span class="text-accent-sky font-semibold" id="eqLabel">f(x) = 1.0·e^(-0.10x)·cos(3.00x)</span></div>
+            <div>Угол ноды: <span class="text-amber-400 font-semibold" id="nodeAngleLabel">θ = 25°</span></div>
             <button id="btnResetParams" class="text-[11px] text-content-secondary hover:text-white underline cursor-pointer">
               Сброс параметров
             </button>
           </div>
         </div>
 
-        <!-- Right: Parameter Sliders & Terminal Console (5 cols) -->
+        <!-- Right: Parameter Sliders, Pomodoro Chime & Event Stream (5 cols) -->
         <div class="col-span-12 lg:col-span-5 space-y-4">
           
           <!-- Slider Card -->
           <div class="bg-bg-surface border border-line rounded-lg p-5 font-mono text-xs space-y-4">
-            <div class="text-[11px] uppercase font-bold text-content-primary tracking-wide">Параметры уравнения</div>
+            <div class="text-[11px] uppercase font-bold text-content-primary tracking-wide flex justify-between items-center">
+              <span>Параметры элементов холста</span>
+              <span class="text-accent-sky text-[10px]">Реактивный JIT</span>
+            </div>
 
             <!-- Slider 1: Frequency -->
             <div>
               <div class="flex justify-between mb-1.5">
-                <span class="text-content-secondary">Частота колебаний (ω):</span>
+                <span class="text-content-secondary">Частота функции (ω):</span>
                 <span class="text-accent-sky font-bold" id="valFreq">3.00 rad/s</span>
               </div>
               <input type="range" id="sliderFreq" min="0.5" max="8.0" step="0.1" value="3.0" class="w-full">
@@ -461,32 +551,74 @@
             <div>
               <div class="flex justify-between mb-1.5">
                 <span class="text-content-secondary">Коэффициент затухания (γ):</span>
-                <span class="text-amber-400 font-bold" id="valDamp">0.10</span>
+                <span class="text-emerald-400 font-bold" id="valDamp">0.10</span>
               </div>
-              <input type="range" id="sliderDamp" min="0.0" max="0.8" step="0.02" value="0.10" class="w-full">
+              <input type="range" id="sliderDamp" min="0.0" max="0.5" step="0.02" value="0.10" class="w-full">
             </div>
 
-            <!-- Slider 3: Amplitude -->
+            <!-- Slider 3: Element Rotation Angle -->
             <div>
               <div class="flex justify-between mb-1.5">
-                <span class="text-content-secondary">Начальная амплитуда (A):</span>
-                <span class="text-emerald-400 font-bold" id="valAmp">1.00 m</span>
+                <span class="text-content-secondary">Вращение элемента (θ):</span>
+                <span class="text-amber-400 font-bold" id="valRot">25°</span>
               </div>
-              <input type="range" id="sliderAmp" min="0.2" max="2.0" step="0.05" value="1.0" class="w-full">
+              <input type="range" id="sliderRot" min="-180" max="180" step="1" value="25" class="w-full">
+              
+              <!-- Quick Angle Snap Buttons -->
+              <div class="flex items-center space-x-2 mt-2 pt-2 border-t border-line text-[11px]">
+                <span class="text-content-muted">Быстрый поворот:</span>
+                <button id="btnRotMinus90" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-content-primary">↺ -90°</button>
+                <button id="btnRotPlus90" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-content-primary">↻ +90°</button>
+                <button id="btnRotReset" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-accent-sky">0°</button>
+              </div>
             </div>
+          </div>
+
+          <!-- To-Do & Pomodoro Live Trigger Card -->
+          <div class="bg-bg-surface border border-line rounded-lg p-4 font-mono text-xs space-y-3">
+            <div class="flex items-center justify-between text-[11px] font-bold text-content-primary uppercase">
+              <span>Интерактивные виджеты</span>
+              <span class="text-emerald-400">Audio & To-Do</span>
+            </div>
+
+            <!-- Interactive To-Do Checkbox preview -->
+            <div class="space-y-1.5 bg-bg-base p-2.5 rounded border border-line text-[11px]">
+              <label class="flex items-center space-x-2 cursor-pointer group">
+                <input type="checkbox" id="todoCheck1" checked class="rounded border-line text-accent-sky focus:ring-0">
+                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel1">Аппаратное ядро Skia и чистая MVVM</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer group">
+                <input type="checkbox" id="todoCheck2" checked class="rounded border-line text-accent-sky focus:ring-0">
+                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel2">Свободное вращение элементов 360°</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer group">
+                <input type="checkbox" id="todoCheck3" class="rounded border-line text-accent-sky focus:ring-0">
+                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel3">Тестирование тибетского гонга Pomodoro</span>
+              </label>
+            </div>
+
+            <!-- Tibetan Singing Bowl Gong Audio Button -->
+            <button id="btnPlayChime" class="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded bg-bg-elevated hover:bg-bg-hover border border-line hover:border-accent-sky text-content-primary transition-all">
+              <svg class="w-4 h-4 text-accent-sky" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span>🔊 Проверить тибетскую чашу (Web Audio Gong)</span>
+            </button>
           </div>
 
           <!-- Terminal Output Log -->
           <div class="bg-bg-base border border-line rounded-lg p-4 font-mono text-xs">
             <div class="flex items-center justify-between pb-2 border-b border-line mb-2 text-[10px] text-content-muted uppercase font-bold">
-              <span>Реактивный терминал вычислений</span>
-              <span class="text-emerald-500">Live</span>
+              <span>WebSocket Relay Event Log</span>
+              <span class="text-emerald-500">Live Stream</span>
             </div>
 
-            <div id="termLog" class="space-y-1 text-[11px] text-content-secondary h-[130px] overflow-y-auto font-mono">
-              <div><span class="text-content-muted">[00:00.010]</span> KERNEL: Initialized RK4 Numerical Solver.</div>
-              <div><span class="text-content-muted">[00:00.012]</span> PARSER: Expression compiled to WebAssembly.</div>
-              <div><span class="text-accent-sky">[00:00.015]</span> READY: Listening for parameter stream...</div>
+            <div id="termLog" class="space-y-1 text-[11px] text-content-secondary h-[110px] overflow-y-auto font-mono">
+              <div><span class="text-content-muted">[00:00.010]</span> LKBOARD_CORE: Initialized Skia Vector Pipeline.</div>
+              <div><span class="text-content-muted">[00:00.015]</span> DESMOS_JIT: Compiled function expression.</div>
+              <div><span class="text-accent-sky">[00:00.022]</span> ROTATION_ENGINE: Bound 360° transform handle.</div>
             </div>
           </div>
 
@@ -498,21 +630,21 @@
   </section>
 
   <!-- =========================================================================
-       4. Core Engineering Specifications (4-Column Bento Architecture)
+       4. Core Engineering Specifications (8-Column Bento Architecture)
        ========================================================================= -->
   <section class="py-16 border-b border-line" id="features">
     <div class="max-w-[1400px] mx-auto px-6">
       
       <div class="mb-12">
-        <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Спецификация движка</div>
+        <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Архитектурный фундамент</div>
         <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-content-primary">
-          Инженерный фундамент без компромиссов
+          Инженерная мощь для сложных проектов
         </h2>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
         
-        <!-- Spec 1 -->
+        <!-- Spec 1: Skia Inking -->
         <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
             <div class="text-accent-sky font-bold text-sm mb-2">01 / НУЛЕВАЯ ЗАДЕРЖКА</div>
@@ -520,7 +652,7 @@
               0.4 ms Skia Inking
             </div>
             <p class="text-xs text-content-secondary font-sans leading-relaxed">
-              Аппаратно-ускоренный рендерер чернил. Адаптивная кубическая интерполяция Безье убирает полигональность штрихов даже при сверхбыстром письме стилусом.
+              Аппаратно-ускоренный рендерер чернил. Адаптивная кубическая интерполяция Безье устраняет полигональность даже при скоростном письме стилусом.
             </p>
           </div>
           <div class="text-[11px] text-content-muted mt-6 pt-3 border-t border-line">
@@ -528,7 +660,7 @@
           </div>
         </div>
 
-        <!-- Spec 2 -->
+        <!-- Spec 2: Desmos Engine -->
         <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
             <div class="text-emerald-400 font-bold text-sm mb-2">02 / ДЕСМОС-АНАЛИЗАТОР</div>
@@ -536,23 +668,55 @@
               Символьный расчет
             </div>
             <p class="text-xs text-content-secondary font-sans leading-relaxed">
-              Встроенный математический анализатор выражений. Полноценная декартова плоскость, сетка с динамическим шагом, тригонометрия и корни по клавише «G».
+              Встроенный математический анализатор выражений. Полноценная декартова плоскость, сетка с динамическим шагом, тригонометрия и корни по горячей клавише «G».
             </p>
           </div>
           <div class="text-[11px] text-content-muted mt-6 pt-3 border-t border-line">
-            Parser: JIT Symbolic Tree
+            Parser: JIT Symbolic Math
           </div>
         </div>
 
-        <!-- Spec 3 -->
+        <!-- Spec 3: 360° Free Rotation -->
         <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
-            <div class="text-amber-400 font-bold text-sm mb-2">03 / СТРУКТУРИРОВАНИЕ</div>
+            <div class="text-amber-400 font-bold text-sm mb-2">03 / ВРАЩЕНИЕ 360°</div>
             <div class="text-lg font-bold text-content-primary font-sans tracking-tight mb-2">
-              Канбан & Roadmaps
+              Полная трансформация
             </div>
             <p class="text-xs text-content-secondary font-sans leading-relaxed">
-              Фреймы этапов с автоматической сменой статуса карточек при перетаскивании. Умные ортогональные магнитные коннекторы привязываются к граням нод.
+              Интерактивное вращение любых фигур, стикеров и канбан-карт. Маркер со штангой, горячие клавиши R / [ / ], привязка с Shift с шагом 15° и сохранение в SVG.
+            </p>
+          </div>
+          <div class="text-[11px] text-content-muted mt-6 pt-3 border-t border-line">
+            Controls: R / Ctrl+R / [ / ]
+          </div>
+        </div>
+
+        <!-- Spec 4: To-Do Sticky Notes -->
+        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+          <div>
+            <div class="text-accent-sky font-bold text-sm mb-2">04 / TO-DO СТИКЕРЫ</div>
+            <div class="text-lg font-bold text-content-primary font-sans tracking-tight mb-2">
+              Интерактивные списки
+            </div>
+            <p class="text-xs text-content-secondary font-sans leading-relaxed">
+              Стикеры со встроенными чекбоксами [ ] и [x]. Зачёркивание задач по клику, автоподгонка высоты под текст и удобная организация спринтов.
+            </p>
+          </div>
+          <div class="text-[11px] text-content-muted mt-6 pt-3 border-t border-line">
+            Hotkey: S (Sticky Note)
+          </div>
+        </div>
+
+        <!-- Spec 5: Kanban & Roadmaps -->
+        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+          <div>
+            <div class="text-purple-400 font-bold text-sm mb-2">05 / КАНБАН & ROADMAP</div>
+            <div class="text-lg font-bold text-content-primary font-sans tracking-tight mb-2">
+              Умные коннекторы
+            </div>
+            <p class="text-xs text-content-secondary font-sans leading-relaxed">
+              Колонки спринтов с авто-сменой статусов карточек при переносе. Ортогональные магнитные стрелки автоматически привязываются к граням нод.
             </p>
           </div>
           <div class="text-[11px] text-content-muted mt-6 pt-3 border-t border-line">
@@ -560,19 +724,51 @@
           </div>
         </div>
 
-        <!-- Spec 4 -->
+        <!-- Spec 6: Pomodoro Liquid Glass -->
         <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
-            <div class="text-accent-sky font-bold text-sm mb-2">04 / ЭКСПОРТ ВЕКТОРОВ</div>
+            <div class="text-rose-400 font-bold text-sm mb-2">06 / POMODORO ТАЙМЕР</div>
             <div class="text-lg font-bold text-content-primary font-sans tracking-tight mb-2">
-              SVG & Векторный PDF
+              Тибетская поющая чаша
             </div>
             <p class="text-xs text-content-secondary font-sans leading-relaxed">
-              100% паритет выгрузки. Формулы, вехи, графики и штрихи сохраняются в чистых векторных кривых без потери резкости при любом увеличении.
+              Плавающий виджет с эффектом матового стекла. Циклы Focus и Break, синтез гармонического звука тибетской чаши через Web Audio API.
             </p>
           </div>
           <div class="text-[11px] text-content-muted mt-6 pt-3 border-t border-line">
-            Formats: PDF / SVG / 4K PNG / JSON
+            Audio: Web Audio API (180+540Hz)
+          </div>
+        </div>
+
+        <!-- Spec 7: Realtime Collaboration Relay -->
+        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+          <div>
+            <div class="text-emerald-400 font-bold text-sm mb-2">07 / СОВМЕСТНАЯ РАБОТА</div>
+            <div class="text-lg font-bold text-content-primary font-sans tracking-tight mb-2">
+              Relay Server (Web + Desktop)
+            </div>
+            <p class="text-xs text-content-secondary font-sans leading-relaxed">
+              Бесшовная синхронизация в реальном времени. Пользователи нативного .exe и Web Studio работают на одном бесконечном холсте с живыми курсорами.
+            </p>
+          </div>
+          <div class="text-[11px] text-content-muted mt-6 pt-3 border-t border-line">
+            Protocol: WebSockets Full-Duplex
+          </div>
+        </div>
+
+        <!-- Spec 8: Vector Export & Offline-First -->
+        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+          <div>
+            <div class="text-accent-sky font-bold text-sm mb-2">08 / ВЕКТОРНЫЙ ЭКСПОРТ</div>
+            <div class="text-lg font-bold text-content-primary font-sans tracking-tight mb-2">
+              SVG, 4K PNG & PDF
+            </div>
+            <p class="text-xs text-content-secondary font-sans leading-relaxed">
+              100% паритет выгрузки. Повернутые элементы, графики Desmos, стикеры и штрихи сохраняются в чистых векторных кривых без потери резкости.
+            </p>
+          </div>
+          <div class="text-[11px] text-content-muted mt-6 pt-3 border-t border-line">
+            Formats: SVG / PDF / 4K PNG / JSON
           </div>
         </div>
 
@@ -601,9 +797,9 @@
               <thead class="bg-bg-elevated border-b border-line text-content-muted">
                 <tr>
                   <th class="p-3">Метрика</th>
-                  <th class="p-3 text-accent-sky">UBoard (Native)</th>
+                  <th class="p-3 text-accent-sky">LKBoard (Native Skia)</th>
                   <th class="p-3">Electron-доски</th>
-                  <th class="p-3">Браузерные аналоги</th>
+                  <th class="p-3">Miro / FigJam</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-line text-content-secondary">
@@ -631,16 +827,22 @@
                   <td class="p-3 text-content-muted">45-55 (просадки)</td>
                   <td class="p-3 text-content-muted">60 (локальный лок)</td>
                 </tr>
+                <tr>
+                  <td class="p-3 font-medium text-content-primary">Автономная работа (Offline)</td>
+                  <td class="p-3 text-emerald-400 font-bold">100% (Без интернета)</td>
+                  <td class="p-3 text-content-muted">Частично</td>
+                  <td class="p-3 text-content-muted">Требует облако</td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <!-- Right: Fast Hotkeys Reference (5 cols) -->
-        <div class="lg:col-span-5 space-y-4">
+        <div class="lg:col-span-5 space-y-4" id="hotkeys">
           <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase">Эргономика управления</div>
           <h3 class="text-xl font-bold font-sans tracking-tight text-content-primary">
-            Горячие клавиши оператора
+            Горячие клавиши оператора LKBoard
           </h3>
 
           <div class="bg-bg-surface border border-line rounded-lg p-4 font-mono text-xs divide-y divide-line">
@@ -657,12 +859,28 @@
               <kbd class="px-2 py-0.5 rounded bg-bg-elevated border border-line text-accent-sky font-bold">G</kbd>
             </div>
             <div class="flex items-center justify-between py-2">
-              <span class="text-content-secondary">Канбан-фрейм задач</span>
+              <span class="text-content-secondary">Стикер с To-Do чекбоксами</span>
+              <kbd class="px-2 py-0.5 rounded bg-bg-elevated border border-line text-content-primary font-bold">S</kbd>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <span class="text-content-secondary">Канбан-фрейм спринта</span>
               <kbd class="px-2 py-0.5 rounded bg-bg-elevated border border-line text-content-primary font-bold">K</kbd>
             </div>
             <div class="flex items-center justify-between py-2">
-              <span class="text-content-secondary">Стикер с To-Do чекбоксами</span>
-              <kbd class="px-2 py-0.5 rounded bg-bg-elevated border border-line text-content-primary font-bold">S</kbd>
+              <span class="text-content-secondary">Вращение элемента на ±90°</span>
+              <div class="space-x-1">
+                <kbd class="px-2 py-0.5 rounded bg-bg-elevated border border-line text-amber-400 font-bold">R</kbd>
+                <span class="text-content-muted">/</span>
+                <kbd class="px-1.5 py-0.5 rounded bg-bg-elevated border border-line text-content-primary">Ctrl+R</kbd>
+              </div>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <span class="text-content-secondary">Точный поворот на ±15°</span>
+              <div class="space-x-1">
+                <kbd class="px-1.5 py-0.5 rounded bg-bg-elevated border border-line text-content-primary">[</kbd>
+                <span class="text-content-muted">/</span>
+                <kbd class="px-1.5 py-0.5 rounded bg-bg-elevated border border-line text-content-primary">]</kbd>
+              </div>
             </div>
             <div class="flex items-center justify-between py-2">
               <span class="text-content-secondary">Снимок в буфер Telegram / Slack</span>
@@ -689,10 +907,10 @@
       <div class="text-center max-w-xl mx-auto mb-12">
         <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Дистрибуция</div>
         <h2 class="text-3xl font-extrabold tracking-tight text-content-primary mb-3">
-          Готов к развертыванию
+          Готов к установке и работе
         </h2>
         <p class="text-xs font-mono text-content-secondary">
-          Автономные пакеты со встроенным JDK 21. Установка Java не требуется.
+          Автономные пакеты со встроенным OpenJDK 21. Установка сторонней Java не требуется.
         </p>
       </div>
 
@@ -720,11 +938,15 @@
               </li>
               <li class="flex items-center space-x-2">
                 <span class="text-accent-sky">✓</span>
-                <span>Встроенный JVM Runtime</span>
+                <span>Встроенный JVM Runtime 21</span>
               </li>
               <li class="flex items-center space-x-2">
                 <span class="text-accent-sky">✓</span>
-                <span>Фоновые автообновления</span>
+                <span>Фоновые автообновления (/api/version)</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <span class="text-accent-sky">✓</span>
+                <span>100% автономная работа офлайн</span>
               </li>
             </ul>
           </div>
@@ -759,6 +981,10 @@
               <li class="flex items-center space-x-2">
                 <span class="text-emerald-400">✓</span>
                 <span>Web Audio гонг и Desmos</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <span class="text-emerald-400">✓</span>
+                <span>Вращение 360° и To-Do стикеры</span>
               </li>
             </ul>
           </div>
@@ -811,7 +1037,7 @@
   <footer class="mt-auto border-t border-line bg-bg-base py-8 font-mono text-xs text-content-muted">
     <div class="max-w-[1400px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center space-x-3">
-        <span class="text-content-primary font-bold">UBoard</span>
+        <span class="text-content-primary font-bold">LKBoard</span>
         <span>·</span>
         <span>Copyright © 2026. Лицензия MIT.</span>
       </div>
@@ -820,13 +1046,14 @@
         <a href="#sandbox" class="hover:text-content-primary transition-colors">Песочница</a>
         <a href="#features" class="hover:text-content-primary transition-colors">Архитектура</a>
         <a href="/canvas" class="hover:text-content-primary transition-colors">Web Studio</a>
+        <a href="/api/version" class="hover:text-content-primary transition-colors">API релизов</a>
         <a href="https://github.com/Komti23/LKBoard" target="_blank" class="hover:text-content-primary transition-colors">GitHub</a>
       </div>
     </div>
   </footer>
 
   <!-- =========================================================================
-       8. Vanilla JS: Live RK4 Canvas Plotter & Terminal Engine
+       8. Vanilla JS: Live Desmos + 360° Rotatable Node + Audio Gong Sandbox
        ========================================================================= -->
   <script>
     (function() {
@@ -836,18 +1063,32 @@
 
       const sliderFreq = document.getElementById('sliderFreq');
       const sliderDamp = document.getElementById('sliderDamp');
-      const sliderAmp = document.getElementById('sliderAmp');
+      const sliderRot = document.getElementById('sliderRot');
 
       const valFreq = document.getElementById('valFreq');
       const valDamp = document.getElementById('valDamp');
-      const valAmp = document.getElementById('valAmp');
+      const valRot = document.getElementById('valRot');
       const eqLabel = document.getElementById('eqLabel');
+      const nodeAngleLabel = document.getElementById('nodeAngleLabel');
       const termLog = document.getElementById('termLog');
+
+      const btnRotMinus90 = document.getElementById('btnRotMinus90');
+      const btnRotPlus90 = document.getElementById('btnRotPlus90');
+      const btnRotReset = document.getElementById('btnRotReset');
+      const btnResetParams = document.getElementById('btnResetParams');
+      const btnPlayChime = document.getElementById('btnPlayChime');
+
+      const todoCheck1 = document.getElementById('todoCheck1');
+      const todoCheck2 = document.getElementById('todoCheck2');
+      const todoCheck3 = document.getElementById('todoCheck3');
+      const todoLabel1 = document.getElementById('todoLabel1');
+      const todoLabel2 = document.getElementById('todoLabel2');
+      const todoLabel3 = document.getElementById('todoLabel3');
 
       let params = {
         omega: parseFloat(sliderFreq.value),
         gamma: parseFloat(sliderDamp.value),
-        amp: parseFloat(sliderAmp.value)
+        angle: parseFloat(sliderRot.value)
       };
 
       function resizeCanvas() {
@@ -881,39 +1122,29 @@
         ctx.lineWidth = 1;
 
         const cy = h / 2;
-        const originX = 40;
+        const originX = 35;
+        const plotWidth = w * 0.58;
 
-        // X and Y Axes
+        // X and Y Axes for Plot
         ctx.beginPath();
         ctx.moveTo(originX, 15);
         ctx.lineTo(originX, h - 15);
         ctx.moveTo(originX, cy);
-        ctx.lineTo(w - 20, cy);
+        ctx.lineTo(originX + plotWidth, cy);
         ctx.stroke();
 
-        // Horizontal guides
-        ctx.strokeStyle = '#181B20';
-        [-1, 1].forEach(sign => {
-          const gy = cy - sign * (params.amp * 50);
-          ctx.beginPath();
-          ctx.moveTo(originX, gy);
-          ctx.lineTo(w - 20, gy);
-          ctx.stroke();
-        });
-
-        // Numeric evaluation: x(t) = A * exp(-gamma * t) * cos(omega * t)
+        // Numeric evaluation of Desmos function: f(x) = exp(-gamma * x) * cos(omega * x)
         ctx.strokeStyle = '#38BDF8';
         ctx.lineWidth = 2;
         ctx.beginPath();
 
-        const tMax = 12.0;
-        const plotWidth = w - originX - 30;
+        const xMax = 12.0;
         let started = false;
 
         for (let px = 0; px <= plotWidth; px += 2) {
-          const t = (px / plotWidth) * tMax;
-          const xVal = params.amp * Math.exp(-params.gamma * t) * Math.cos(params.omega * t);
-          const py = cy - (xVal * 50);
+          const t = (px / plotWidth) * xMax;
+          const yVal = Math.exp(-params.gamma * t) * Math.cos(params.omega * t);
+          const py = cy - (yVal * 55);
 
           if (!started) {
             ctx.moveTo(originX + px, py);
@@ -924,16 +1155,16 @@
         }
         ctx.stroke();
 
-        // Damping envelope
+        // Damping envelope dashed lines
         ctx.strokeStyle = '#363C48';
         ctx.lineWidth = 1;
         ctx.setLineDash([3, 3]);
 
         ctx.beginPath();
         for (let px = 0; px <= plotWidth; px += 4) {
-          const t = (px / plotWidth) * tMax;
-          const env = params.amp * Math.exp(-params.gamma * t);
-          const py = cy - (env * 50);
+          const t = (px / plotWidth) * xMax;
+          const env = Math.exp(-params.gamma * t);
+          const py = cy - (env * 55);
           if (px === 0) ctx.moveTo(originX + px, py);
           else ctx.lineTo(originX + px, py);
         }
@@ -941,66 +1172,210 @@
 
         ctx.beginPath();
         for (let px = 0; px <= plotWidth; px += 4) {
-          const t = (px / plotWidth) * tMax;
-          const env = -params.amp * Math.exp(-params.gamma * t);
-          const py = cy - (env * 50);
+          const t = (px / plotWidth) * xMax;
+          const env = -Math.exp(-params.gamma * t);
+          const py = cy - (env * 55);
           if (px === 0) ctx.moveTo(originX + px, py);
           else ctx.lineTo(originX + px, py);
         }
         ctx.stroke();
         ctx.setLineDash([]);
+
+        // Axis label
+        ctx.fillStyle = '#71717A';
+        ctx.font = '10px monospace';
+        ctx.fillText('0', originX - 12, cy + 12);
+        ctx.fillText('Desmos f(x)', originX + 5, 25);
+
+        // Divider separator line
+        ctx.strokeStyle = '#242830';
+        ctx.beginPath();
+        ctx.moveTo(originX + plotWidth + 25, 20);
+        ctx.lineTo(originX + plotWidth + 25, h - 20);
+        ctx.stroke();
+
+        // =========================================================================
+        // Render 360° Rotatable LKBoard Node on the right half
+        // =========================================================================
+        const nodeCenterX = originX + plotWidth + (w - (originX + plotWidth)) / 2;
+        const nodeCenterY = cy;
+        const cardW = 120;
+        const cardH = 80;
+
+        ctx.save();
+        ctx.translate(nodeCenterX, nodeCenterY);
+        ctx.rotate((params.angle * Math.PI) / 180);
+
+        // Rotation stem & circular knob
+        ctx.strokeStyle = '#38BDF8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -cardH / 2);
+        ctx.lineTo(0, -cardH / 2 - 22);
+        ctx.stroke();
+
+        ctx.fillStyle = '#38BDF8';
+        ctx.beginPath();
+        ctx.arc(0, -cardH / 2 - 22, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#0D0F12';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Card body
+        ctx.fillStyle = '#181B20';
+        ctx.strokeStyle = '#38BDF8';
+        ctx.lineWidth = 1.2;
+        ctx.fillRect(-cardW / 2, -cardH / 2, cardW, cardH);
+        ctx.strokeRect(-cardW / 2, -cardH / 2, cardW, cardH);
+
+        // Card header
+        ctx.fillStyle = '#1F2329';
+        ctx.fillRect(-cardW / 2, -cardH / 2, cardW, 20);
+
+        ctx.fillStyle = '#FBBF24';
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText('📝 LKBoard Node', -cardW / 2 + 8, -cardH / 2 + 13);
+
+        ctx.fillStyle = '#A1A1AA';
+        ctx.font = '9px monospace';
+        ctx.fillText(`θ = ${Math.round(params.angle)}°`, -cardW / 2 + 8, -cardH / 2 + 38);
+        ctx.fillText('Shift: 15° snap', -cardW / 2 + 8, -cardH / 2 + 52);
+        ctx.fillText('Hotkey: [ R ]', -cardW / 2 + 8, -cardH / 2 + 66);
+
+        ctx.restore();
+
+        // Label for the right side
+        ctx.fillStyle = '#A1A1AA';
+        ctx.font = '10px monospace';
+        ctx.fillText('Интерактивный угол 360°', originX + plotWidth + 35, 30);
       }
 
       function updateParameters() {
         params.omega = parseFloat(sliderFreq.value);
         params.gamma = parseFloat(sliderDamp.value);
-        params.amp = parseFloat(sliderAmp.value);
+        params.angle = parseFloat(sliderRot.value);
 
         valFreq.textContent = `${params.omega.toFixed(2)} rad/s`;
         valDamp.textContent = params.gamma.toFixed(2);
-        valAmp.textContent = `${params.amp.toFixed(2)} m`;
+        valRot.textContent = `${Math.round(params.angle)}°`;
 
-        eqLabel.textContent = `x(t) = ${params.amp.toFixed(2)}·e^(-${params.gamma.toFixed(2)}t)·cos(${params.omega.toFixed(2)}t)`;
+        eqLabel.textContent = `f(x) = 1.0·e^(-${params.gamma.toFixed(2)}x)·cos(${params.omega.toFixed(2)}x)`;
+        nodeAngleLabel.textContent = `θ = ${Math.round(params.angle)}°`;
 
         drawSimulation();
       }
 
       sliderFreq.addEventListener('input', () => {
         updateParameters();
-        logEvent(`PARAM_UPDATE: ω = ${params.omega.toFixed(2)} rad/s`);
+        logEvent(`MATH_UPDATE: ω = ${params.omega.toFixed(2)} rad/s`);
       });
 
       sliderDamp.addEventListener('input', () => {
         updateParameters();
-        logEvent(`PARAM_UPDATE: γ = ${params.gamma.toFixed(2)} (decay rate)`);
+        logEvent(`MATH_UPDATE: γ = ${params.gamma.toFixed(2)} (decay rate)`);
       });
 
-      sliderAmp.addEventListener('input', () => {
+      sliderRot.addEventListener('input', () => {
         updateParameters();
-        logEvent(`PARAM_UPDATE: A = ${params.amp.toFixed(2)} m`);
+        logEvent(`ROTATE_TRANSFORM: θ = ${Math.round(params.angle)}°`, 'text-amber-400');
       });
 
-      document.getElementById('btnResetParams').addEventListener('click', () => {
+      btnRotMinus90.addEventListener('click', () => {
+        params.angle = (params.angle - 90 + 360) % 360;
+        if (params.angle > 180) params.angle -= 360;
+        sliderRot.value = params.angle;
+        updateParameters();
+        logEvent(`ACTION: Rotate step -90° -> θ = ${Math.round(params.angle)}°`, 'text-amber-400');
+      });
+
+      btnRotPlus90.addEventListener('click', () => {
+        params.angle = (params.angle + 90 + 360) % 360;
+        if (params.angle > 180) params.angle -= 360;
+        sliderRot.value = params.angle;
+        updateParameters();
+        logEvent(`ACTION: Rotate step +90° -> θ = ${Math.round(params.angle)}°`, 'text-amber-400');
+      });
+
+      btnRotReset.addEventListener('click', () => {
+        params.angle = 0;
+        sliderRot.value = 0;
+        updateParameters();
+        logEvent('ACTION: Reset rotation angle to 0°', 'text-accent-sky');
+      });
+
+      btnResetParams.addEventListener('click', () => {
         sliderFreq.value = 3.0;
         sliderDamp.value = 0.10;
-        sliderAmp.value = 1.0;
+        sliderRot.value = 25;
         updateParameters();
-        logEvent('SYSTEM: Parameters reset to factory default (ω=3.0, γ=0.1, A=1.0)', 'text-accent-sky');
+        logEvent('SYSTEM: Parameters reset to factory defaults (ω=3.0, γ=0.1, θ=25°)', 'text-accent-sky');
       });
 
       // Quick hover coordinates inspect
       canvas.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        const originX = 40;
-        const cy = rect.height / 2;
-        if (mx >= originX && mx <= rect.width - 20) {
-          const t = ((mx - originX) / (rect.width - originX - 30)) * 12.0;
-          const xVal = params.amp * Math.exp(-params.gamma * t) * Math.cos(params.omega * t);
-          canvas.title = `t = ${t.toFixed(2)} s, x = ${xVal.toFixed(3)} m`;
+        const originX = 35;
+        const plotWidth = rect.width * 0.58;
+        if (mx >= originX && mx <= originX + plotWidth) {
+          const t = ((mx - originX) / plotWidth) * 12.0;
+          const yVal = Math.exp(-params.gamma * t) * Math.cos(params.omega * t);
+          canvas.title = `x = ${t.toFixed(2)}, f(x) = ${yVal.toFixed(3)}`;
+        } else {
+          canvas.title = '';
         }
       });
+
+      // Interactive To-Do Checkbox logic
+      function updateTodo(check, label, name) {
+        if (check.checked) {
+          label.classList.add('line-through', 'text-content-muted');
+          label.classList.remove('text-content-secondary');
+          logEvent(`TODO_COMPLETED: "${name}"`, 'text-emerald-400');
+        } else {
+          label.classList.remove('line-through', 'text-content-muted');
+          label.classList.add('text-content-secondary');
+          logEvent(`TODO_UNCHECKED: "${name}"`, 'text-content-muted');
+        }
+      }
+
+      todoCheck1.addEventListener('change', () => updateTodo(todoCheck1, todoLabel1, 'Skia core'));
+      todoCheck2.addEventListener('change', () => updateTodo(todoCheck2, todoLabel2, 'Rotation 360°'));
+      todoCheck3.addEventListener('change', () => {
+        updateTodo(todoCheck3, todoLabel3, 'Tibetan chime test');
+        if (todoCheck3.checked) playHarmonicChime();
+      });
+
+      // Tibetan Singing Bowl Harmonic Bell Synthesis via Web Audio API
+      function playHarmonicChime() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const actx = new AudioCtx();
+          if (actx.state === 'suspended') actx.resume();
+          const now = actx.currentTime;
+
+          // Harmonic triad C5 (523.25 Hz), E5 (659.25 Hz), G5 (783.99 Hz) with gentle exponential decay
+          [523.25, 659.25, 783.99].forEach((freq, idx) => {
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.22, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 2.8);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 2.9);
+          });
+          logEvent('AUDIO: Synthesized Tibetan singing bowl harmonic chime (523Hz + 659Hz + 784Hz)', 'text-emerald-400');
+        } catch(e) {
+          logEvent('AUDIO: Web Audio not supported or blocked by browser policy', 'text-red-400');
+        }
+      }
+
+      btnPlayChime.addEventListener('click', playHarmonicChime);
 
       setTimeout(resizeCanvas, 50);
     })();
