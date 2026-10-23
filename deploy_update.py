@@ -48,7 +48,7 @@ NGINX_CONF = """server {
 
     # Landing Page & Static Web Assets
     location / {
-        try_files $uri $uri/ =404;
+        try_files $uri $uri.html $uri/ =404;
     }
 
     # Downloads for Windows .exe Installers

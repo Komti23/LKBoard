@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Подробно о LKBoard — История, возможности, песочница и сравнение с Miro</title>
+  <meta name="description" content="Подробное описание онлайн-доски LKBoard: почему мы ее создали, интерактивная песочница, сравнение с Miro и горячие клавиши.">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bg: {
+              base: '#0D0F12',
+              surface: '#13161A',
+              elevated: '#181B20',
+              hover: '#1F2329'
+            },
+            line: {
+              subtle: '#1F242C',
+              DEFAULT: '#242830',
+              bright: '#363C48'
+            },
+            accent: {
+              sky: '#38BDF8',
+              blue: '#3B82F6',
+              cobalt: '#0284C7'
+            },
+            content: {
+              primary: '#F4F4F5',
+              secondary: '#A1A1AA',
+              muted: '#71717A'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .tech-grid {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    }
+    .subtle-dots {
+      background-size: 20px 20px;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #242830;
+      height: 4px;
+      border-radius: 2px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 14px;
+      width: 14px;
+      border-radius: 50%;
+      background: #38BDF8;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+      border: 2px solid #0D0F12;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0D0F12; }
+    ::-webkit-scrollbar-thumb { background: #242830; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-bg-base text-content-primary tech-grid min-h-screen flex flex-col antialiased selection:bg-accent-sky/20 selection:text-accent-sky">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-bg-base/90 backdrop-blur-md border-b border-line">
+    <div class="max-w-[1200px] mx-auto px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/" class="flex items-center space-x-2 text-xs font-mono text-content-secondary hover:text-content-primary transition-colors">
+          <span>← На главную</span>
+        </a>
+        <div class="h-4 w-px bg-line"></div>
+        <a href="/" class="flex items-center space-x-2 group">
+          <div class="w-5 h-5 rounded bg-gradient-to-br from-accent-sky to-accent-blue flex items-center justify-center p-0.5">
+            <svg class="w-3.5 h-3.5 text-bg-base" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M7 12h10M12 7v10"/>
+            </svg>
+          </div>
+          <span class="font-bold text-sm tracking-tight text-content-primary">LKBoard</span>
+        </a>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <a href="/canvas" target="_blank" class="text-xs font-mono font-semibold text-bg-base bg-accent-sky hover:bg-sky-300 px-3.5 py-1.5 rounded transition-all">
+          Запустить веб-доску ↗
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1200px] mx-auto px-6 py-12 space-y-16">
+
+    <!-- Page Title -->
+    <div>
+      <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded bg-bg-surface border border-line text-[11px] font-mono text-emerald-400 mb-3">
+        <span>ПОЛНОЕ ОПИСАНИЕ ПРОЕКТА</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-content-primary mb-3">
+        Все подробности о доске LKBoard
+      </h1>
+      <p class="text-sm text-content-secondary max-w-2xl leading-relaxed">
+        Почему мы решили сделать полностью бесплатную открытую доску, как она устроена технически и почему она быстрее Miro на онлайн-уроках и созвонах.
+      </p>
+    </div>
+
+    <!-- 1. The Story & 6 Real Pains -->
+    <section class="border-t border-line pt-10" id="why">
+      <div class="max-w-2xl mb-8">
+        <div class="text-[11px] font-mono text-accent-sky uppercase tracking-wider mb-1">01 / Предыстория</div>
+        <h2 class="text-2xl font-bold tracking-tight text-content-primary">
+          Проблемы современных досок, от которых мы устали
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 font-mono text-xs">
+        <div class="bg-bg-surface border border-line p-5 rounded-lg">
+          <div class="text-rose-400 font-bold mb-1.5">ЛИМИТ НА 3 ДОСКИ</div>
+          <div class="text-sm font-bold text-content-primary font-sans mb-2">Бесплатно и безлимитно</div>
+          <p class="text-content-secondary font-sans leading-relaxed">
+            В Miro бесплатный аккаунт дает всего 3 доски на команду, а дальше требует подписку по $16/мес с каждого участника. В LKBoard ограничений на количество досок нет вообще.
+          </p>
+        </div>
+
+        <div class="bg-bg-surface border border-line p-5 rounded-lg">
+          <div class="text-rose-400 font-bold mb-1.5">СЛОЖНЫЙ ВХОД ДЛЯ УЧЕНИКА</div>
+          <div class="text-sm font-bold text-content-primary font-sans mb-2">Вход за 1 секунду по ссылке</div>
+          <p class="text-content-secondary font-sans leading-relaxed">
+            Ученику или коллеге не нужно регистрироваться, вводить почту и придумывать пароли. Вы скинули ссылку — человек сразу на доске и может писать.
+          </p>
+        </div>
+
+        <div class="bg-bg-surface border border-line p-5 rounded-lg">
+          <div class="text-rose-400 font-bold mb-1.5">ЛАГИ ПРИ ДЕМОНСТРАЦИИ ЭКРАНА</div>
+          <div class="text-sm font-bold text-content-primary font-sans mb-2">120 FPS и 0.4 ms задержка пера</div>
+          <p class="text-content-secondary font-sans leading-relaxed">
+            Браузерные комбайны тормозят при включенном Zoom или Discord. Ядро Skia GPU обеспечивает мгновенный отклик пера без разрывов штриха.
+          </p>
+        </div>
+
+        <div class="bg-bg-surface border border-line p-5 rounded-lg">
+          <div class="text-rose-400 font-bold mb-1.5">ПЕРЕГРУЖЕННЫЙ ИНТЕРФЕЙС</div>
+          <div class="text-sm font-bold text-content-primary font-sans mb-2">Только нужные инструменты</div>
+          <p class="text-content-secondary font-sans leading-relaxed">
+            Никаких сотен запутанных кнопок. Только перо, стикеры с галочками для домашки, графики Desmos, канбан для плана урока и таймер созвона.
+          </p>
+        </div>
+
+        <div class="bg-bg-surface border border-line p-5 rounded-lg">
+          <div class="text-rose-400 font-bold mb-1.5">РИСК БЛОКИРОВОК В РФ</div>
+          <div class="text-sm font-bold text-content-primary font-sans mb-2">100% Открытый код и офлайн</div>
+          <p class="text-content-secondary font-sans leading-relaxed">
+            Зарубежные облака блокируют учетные записи. Код LKBoard открыт на GitHub, а десктопное приложение для Windows работает полностью автономно на вашем компьютере.
+          </p>
+        </div>
+
+        <div class="bg-bg-surface border border-line p-5 rounded-lg">
+          <div class="text-rose-400 font-bold mb-1.5">ЗАТЯГИВАЮЩИЕСЯ ЗАНЯТИЯ</div>
+          <div class="text-sm font-bold text-content-primary font-sans mb-2">Таймер с тибетской чашей</div>
+          <p class="text-content-secondary font-sans leading-relaxed">
+            Вместо раздражающего резкого звука будильника встроенный таймер воспроизводит медитативный звон тибетской поющей чаши, мягко напоминая о завершении урока.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Interactive Sandbox -->
+    <section class="border-t border-line pt-10" id="sandbox">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-3 border-b border-line">
+        <div>
+          <div class="text-[11px] font-mono text-accent-sky uppercase tracking-wider mb-1">02 / Интерактив</div>
+          <h2 class="text-2xl font-bold tracking-tight text-content-primary">
+            Живая песочница прямо в браузере
+          </h2>
+        </div>
+        <p class="text-xs font-mono text-content-muted mt-2 md:mt-0">
+          Проверьте плавность графика, вращение стикера на 360° и звук тибетской чаши.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 items-start">
+        <!-- Canvas -->
+        <div class="col-span-12 lg:col-span-7 bg-bg-surface border border-line rounded-lg p-5">
+          <div class="flex items-center justify-between mb-3 text-xs font-mono text-content-secondary">
+            <span class="font-bold text-content-primary">Холст: График урока & Вращаемый стикер</span>
+            <span class="text-[11px] text-content-muted">60 FPS · 0.4 ms</span>
+          </div>
+
+          <div class="relative bg-bg-base border border-line rounded p-2">
+            <canvas id="sandboxCanvas" class="w-full h-[280px] block cursor-crosshair"></canvas>
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center justify-between text-xs font-mono text-content-muted gap-2">
+            <div>Формула: <span class="text-accent-sky font-semibold" id="eqLabel">f(x) = 1.0·e^(-0.10x)·cos(3.00x)</span></div>
+            <div>Угол стикера: <span class="text-amber-400 font-semibold" id="nodeAngleLabel">θ = 25°</span></div>
+            <button id="btnResetParams" class="text-[11px] text-content-secondary hover:text-white underline cursor-pointer">
+              Сброс
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="col-span-12 lg:col-span-5 space-y-4 font-mono text-xs">
+          <!-- Sliders -->
+          <div class="bg-bg-surface border border-line rounded-lg p-5 space-y-4">
+            <div class="text-[11px] uppercase font-bold text-content-primary">Регуляторы параметров</div>
+            
+            <div>
+              <div class="flex justify-between mb-1.5">
+                <span class="text-content-secondary">Колебания (ω):</span>
+                <span class="text-accent-sky font-bold" id="valFreq">3.00 rad/s</span>
+              </div>
+              <input type="range" id="sliderFreq" min="0.5" max="8.0" step="0.1" value="3.0" class="w-full">
+            </div>
+
+            <div>
+              <div class="flex justify-between mb-1.5">
+                <span class="text-content-secondary">Затухание (γ):</span>
+                <span class="text-emerald-400 font-bold" id="valDamp">0.10</span>
+              </div>
+              <input type="range" id="sliderDamp" min="0.0" max="0.5" step="0.02" value="0.10" class="w-full">
+            </div>
+
+            <div>
+              <div class="flex justify-between mb-1.5">
+                <span class="text-content-secondary">Вращение стикера (θ):</span>
+                <span class="text-amber-400 font-bold" id="valRot">25°</span>
+              </div>
+              <input type="range" id="sliderRot" min="-180" max="180" step="1" value="25" class="w-full">
+              
+              <div class="flex items-center space-x-2 mt-2 pt-2 border-t border-line text-[11px]">
+                <button id="btnRotMinus90" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-content-primary">↺ -90°</button>
+                <button id="btnRotPlus90" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-content-primary">↻ +90°</button>
+                <button id="btnRotReset" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-accent-sky">0°</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- To-Do & Chime -->
+          <div class="bg-bg-surface border border-line rounded-lg p-4 space-y-3">
+            <div class="text-[11px] font-bold text-content-primary uppercase">Чекбоксы домашки и звук</div>
+            
+            <div class="space-y-1.5 bg-bg-base p-2.5 rounded border border-line text-[11px]">
+              <label class="flex items-center space-x-2 cursor-pointer group">
+                <input type="checkbox" id="todoCheck1" checked class="rounded border-line text-accent-sky">
+                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel1">Объяснить теорию и формулу</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer group">
+                <input type="checkbox" id="todoCheck2" checked class="rounded border-line text-accent-sky">
+                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel2">Повернуть стикер с подсказкой на 360°</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer group">
+                <input type="checkbox" id="todoCheck3" class="rounded border-line text-accent-sky">
+                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel3">Подать мягкий гонг окончания урока</span>
+              </label>
+            </div>
+
+            <button id="btnPlayChime" class="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded bg-bg-elevated hover:bg-bg-hover border border-line hover:border-emerald-500 text-content-primary transition-all">
+              <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span>🔊 Проверить тибетскую чашу (Web Audio Gong)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Comparison Table -->
+    <section class="border-t border-line pt-10" id="compare">
+      <div class="max-w-2xl mb-6">
+        <div class="text-[11px] font-mono text-accent-sky uppercase tracking-wider mb-1">03 / Сравнение</div>
+        <h2 class="text-2xl font-bold tracking-tight text-content-primary">
+          LKBoard против Miro и других сервисов
+        </h2>
+      </div>
+
+      <div class="overflow-x-auto border border-line rounded-lg bg-bg-surface font-mono text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-bg-elevated border-b border-line text-content-muted">
+            <tr>
+              <th class="p-3.5">Критерий</th>
+              <th class="p-3.5 text-accent-sky font-bold bg-accent-sky/5">LKBoard</th>
+              <th class="p-3.5">Miro (Бесплатно)</th>
+              <th class="p-3.5">Miro (Подписка)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line text-content-secondary">
+            <tr>
+              <td class="p-3.5 font-medium text-content-primary">Цена</td>
+              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">0 ₽ (Навсегда бесплатно)</td>
+              <td class="p-3.5 text-content-muted">0 ₽ (Жесткие лимиты)</td>
+              <td class="p-3.5 text-rose-400">$10 – $16/мес с человека</td>
+            </tr>
+            <tr>
+              <td class="p-3.5 font-medium text-content-primary">Количество досок</td>
+              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">Безлимитно</td>
+              <td class="p-3.5 text-rose-400">Всего 3 доски</td>
+              <td class="p-3.5">Безлимитно</td>
+            </tr>
+            <tr>
+              <td class="p-3.5 font-medium text-content-primary">Вход ученика</td>
+              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">По ссылке за 1 секунду</td>
+              <td class="p-3.5 text-rose-400">Обязательная регистрация</td>
+              <td class="p-3.5 text-rose-400">Обязательная регистрация</td>
+            </tr>
+            <tr>
+              <td class="p-3.5 font-medium text-content-primary">Отклик пера</td>
+              <td class="p-3.5 text-accent-sky font-bold bg-accent-sky/5">0.4 ms (Skia GPU)</td>
+              <td class="p-3.5 text-content-muted">15-25 ms (лагает в браузере)</td>
+              <td class="p-3.5 text-content-muted">15-25 ms</td>
+            </tr>
+            <tr>
+              <td class="p-3.5 font-medium text-content-primary">Офлайн-режим на ПК</td>
+              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">Да (100% без интернета)</td>
+              <td class="p-3.5 text-rose-400">Нет</td>
+              <td class="p-3.5 text-rose-400">Нет</td>
+            </tr>
+            <tr>
+              <td class="p-3.5 font-medium text-content-primary">Исходный код</td>
+              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">Открытый (MIT GitHub)</td>
+              <td class="p-3.5 text-content-muted">Закрытый</td>
+              <td class="p-3.5 text-content-muted">Закрытый</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. Hotkeys -->
+    <section class="border-t border-line pt-10" id="hotkeys">
+      <div class="mb-6">
+        <div class="text-[11px] font-mono text-accent-sky uppercase tracking-wider mb-1">04 / Управление</div>
+        <h2 class="text-2xl font-bold tracking-tight text-content-primary">
+          Горячие клавиши
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono text-xs">
+        <div class="bg-bg-surface border border-line p-3 rounded">
+          <div class="text-content-muted text-[10px] mb-1">Выделение</div>
+          <div class="text-content-primary font-bold text-sm">V</div>
+        </div>
+        <div class="bg-bg-surface border border-line p-3 rounded">
+          <div class="text-content-muted text-[10px] mb-1">Перо</div>
+          <div class="text-content-primary font-bold text-sm">P</div>
+        </div>
+        <div class="bg-bg-surface border border-line p-3 rounded">
+          <div class="text-content-muted text-[10px] mb-1">График Desmos</div>
+          <div class="text-accent-sky font-bold text-sm">G</div>
+        </div>
+        <div class="bg-bg-surface border border-line p-3 rounded">
+          <div class="text-content-muted text-[10px] mb-1">Стикер с To-Do</div>
+          <div class="text-amber-400 font-bold text-sm">S</div>
+        </div>
+        <div class="bg-bg-surface border border-line p-3 rounded">
+          <div class="text-content-muted text-[10px] mb-1">Вращение ±90°</div>
+          <div class="text-content-primary font-bold text-sm">R / Ctrl+R</div>
+        </div>
+        <div class="bg-bg-surface border border-line p-3 rounded">
+          <div class="text-content-muted text-[10px] mb-1">Скриншот в буфер</div>
+          <div class="text-content-primary font-bold text-sm">Ctrl+Shift+C</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Action CTA -->
+    <section class="bg-bg-surface border border-line rounded-lg p-8 text-center space-y-4">
+      <h3 class="text-xl font-bold text-content-primary">Готовы провести свой первый урок или созвон?</h3>
+      <p class="text-xs text-content-secondary max-w-md mx-auto">
+        Запустите веб-доску прямо сейчас в браузере или скачайте нативное приложение для Windows.
+      </p>
+      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <a href="/canvas" target="_blank" class="px-5 py-2.5 bg-accent-sky hover:bg-sky-300 text-bg-base text-xs font-mono font-bold rounded transition-all">
+          Открыть веб-доску онлайн ↗
+        </a>
+        <a href="/downloads/Lkboard-1.0.0.exe" class="px-5 py-2.5 bg-bg-elevated hover:bg-bg-hover text-content-primary border border-line text-xs font-mono font-semibold rounded transition-all">
+          Скачать установщик Windows (.exe)
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-line bg-bg-base py-6 font-mono text-xs text-content-muted">
+    <div class="max-w-[1200px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>LKBoard · Лицензия MIT. Открытый код на GitHub.</div>
+      <div class="flex items-center space-x-4">
+        <a href="/" class="hover:text-content-primary">На главную</a>
+        <a href="/canvas" class="hover:text-content-primary">Веб-доска</a>
+        <a href="https://github.com/Komti23/LKBoard" target="_blank" class="hover:text-content-primary">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script for Sandbox -->
+  <script>
+    (function() {
+      const canvas = document.getElementById('sandboxCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      const sliderFreq = document.getElementById('sliderFreq');
+      const sliderDamp = document.getElementById('sliderDamp');
+      const sliderRot = document.getElementById('sliderRot');
+      const valFreq = document.getElementById('valFreq');
+      const valDamp = document.getElementById('valDamp');
+      const valRot = document.getElementById('valRot');
+      const eqLabel = document.getElementById('eqLabel');
+      const nodeAngleLabel = document.getElementById('nodeAngleLabel');
+
+      let params = {
+        omega: parseFloat(sliderFreq.value),
+        gamma: parseFloat(sliderDamp.value),
+        angle: parseFloat(sliderRot.value)
+      };
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        drawSimulation();
+      }
+      window.addEventListener('resize', resizeCanvas);
+
+      function drawSimulation() {
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        ctx.clearRect(0, 0, w, h);
+
+        ctx.strokeStyle = '#1F242C';
+        ctx.lineWidth = 1;
+        const cy = h / 2;
+        const originX = 35;
+        const plotWidth = w * 0.58;
+
+        ctx.beginPath();
+        ctx.moveTo(originX, 15);
+        ctx.lineTo(originX, h - 15);
+        ctx.moveTo(originX, cy);
+        ctx.lineTo(originX + plotWidth, cy);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#38BDF8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const xMax = 12.0;
+        let started = false;
+        for (let px = 0; px <= plotWidth; px += 2) {
+          const t = (px / plotWidth) * xMax;
+          const yVal = Math.exp(-params.gamma * t) * Math.cos(params.omega * t);
+          const py = cy - (yVal * 50);
+          if (!started) { ctx.moveTo(originX + px, py); started = true; }
+          else { ctx.lineTo(originX + px, py); }
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#242830';
+        ctx.beginPath();
+        ctx.moveTo(originX + plotWidth + 20, 20);
+        ctx.lineTo(originX + plotWidth + 20, h - 20);
+        ctx.stroke();
+
+        // 360 card
+        const nodeCenterX = originX + plotWidth + (w - (originX + plotWidth)) / 2;
+        const nodeCenterY = cy;
+        const cardW = 115;
+        const cardH = 75;
+
+        ctx.save();
+        ctx.translate(nodeCenterX, nodeCenterY);
+        ctx.rotate((params.angle * Math.PI) / 180);
+
+        ctx.strokeStyle = '#38BDF8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -cardH / 2);
+        ctx.lineTo(0, -cardH / 2 - 20);
+        ctx.stroke();
+        ctx.fillStyle = '#38BDF8';
+        ctx.beginPath();
+        ctx.arc(0, -cardH / 2 - 20, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#181B20';
+        ctx.strokeStyle = '#38BDF8';
+        ctx.fillRect(-cardW / 2, -cardH / 2, cardW, cardH);
+        ctx.strokeRect(-cardW / 2, -cardH / 2, cardW, cardH);
+
+        ctx.fillStyle = '#1F2329';
+        ctx.fillRect(-cardW / 2, -cardH / 2, cardW, 18);
+        ctx.fillStyle = '#FBBF24';
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText('📝 Стикер урока', -cardW / 2 + 6, -cardH / 2 + 12);
+
+        ctx.fillStyle = '#A1A1AA';
+        ctx.font = '9px monospace';
+        ctx.fillText(`Угол θ = ${Math.round(params.angle)}°`, -cardW / 2 + 6, -cardH / 2 + 35);
+        ctx.fillText('Shift: шаг 15°', -cardW / 2 + 6, -cardH / 2 + 48);
+        ctx.fillText('Хоткей: [ R ]', -cardW / 2 + 6, -cardH / 2 + 61);
+        ctx.restore();
+      }
+
+      function updateParameters() {
+        params.omega = parseFloat(sliderFreq.value);
+        params.gamma = parseFloat(sliderDamp.value);
+        params.angle = parseFloat(sliderRot.value);
+        valFreq.textContent = `${params.omega.toFixed(2)} rad/s`;
+        valDamp.textContent = params.gamma.toFixed(2);
+        valRot.textContent = `${Math.round(params.angle)}°`;
+        eqLabel.textContent = `f(x) = 1.0·e^(-${params.gamma.toFixed(2)}x)·cos(${params.omega.toFixed(2)}x)`;
+        nodeAngleLabel.textContent = `θ = ${Math.round(params.angle)}°`;
+        drawSimulation();
+      }
+
+      sliderFreq.addEventListener('input', updateParameters);
+      sliderDamp.addEventListener('input', updateParameters);
+      sliderRot.addEventListener('input', updateParameters);
+
+      document.getElementById('btnRotMinus90').addEventListener('click', () => {
+        params.angle = (params.angle - 90 + 360) % 360;
+        if (params.angle > 180) params.angle -= 360;
+        sliderRot.value = params.angle; updateParameters();
+      });
+      document.getElementById('btnRotPlus90').addEventListener('click', () => {
+        params.angle = (params.angle + 90 + 360) % 360;
+        if (params.angle > 180) params.angle -= 360;
+        sliderRot.value = params.angle; updateParameters();
+      });
+      document.getElementById('btnRotReset').addEventListener('click', () => {
+        params.angle = 0; sliderRot.value = 0; updateParameters();
+      });
+      document.getElementById('btnResetParams').addEventListener('click', () => {
+        sliderFreq.value = 3.0; sliderDamp.value = 0.10; sliderRot.value = 25; updateParameters();
+      });
+
+      // Chime
+      function playHarmonicChime() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const actx = new AudioCtx();
+          if (actx.state === 'suspended') actx.resume();
+          const now = actx.currentTime;
+          [523.25, 659.25, 783.99].forEach((freq, idx) => {
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.22, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 2.8);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 2.9);
+          });
+        } catch(e) {}
+      }
+      document.getElementById('btnPlayChime').addEventListener('click', playHarmonicChime);
+      setTimeout(resizeCanvas, 50);
+    })();
+  </script>
+</body>
+</html>

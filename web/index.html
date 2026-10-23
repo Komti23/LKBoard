@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LKBoard — Бесплатная открытая онлайн-доска для уроков, репетиторов и команд</title>
-  <meta name="description" content="Бесплатная и быстрая открытая альтернатива Miro. Никаких платных подписок, лимитов на доски и лагов на созвонах. Открыл в один клик и работаешь с учеником или коллегами.">
+  <title>LKBoard — Бесплатная онлайн-доска для уроков, репетиторов и созвонов</title>
+  <meta name="description" content="Быстрая и бесплатная открытая замена Miro. Никаких подписок, лимитов на доски и лагов на созвонах. Открыл в 1 клик и работаешь с учеником или коллегами.">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   
   <!-- Fonts -->
@@ -52,54 +52,27 @@
   </script>
 
   <style>
-    /* Technical Coordinate Grid */
     .tech-grid {
       background-size: 24px 24px;
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
     }
-
-    .subtle-dots {
-      background-size: 20px 20px;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-    }
-
-    /* Custom range slider styling */
-    input[type=range] {
-      -webkit-appearance: none;
-      background: #242830;
-      height: 4px;
-      border-radius: 2px;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      height: 14px;
-      width: 14px;
-      border-radius: 50%;
-      background: #38BDF8;
-      cursor: pointer;
-      box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
-      border: 2px solid #0D0F12;
-    }
-
-    /* Custom scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0D0F12; }
     ::-webkit-scrollbar-thumb { background: #242830; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #363C48; }
   </style>
 </head>
 <body class="bg-bg-base text-content-primary tech-grid min-h-screen flex flex-col antialiased selection:bg-accent-sky/20 selection:text-accent-sky">
 
   <!-- =========================================================================
-       1. Top Technical Navigation Bar
+       1. Clean Minimal Navigation Bar
        ========================================================================= -->
   <header class="sticky top-0 z-50 bg-bg-base/90 backdrop-blur-md border-b border-line">
-    <div class="max-w-[1400px] mx-auto px-6 h-14 flex items-center justify-between">
+    <div class="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
       
-      <!-- Brand & Open Source Pill -->
-      <div class="flex items-center space-x-4">
+      <!-- Brand & Version Tag -->
+      <div class="flex items-center space-x-3">
         <a href="/" class="flex items-center space-x-2.5 group">
           <div class="w-6 h-6 rounded bg-gradient-to-br from-accent-sky to-accent-blue flex items-center justify-center p-0.5 shadow-sm">
             <svg class="w-4 h-4 text-bg-base" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -116,464 +89,160 @@
         </span>
       </div>
 
-      <!-- Center Nav Links -->
-      <nav class="hidden md:flex items-center space-x-6 text-xs font-medium text-content-secondary">
-        <a href="#why" class="hover:text-content-primary transition-colors">Почему LKBoard</a>
-        <a href="#audience" class="hover:text-content-primary transition-colors">Для кого</a>
-        <a href="#sandbox" class="hover:text-content-primary transition-colors">Песочница</a>
-        <a href="#compare" class="hover:text-content-primary transition-colors">Сравнение с Miro</a>
-        <a href="#download" class="hover:text-content-primary transition-colors">Скачать / Войти</a>
+      <!-- Quick Nav Links -->
+      <nav class="flex items-center space-x-4 sm:space-x-6 text-xs font-medium">
+        <a href="#download" class="text-content-secondary hover:text-content-primary transition-colors">Скачать</a>
+        <a href="/details.html" class="text-accent-sky hover:text-sky-300 font-semibold flex items-center space-x-1 transition-colors">
+          <span>Подробнее</span>
+          <span>→</span>
+        </a>
+        <a href="/canvas" target="_blank" class="hidden sm:inline-flex items-center space-x-1.5 text-xs font-mono font-semibold text-bg-base bg-accent-sky hover:bg-sky-300 px-3 py-1.5 rounded transition-all">
+          <span>Открыть доску ↗</span>
+        </a>
       </nav>
-
-      <!-- Right Action Group -->
-      <div class="flex items-center space-x-3">
-        <a href="/canvas" target="_blank" class="text-xs font-mono text-content-secondary hover:text-content-primary px-3 py-1.5 rounded border border-line hover:border-line-bright transition-all">
-          Без регистрации ↗
-        </a>
-
-        <a href="/downloads/Lkboard-1.0.0.exe" class="flex items-center space-x-2 text-xs font-semibold text-bg-base bg-accent-sky hover:bg-sky-300 px-3.5 py-1.5 rounded transition-all shadow-sm">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span>Скачать .exe</span>
-        </a>
-      </div>
     </div>
   </header>
 
   <!-- =========================================================================
-       2. Hero Section: Honest, Relatable & Ultra-Fast
+       2. Hero Section: Focused & Clean
        ========================================================================= -->
-  <section class="relative pt-16 pb-12 overflow-hidden border-b border-line">
-    <div class="max-w-[1400px] mx-auto px-6">
+  <section class="py-16 sm:py-20 border-b border-line">
+    <div class="max-w-[1100px] mx-auto px-6 text-center">
       
-      <!-- Top Pre-heading Monospace Pill -->
-      <div class="flex items-center justify-center mb-6">
-        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded bg-bg-surface border border-line text-[11px] font-mono text-content-secondary">
-          <span class="text-emerald-400 font-semibold">[0₽ НАВСЕГДА]</span>
-          <span>·</span>
-          <span>БЕЗ ПОДПИСОК, БЕЗ ЛИМИТОВ НА 3 ДОСКИ, БЕЗ ТОРМОЗОВ НА СОЗВОНАХ</span>
-        </div>
+      <!-- Top Pill -->
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded bg-bg-surface border border-line text-[11px] font-mono text-content-secondary mb-6">
+        <span class="text-emerald-400 font-semibold">[0₽ НАВСЕГДА]</span>
+        <span>·</span>
+        <span>БЕЗ ПОДПИСОК, БЕЗ ЛИМИТОВ, БЕЗ ТОРМОЗОВ НА СОЗВОНАХ</span>
       </div>
 
-      <!-- Main Heading (Clear, Punchy, Relatable) -->
-      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-center tracking-tight text-content-primary max-w-4xl mx-auto leading-[1.08] mb-6">
-        Онлайн-доска, которая не бесит на созвонах с учениками и коллегами.
+      <!-- Main Title -->
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-content-primary max-w-3xl mx-auto leading-[1.1] mb-6">
+        Простая онлайн-доска для уроков и созвонов.
       </h1>
 
-      <p class="text-sm sm:text-base text-content-secondary text-center max-w-2xl mx-auto leading-relaxed mb-8">
-        Мы сами столкнулись с проблемой: Miro стал неподъемным комбайном за $16 в месяц, который виснет при демонстрации экрана, просит регистрацию у ученика и блокирует доски. Мы сделали LKBoard — быстрый, легкий, полностью открытый и бесплатный.
+      <!-- Short Subtitle -->
+      <p class="text-sm sm:text-base text-content-secondary max-w-2xl mx-auto leading-relaxed mb-8">
+        Быстрая, бесплатная и открытая замена Miro для репетиторов, преподавателей и команд. Ученик входит за секунду по ссылке без регистрации. Никаких лимитов на 3 доски и никаких лагов при демонстрации экрана.
       </p>
 
-      <!-- Action Row & Metadata -->
-      <div class="flex flex-wrap items-center justify-center gap-3 mb-10">
-        <a href="/canvas" target="_blank" class="flex items-center space-x-2 text-xs font-mono font-semibold bg-accent-sky hover:bg-sky-300 text-bg-base px-5 py-2.5 rounded transition-all shadow-sm">
+      <!-- Primary Action Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-3 mb-8">
+        <a href="/canvas" target="_blank" class="flex items-center space-x-2 text-xs font-mono font-bold bg-accent-sky hover:bg-sky-300 text-bg-base px-6 py-3 rounded transition-all shadow-sm">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <path d="m10 15 5-3-5-3v6Z"/>
           </svg>
-          <span>Открыть доску онлайн (в 1 клик)</span>
+          <span>Открыть в браузере (в 1 клик)</span>
         </a>
 
-        <a href="/downloads/Lkboard-1.0.0.exe" class="flex items-center space-x-2 text-xs font-mono text-content-primary bg-bg-surface hover:bg-bg-elevated border border-line px-5 py-2.5 rounded transition-all">
+        <a href="/downloads/Lkboard-1.0.0.exe" class="flex items-center space-x-2 text-xs font-mono text-content-primary bg-bg-surface hover:bg-bg-elevated border border-line px-5 py-3 rounded transition-all">
           <svg class="w-4 h-4 text-accent-sky" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          <span>Скачать для Windows (114 MB .exe)</span>
+          <span>Скачать для Windows (114 MB)</span>
         </a>
 
-        <a href="https://github.com/Komti23/LKBoard" target="_blank" class="flex items-center space-x-2 text-xs font-mono text-content-secondary hover:text-content-primary bg-bg-surface/50 border border-line px-4 py-2.5 rounded transition-all">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
-          </svg>
-          <span>Исходный код (GitHub)</span>
+        <a href="/details.html" class="flex items-center space-x-1.5 text-xs font-mono text-content-secondary hover:text-white px-4 py-3 rounded border border-line/60 hover:border-line-bright transition-all">
+          <span>Подробнее о возможностях →</span>
         </a>
       </div>
 
       <!-- Quick Trust Badges -->
-      <div class="flex flex-wrap items-center justify-center gap-6 text-xs font-mono text-content-muted mb-12">
+      <div class="flex flex-wrap items-center justify-center gap-5 text-xs font-mono text-content-muted">
         <div class="flex items-center space-x-1.5">
           <span class="text-emerald-400">✓</span>
           <span>Без обязательной регистрации</span>
         </div>
         <div class="flex items-center space-x-1.5">
           <span class="text-emerald-400">✓</span>
-          <span>Бесконечные доски без лимитов</span>
+          <span>Неограниченное число досок</span>
         </div>
         <div class="flex items-center space-x-1.5">
           <span class="text-emerald-400">✓</span>
-          <span>Работает 100% офлайн на ПК</span>
+          <span>100% офлайн-режим на ПК</span>
         </div>
         <div class="flex items-center space-x-1.5">
           <span class="text-emerald-400">✓</span>
-          <span>120 FPS даже на старых ноутбуках</span>
+          <span>120 FPS и 0.4 ms задержка пера</span>
         </div>
-      </div>
-
-      <!-- =========================================================================
-           Native App Window Mockup: Tutoring & Team Call in Action (88% Container)
-           ========================================================================= -->
-      <div class="w-full max-w-[1240px] mx-auto rounded-lg border border-line bg-bg-surface shadow-2xl overflow-hidden">
-        
-        <!-- Window Titlebar -->
-        <div class="h-9 bg-bg-elevated border-b border-line px-3 flex items-center justify-between">
-          
-          <!-- Window Controls & Tabs -->
-          <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444] inline-block opacity-80"></span>
-              <span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B] inline-block opacity-80"></span>
-              <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] inline-block opacity-80"></span>
-            </div>
-
-            <!-- Tab strip -->
-            <div class="flex items-center space-x-1 ml-2 text-[11px] font-mono">
-              <div class="bg-bg-surface border-t border-x border-line px-3 py-1 rounded-t text-content-primary flex items-center space-x-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>урок_математика_11кл_егэ.lkb</span>
-                <span class="text-content-muted hover:text-white cursor-pointer ml-1">×</span>
-              </div>
-              <div class="px-3 py-1 text-content-muted hover:text-content-secondary cursor-pointer">
-                созвон_команда_спринт.lkb
-              </div>
-            </div>
-          </div>
-
-          <!-- Titlebar Info -->
-          <div class="text-[11px] font-mono text-content-muted hidden md:flex items-center space-x-4">
-            <span>Учеников на доске: 2</span>
-            <span>·</span>
-            <span>Пинг: 0.8 ms</span>
-            <span>·</span>
-            <span class="text-emerald-400">СЕССИЯ АКТИВНА</span>
-          </div>
-        </div>
-
-        <!-- App Body Layout (Toolbar + Canvas Scene) -->
-        <div class="grid grid-cols-12 min-h-[500px] bg-bg-base">
-          
-          <!-- Left Workspace Sidebar: Simple & Honest Tools -->
-          <div class="col-span-12 md:col-span-3 border-r border-line bg-bg-surface/50 p-4 font-mono text-xs flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] uppercase font-bold text-content-muted tracking-wider mb-3">Инструменты урока и созвона</div>
-              
-              <!-- Quick tool icons strip -->
-              <div class="grid grid-cols-4 gap-1.5 mb-4">
-                <div class="flex flex-col items-center p-2 rounded bg-bg-elevated border border-accent-sky/50 text-accent-sky" title="Выделение (V)">
-                  <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
-                  <span class="text-[9px]">V</span>
-                </div>
-                <div class="flex flex-col items-center p-2 rounded bg-bg-elevated/40 border border-line text-content-secondary hover:text-content-primary" title="Перо как на бумаге (P)">
-                  <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 2 4 4-12 12H6v-4L18 2z"/></svg>
-                  <span class="text-[9px]">P</span>
-                </div>
-                <div class="flex flex-col items-center p-2 rounded bg-bg-elevated/40 border border-line text-content-secondary hover:text-content-primary" title="Стикер с чекбоксами (S)">
-                  <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/><path d="m9 13 2 2 4-4"/></svg>
-                  <span class="text-[9px]">S</span>
-                </div>
-                <div class="flex flex-col items-center p-2 rounded bg-bg-elevated/40 border border-line text-content-secondary hover:text-content-primary" title="График Desmos (G)">
-                  <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                  <span class="text-[9px]">G</span>
-                </div>
-              </div>
-
-              <div class="text-[10px] uppercase font-bold text-content-muted tracking-wider mb-2">На этой доске сейчас</div>
-              
-              <div class="space-y-1.5 text-content-secondary">
-                <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/70 border border-line text-content-primary">
-                  <span class="flex items-center space-x-2">
-                    <span class="text-accent-sky">📈</span>
-                    <span>График параболы $f(x)$</span>
-                  </span>
-                  <span class="text-[10px] text-accent-sky font-semibold">На экране</span>
-                </div>
-
-                <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/40 border border-line/60">
-                  <span class="flex items-center space-x-2">
-                    <span class="text-amber-400">📝</span>
-                    <span>Стикер: Задачи урока</span>
-                  </span>
-                  <span class="text-[10px] text-content-muted">θ = +12°</span>
-                </div>
-
-                <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/40 border border-line/60">
-                  <span class="flex items-center space-x-2">
-                    <span class="text-emerald-400">⏱</span>
-                    <span>Таймер занятия (45м)</span>
-                  </span>
-                  <span class="text-[10px] text-emerald-400">32:15</span>
-                </div>
-
-                <div class="flex items-center justify-between p-1.5 rounded bg-bg-elevated/40 border border-line/60">
-                  <span class="flex items-center space-x-2">
-                    <span class="text-purple-400">⛶</span>
-                    <span>План созвона</span>
-                  </span>
-                  <span class="text-[10px] text-content-muted">3 этапа</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Terminal status snippet -->
-            <div class="border-t border-line pt-3 mt-4 text-[10px] text-content-muted space-y-1">
-              <div>Совместный доступ: <span class="text-emerald-400 font-semibold">По ссылке (без паролей)</span></div>
-              <div>Скорость пера: <span class="text-accent-sky">0.4 ms (ощущение бумаги)</span></div>
-              <div>Стоимость сервиса: <span class="text-content-primary font-bold">0 ₽ (Навсегда)</span></div>
-            </div>
-          </div>
-
-          <!-- Center Workspace: Actual Tutoring & Team Call Scene -->
-          <div class="col-span-12 md:col-span-9 relative subtle-dots p-6 flex flex-col justify-between overflow-hidden">
-            
-            <!-- Floating Canvas Header Pill -->
-            <div class="flex items-center justify-between z-10">
-              <div class="bg-bg-elevated/90 border border-line px-3 py-1.5 rounded flex items-center space-x-3 text-xs font-mono">
-                <span class="text-accent-sky font-bold">Тема: Исследование функций и экстремумы</span>
-                <span class="text-line-bright">|</span>
-                <span class="text-emerald-400">f(x) = x² - 4x + 3</span>
-                <span class="text-line-bright">|</span>
-                <span class="text-content-muted">Корни: x₁=1, x₂=3</span>
-              </div>
-
-              <!-- Quick Action Share Link -->
-              <div class="flex items-center space-x-1.5 bg-bg-elevated border border-line p-1 rounded font-mono text-xs">
-                <button class="px-2.5 py-1 bg-accent-sky/10 text-accent-sky hover:bg-accent-sky/20 rounded border border-accent-sky/30 text-[11px] flex items-center space-x-1.5">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                  <span>Скопировать ссылку для ученика</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Collaborative Multi-Node Canvas Graphic (SVG) -->
-            <div class="my-6 relative">
-              <svg class="w-full h-[260px]" viewBox="0 0 850 260" fill="none">
-                <defs>
-                  <linearGradient id="parabolaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#38BDF8"/>
-                    <stop offset="100%" stop-color="#3B82F6"/>
-                  </linearGradient>
-                  <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
-                    <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
-                  </filter>
-                </defs>
-
-                <!-- Desmos Function Plot Card Box (Tutoring Graph) -->
-                <rect x="20" y="20" width="480" height="220" rx="6" fill="#13161A" stroke="#242830" filter="url(#cardShadow)"/>
-                
-                <!-- Card Header -->
-                <rect x="20" y="20" width="480" height="28" rx="6" fill="#181B20"/>
-                <text x="35" y="38" fill="#F4F4F5" font-size="11" font-family="monospace" font-weight="600">📈 Построение параболы: y = x² - 4x + 3</text>
-                <circle cx="485" cy="34" r="3" fill="#38BDF8"/>
-
-                <!-- Plot Axes inside Card -->
-                <line x1="40" y1="175" x2="475" y2="175" stroke="#242830" stroke-width="1.5"/>
-                <line x1="160" y1="45" x2="160" y2="225" stroke="#242830" stroke-width="1.5"/>
-                <text x="148" y="190" fill="#71717A" font-size="10" font-family="monospace">0</text>
-                <text x="465" y="190" fill="#71717A" font-size="10" font-family="monospace">x</text>
-                <text x="168" y="58" fill="#71717A" font-size="10" font-family="monospace">y</text>
-
-                <!-- Roots marks on axis: x=1, x=3 -->
-                <circle cx="210" cy="175" r="3.5" fill="#10B981"/>
-                <text x="205" y="192" fill="#10B981" font-size="9" font-family="monospace">x₁=1</text>
-                <circle cx="310" cy="175" r="3.5" fill="#10B981"/>
-                <text x="305" y="192" fill="#10B981" font-size="9" font-family="monospace">x₂=3</text>
-
-                <!-- Parabola Curve -->
-                <path d="M 100 55 Q 260 250 420 55" stroke="url(#parabolaGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-
-                <!-- Vertex min point: (2, -1) -->
-                <circle cx="260" cy="195" r="4.5" fill="#38BDF8" stroke="#0D0F12" stroke-width="2"/>
-                <rect x="270" y="190" width="105" height="18" rx="2" fill="#181B20" stroke="#242830"/>
-                <text x="275" y="202" fill="#F4F4F5" font-size="9" font-family="monospace">Вершина: (2, -1)</text>
-
-                <!-- Orthogonal Connector Line snapping from formula to homework sticky -->
-                <path d="M 500 120 L 530 120 L 530 65 L 550 65" stroke="#38BDF8" stroke-width="2" stroke-dasharray="4,4" fill="none"/>
-                <polygon points="550,61 558,65 550,69" fill="#38BDF8"/>
-
-                <!-- Team / Lesson Sprint Card -->
-                <rect x="560" y="25" width="265" height="85" rx="6" fill="#13161A" stroke="#242830" filter="url(#cardShadow)"/>
-                <rect x="560" y="25" width="265" height="22" rx="6" fill="#181B20"/>
-                <text x="570" y="39" fill="#F4F4F5" font-size="10" font-family="monospace" font-weight="600">⛶ План урока и спринта</text>
-                <rect x="750" y="29" width="65" height="14" rx="2" fill="#10B981" opacity="0.2"/>
-                <text x="755" y="40" fill="#10B981" font-size="9" font-family="monospace" font-weight="700">В ПРОЦЕССЕ</text>
-                <text x="570" y="65" fill="#A1A1AA" font-size="10" font-family="sans-serif">Разбор параметров и графиков парабол</text>
-                <text x="570" y="80" fill="#71717A" font-size="9" font-family="monospace">Ученик: Данил С. · Связь: Telegram Call</text>
-
-                <!-- Rotated Sticky To-Do Note (Homework / Checklist) -->
-                <g transform="translate(660, 135) rotate(10)">
-                  <!-- Stem Line & Rotation Knob Handle -->
-                  <line x1="80" y1="0" x2="80" y2="-22" stroke="#38BDF8" stroke-width="1.5"/>
-                  <circle cx="80" cy="-22" r="4.5" fill="#38BDF8" stroke="#0D0F12" stroke-width="2"/>
-                  <text x="90" y="-20" fill="#38BDF8" font-size="9" font-family="monospace">θ = +10°</text>
-
-                  <!-- Sticky Card Body -->
-                  <rect x="0" y="0" width="165" height="105" rx="4" fill="#181B20" stroke="#38BDF8" stroke-width="1.2" filter="url(#cardShadow)"/>
-                  <rect x="0" y="0" width="165" height="18" rx="4" fill="#1F2329"/>
-                  <text x="8" y="12" fill="#FBBF24" font-size="9" font-family="monospace" font-weight="700">📝 Домашка и задачи</text>
-                  
-                  <!-- Checkboxes -->
-                  <text x="8" y="34" fill="#10B981" font-size="9" font-family="monospace">☑ Построить параболу</text>
-                  <text x="8" y="52" fill="#10B981" font-size="9" font-family="monospace">☑ Найти вершину и корни</text>
-                  <text x="8" y="70" fill="#A1A1AA" font-size="9" font-family="monospace">☐ 3 задачи из сборника</text>
-                  <text x="8" y="88" fill="#A1A1AA" font-size="9" font-family="monospace">☐ Сдать до четверга 18:00</text>
-                </g>
-
-                <!-- Floating Apple Liquid Glass Pomodoro (Lesson Timer 45m) -->
-                <g transform="translate(530, 190)">
-                  <rect x="0" y="0" width="115" height="50" rx="25" fill="#13161A" stroke="#363C48" stroke-width="1" filter="url(#cardShadow)"/>
-                  <circle cx="25" cy="25" r="14" stroke="#242830" stroke-width="3" fill="none"/>
-                  <circle cx="25" cy="25" r="14" stroke="#10B981" stroke-width="3" stroke-dasharray="65, 25" fill="none"/>
-                  <text x="47" y="24" fill="#F4F4F5" font-size="12" font-family="monospace" font-weight="700">32:15</text>
-                  <text x="47" y="37" fill="#10B981" font-size="8" font-family="monospace">УРОК · ГОНГ ON</text>
-                </g>
-
-                <!-- Collaborator Cursors: Teacher & Student -->
-                <g transform="translate(300, 100)">
-                  <polygon points="0,0 0,14 4,11 7,17 9,16 6,10 11,10" fill="#38BDF8"/>
-                  <rect x="12" y="10" width="105" height="16" rx="2" fill="#0284C7"/>
-                  <text x="16" y="21" fill="#FFFFFF" font-size="8" font-family="monospace">Вы (Преподаватель)</text>
-                </g>
-
-                <g transform="translate(600, 75)">
-                  <polygon points="0,0 0,14 4,11 7,17 9,16 6,10 11,10" fill="#10B981"/>
-                  <rect x="12" y="10" width="110" height="16" rx="2" fill="#059669"/>
-                  <text x="16" y="21" fill="#FFFFFF" font-size="8" font-family="monospace">Данил (Ученик по ссылке)</text>
-                </g>
-              </svg>
-            </div>
-
-            <!-- Bottom Floating Node Blocks -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 z-10 text-xs font-mono">
-              <div class="bg-bg-elevated/80 border border-line p-3 rounded">
-                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">Мгновенный вход</div>
-                <div class="text-content-primary">Ученик открывает ссылку</div>
-                <div class="text-[11px] text-accent-sky">Без почты, паролей и SMS</div>
-              </div>
-
-              <div class="bg-bg-elevated/80 border border-line p-3 rounded">
-                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">Таймер с гонгом</div>
-                <div class="text-content-primary">Урок 45м / Спринт 25м</div>
-                <div class="text-[11px] text-emerald-400">Мягкий сигнал тибетской чаши</div>
-              </div>
-
-              <div class="bg-bg-elevated/80 border border-line p-3 rounded">
-                <div class="text-content-muted text-[10px] uppercase font-bold mb-1">100% Ваши данные</div>
-                <div class="text-content-primary">Сохранение на ПК & Облако</div>
-                <div class="text-[11px] text-content-muted">Никаких блокировок аккаунтов</div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
       </div>
 
     </div>
   </section>
 
   <!-- =========================================================================
-       3. The Story & The Problem We Solve ("Почему мы создали LKBoard")
+       3. 4 Core Highlights (Brief & Punchy)
        ========================================================================= -->
-  <section class="py-16 border-b border-line bg-bg-surface/20" id="why">
-    <div class="max-w-[1400px] mx-auto px-6">
+  <section class="py-16 border-b border-line">
+    <div class="max-w-[1100px] mx-auto px-6">
       
-      <div class="max-w-3xl mb-12">
-        <div class="text-[11px] font-mono text-emerald-400 font-semibold tracking-wider uppercase mb-1">Честная история создания</div>
-        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-content-primary mb-3">
-          Мы сами устали от того, во что превратились современные онлайн-доски.
+      <div class="text-center max-w-xl mx-auto mb-10">
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-content-primary mb-2">
+          Все самое нужное для работы. Без лишнего мусора.
         </h2>
-        <p class="text-xs sm:text-sm text-content-secondary leading-relaxed">
-          Когда ты репетитор или работаешь в небольшой команде, тебе нужно просто созвониться, открыть доску, нарисовать формулу, накидать стикеры с задачами и разобрать тему. Вместо этого индустрия предлагает сложные монструозные сервисы с подписками за каждый чих. Мы сделали то, чем приятно пользоваться каждый день.
+        <p class="text-xs text-content-secondary">
+          Инструмент, созданный людьми, которые сами устали от сложных комбайнов.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 font-mono text-xs">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
         
-        <!-- Pain Card 1 -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- Card 1 -->
+        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
-            <div class="text-rose-400 font-bold mb-2">01 / БОЛЬ: ЛИМИТ НА 3 ДОСКИ И $16 В МЕСЯЦ</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-2">Бесплатно навсегда без скрытых пейволлов</div>
+            <div class="text-accent-sky font-bold mb-2">01 / ВХОД В 1 КЛИК</div>
+            <div class="text-base font-bold text-content-primary font-sans mb-1.5">Без регистрации</div>
             <p class="text-content-secondary font-sans leading-relaxed">
-              Miro ограничивает бесплатный тариф всего тремя досками, а дальше требует оплату за каждого участника. В LKBoard вы создаете сколько угодно досок, комнат и уроков совершенно бесплатно.
+              Скинули ссылку ученику или коллеге — он сразу на доске и может писать. Никаких подтверждений почты и забытых паролей перед началом урока.
             </p>
           </div>
-          <div class="text-[11px] text-emerald-400 mt-6 pt-3 border-t border-line font-bold">
-            Решение LKBoard: 0 ₽ / Безлимитные доски
+          <div class="text-[11px] text-content-muted mt-4 pt-2 border-t border-line">
+            Подключение: мгновенно
           </div>
         </div>
 
-        <!-- Pain Card 2 -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- Card 2 -->
+        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
-            <div class="text-rose-400 font-bold mb-2">02 / БОЛЬ: «УЧЕНИК НЕ МОЖЕТ ВОЙТИ»</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-2">Вход за 1 секунду по ссылке</div>
+            <div class="text-emerald-400 font-bold mb-2">02 / ЧЕСТНЫЙ OPEN SOURCE</div>
+            <div class="text-base font-bold text-content-primary font-sans mb-1.5">0 ₽ навсегда</div>
             <p class="text-content-secondary font-sans leading-relaxed">
-              Знакомая ситуация: начинается урок, а ученик 15 минут регистрируется, подтверждает почту и сбрасывает пароль. В LKBoard вы просто скинули ссылку — ученик сразу на доске и пишет.
+              Никаких ограничений на 3 доски и подписок по $16/мес с каждого участника. Исходный код полностью открыт на GitHub под лицензией MIT.
             </p>
           </div>
-          <div class="text-[11px] text-emerald-400 mt-6 pt-3 border-t border-line font-bold">
-            Решение LKBoard: 0 кликов на регистрацию
+          <div class="text-[11px] text-content-muted mt-4 pt-2 border-t border-line">
+            Лицензия: MIT Open Source
           </div>
         </div>
 
-        <!-- Pain Card 3 -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- Card 3 -->
+        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
-            <div class="text-rose-400 font-bold mb-2">03 / БОЛЬ: ТОРМОЗА И ЛАГИ НА СОЗВОНАХ</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-2">120 FPS и 0.4 ms задержка пера</div>
+            <div class="text-amber-400 font-bold mb-2">03 / НУЛЕВАЯ ЗАДЕРЖКА</div>
+            <div class="text-base font-bold text-content-primary font-sans mb-1.5">Перо как на бумаге</div>
             <p class="text-content-secondary font-sans leading-relaxed">
-              Тяжелые браузерные комбайны пожирают всю память, и когда вы включаете демонстрацию экрана в Zoom или Discord, перо начинает заикаться. Ядро Skia рендерит штрихи моментально.
+              Аппаратный движок Skia устраняет рывки. Стабильные 120 FPS и 0.4 ms задержка даже во время включенной демонстрации экрана в Zoom или Discord.
             </p>
           </div>
-          <div class="text-[11px] text-emerald-400 mt-6 pt-3 border-t border-line font-bold">
-            Решение LKBoard: Плавность настоящего блокнота
+          <div class="text-[11px] text-content-muted mt-4 pt-2 border-t border-line">
+            Ядро: Skia GPU / Direct3D
           </div>
         </div>
 
-        <!-- Pain Card 4 -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- Card 4 -->
+        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
-            <div class="text-rose-400 font-bold mb-2">04 / БОЛЬ: ПЕРЕГРУЖЕННЫЙ ИНТЕРФЕЙС</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-2">Только то, что реально нужно</div>
+            <div class="text-purple-400 font-bold mb-2">04 / ВСЕ ПОД РУКОЙ</div>
+            <div class="text-base font-bold text-content-primary font-sans mb-1.5">Формулы и стикеры</div>
             <p class="text-content-secondary font-sans leading-relaxed">
-              Сотни ненужных кнопок, шаблонов и всплывающих окон отвлекают от занятия. Мы оставили самое важное: быстрое перо, стикеры с чекбоксами для домашки, графики Desmos и канбан-план.
+              Интерактивные графики Desmos (G), стикеры с галочками для домашки (S), вращение любых нод на 360° и тихий таймер с гонгом тибетской чаши.
             </p>
           </div>
-          <div class="text-[11px] text-emerald-400 mt-6 pt-3 border-t border-line font-bold">
-            Решение LKBoard: Чистота и фокус на уроке
-          </div>
-        </div>
-
-        <!-- Pain Card 5 -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
-          <div>
-            <div class="text-rose-400 font-bold mb-2">05 / БОЛЬ: ВНЕЗАПНЫЕ БЛОКИРОВКИ</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-2">100% Открытый код и офлайн-режим</div>
-            <p class="text-content-secondary font-sans leading-relaxed">
-              Зарубежные облака блокируют аккаунты из РФ или стирают данные при сбое оплаты. LKBoard имеет открытый исходный код на GitHub, а десктопное приложение работает даже без интернета.
-            </p>
-          </div>
-          <div class="text-[11px] text-emerald-400 mt-6 pt-3 border-t border-line font-bold">
-            Решение LKBoard: Данные принадлежат вам
-          </div>
-        </div>
-
-        <!-- Pain Card 6 -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
-          <div>
-            <div class="text-rose-400 font-bold mb-2">06 / БОЛЬ: ПЕРЕРАБОТКИ И ПОТЕРЯ ВРЕМЕНИ</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-2">Встроенный Pomodoro с тибетским гонгом</div>
-            <p class="text-content-secondary font-sans leading-relaxed">
-              Уроки и созвоны затягиваются, если нет мягкого контроля времени. Наш стеклянный таймер не пищит мерзким будильником, а издает медитативный звук тибетской поющей чаши.
-            </p>
-          </div>
-          <div class="text-[11px] text-emerald-400 mt-6 pt-3 border-t border-line font-bold">
-            Решение LKBoard: Комфортный тайм-менеджмент
+          <div class="text-[11px] text-content-muted mt-4 pt-2 border-t border-line">
+            Экспорт: PDF, SVG, 4K PNG
           </div>
         </div>
 
@@ -583,476 +252,95 @@
   </section>
 
   <!-- =========================================================================
-       4. Target Audience: For Whom LKBoard is Built
+       4. "Want to know more?" Banner leading to /details.html
        ========================================================================= -->
-  <section class="py-16 border-b border-line" id="audience">
-    <div class="max-w-[1400px] mx-auto px-6">
+  <section class="py-12 border-b border-line bg-bg-surface/30">
+    <div class="max-w-[1100px] mx-auto px-6">
       
-      <div class="mb-12">
-        <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Сценарии использования</div>
-        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-content-primary">
-          Кому идеально подходит LKBoard
-        </h2>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <!-- Role 1: Tutors & Teachers -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between">
-          <div>
-            <div class="w-10 h-10 rounded bg-bg-elevated border border-line flex items-center justify-center text-accent-sky mb-4 text-xl">
-              👨‍🏫
-            </div>
-            <h3 class="text-lg font-bold text-content-primary mb-2">Репетиторам и учителям</h3>
-            <p class="text-xs text-content-secondary leading-relaxed mb-4">
-              Математика, физика, информатика, языки и подготовка к ОГЭ/ЕГЭ. Пишите формулы как мелом на доске, стройте графики функций по нажатию клавиши «G» и выдавайте домашку прямо в стикерах с галочками.
-            </p>
-          </div>
-          <ul class="text-xs font-mono text-content-muted space-y-1.5 pt-4 border-t border-line">
-            <li>✓ Ссылка для ученика без регистрации</li>
-            <li>✓ Графики функций Desmos</li>
-            <li>✓ Экспорт конспекта урока в PDF</li>
-          </ul>
-        </div>
-
-        <!-- Role 2: Teams & Startups -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between">
-          <div>
-            <div class="w-10 h-10 rounded bg-bg-elevated border border-line flex items-center justify-center text-emerald-400 mb-4 text-xl">
-              💼
-            </div>
-            <h3 class="text-lg font-bold text-content-primary mb-2">Командам и стартапам</h3>
-            <p class="text-xs text-content-secondary leading-relaxed mb-4">
-              Быстрые созвоны один-на-один, дейли-митинги, архитектурные наброски и канбан-планирование спринтов. Не платите $16 за каждого сотрудника, которому доска нужна всего пару раз в неделю.
-            </p>
-          </div>
-          <ul class="text-xs font-mono text-content-muted space-y-1.5 pt-4 border-t border-line">
-            <li>✓ Канбан-колонки с авто-статусами</li>
-            <li>✓ Умные магнитные стрелки-коннекторы</li>
-            <li>✓ Вращение любых блоков на 360°</li>
-          </ul>
-        </div>
-
-        <!-- Role 3: Students & Study Groups -->
-        <div class="bg-bg-surface border border-line p-6 rounded-lg flex flex-col justify-between">
-          <div>
-            <div class="w-10 h-10 rounded bg-bg-elevated border border-line flex items-center justify-center text-amber-400 mb-4 text-xl">
-              🎓
-            </div>
-            <h3 class="text-lg font-bold text-content-primary mb-2">Студентам и друзьям</h3>
-            <p class="text-xs text-content-secondary leading-relaxed mb-4">
-              Совместное решение лабораторных работ, подготовка к зачетам и сессии, мозговой штурм курсовых проектов. Работает на смартфонах, планшетах и компьютерах в любом современном браузере.
-            </p>
-          </div>
-          <ul class="text-xs font-mono text-content-muted space-y-1.5 pt-4 border-t border-line">
-            <li>✓ Нулевая стоимость использования</li>
-            <li>✓ Быстрый скриншот в буфер обмена</li>
-            <li>✓ Чистый открытый код на GitHub</li>
-          </ul>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- =========================================================================
-       5. Interactive Live Sandbox Section (12-Col Grid)
-       ========================================================================= -->
-  <section class="py-16 border-b border-line bg-bg-surface/30" id="sandbox">
-    <div class="max-w-[1400px] mx-auto px-6">
-      
-      <!-- Section Header -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-line">
+      <div class="bg-bg-surface border border-line rounded-lg p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
-          <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Попробуйте прямо сейчас</div>
-          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-content-primary">
-            Интерактивный тест в браузере
-          </h2>
-        </div>
-        <p class="text-xs font-mono text-content-muted mt-2 md:mt-0">
-          Покрутите график урока, поверните стикер на 360°, отметьте чекбоксы домашки и послушайте гонг таймера.
-        </p>
-      </div>
-
-      <!-- 12-Column Interactive Grid -->
-      <div class="grid grid-cols-12 gap-6 items-start">
-        
-        <!-- Left: Interactive Canvas Plotter & Rotatable Element (7 cols) -->
-        <div class="col-span-12 lg:col-span-7 bg-bg-surface border border-line rounded-lg p-5">
-          <div class="flex items-center justify-between mb-3 text-xs font-mono text-content-secondary">
-            <div class="flex items-center space-x-2">
-              <span class="w-2 h-2 rounded-full bg-accent-sky"></span>
-              <span class="font-bold text-content-primary">Холст: График для ученика & Вращаемый стикер</span>
-            </div>
-            <div class="text-[11px] text-content-muted">
-              60 FPS · Без задержек
-            </div>
-          </div>
-
-          <!-- HTML5 Canvas -->
-          <div class="relative bg-bg-base border border-line rounded p-2">
-            <canvas id="sandboxCanvas" class="w-full h-[300px] block cursor-crosshair"></canvas>
-            
-            <div class="absolute bottom-4 right-4 text-[10px] font-mono text-content-muted bg-bg-surface/80 px-2 py-1 rounded border border-line">
-              Наведите мышь для замеров координат
-            </div>
-          </div>
-
-          <!-- Formula & Status Legend -->
-          <div class="mt-4 flex flex-wrap items-center justify-between text-xs font-mono text-content-muted gap-2">
-            <div>Формула урока: <span class="text-accent-sky font-semibold" id="eqLabel">f(x) = 1.0·e^(-0.10x)·cos(3.00x)</span></div>
-            <div>Угол стикера: <span class="text-amber-400 font-semibold" id="nodeAngleLabel">θ = 25°</span></div>
-            <button id="btnResetParams" class="text-[11px] text-content-secondary hover:text-white underline cursor-pointer">
-              Сброс
-            </button>
-          </div>
-        </div>
-
-        <!-- Right: Controls, To-Do Checkboxes & Tibetan Bell (5 cols) -->
-        <div class="col-span-12 lg:col-span-5 space-y-4">
-          
-          <!-- Slider Card -->
-          <div class="bg-bg-surface border border-line rounded-lg p-5 font-mono text-xs space-y-4">
-            <div class="text-[11px] uppercase font-bold text-content-primary tracking-wide flex justify-between items-center">
-              <span>Параметры элементов доски</span>
-              <span class="text-accent-sky text-[10px]">Реактивный движок</span>
-            </div>
-
-            <!-- Slider 1: Frequency -->
-            <div>
-              <div class="flex justify-between mb-1.5">
-                <span class="text-content-secondary">Колебания функции (ω):</span>
-                <span class="text-accent-sky font-bold" id="valFreq">3.00 rad/s</span>
-              </div>
-              <input type="range" id="sliderFreq" min="0.5" max="8.0" step="0.1" value="3.0" class="w-full">
-            </div>
-
-            <!-- Slider 2: Damping -->
-            <div>
-              <div class="flex justify-between mb-1.5">
-                <span class="text-content-secondary">Затухание (γ):</span>
-                <span class="text-emerald-400 font-bold" id="valDamp">0.10</span>
-              </div>
-              <input type="range" id="sliderDamp" min="0.0" max="0.5" step="0.02" value="0.10" class="w-full">
-            </div>
-
-            <!-- Slider 3: Element Rotation Angle -->
-            <div>
-              <div class="flex justify-between mb-1.5">
-                <span class="text-content-secondary">Вращение стикера (θ):</span>
-                <span class="text-amber-400 font-bold" id="valRot">25°</span>
-              </div>
-              <input type="range" id="sliderRot" min="-180" max="180" step="1" value="25" class="w-full">
-              
-              <!-- Quick Angle Snap Buttons -->
-              <div class="flex items-center space-x-2 mt-2 pt-2 border-t border-line text-[11px]">
-                <span class="text-content-muted">Быстрый поворот:</span>
-                <button id="btnRotMinus90" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-content-primary">↺ -90°</button>
-                <button id="btnRotPlus90" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-content-primary">↻ +90°</button>
-                <button id="btnRotReset" class="px-2 py-0.5 rounded bg-bg-elevated hover:bg-bg-hover border border-line text-accent-sky">0°</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- To-Do & Pomodoro Live Trigger Card -->
-          <div class="bg-bg-surface border border-line rounded-lg p-4 font-mono text-xs space-y-3">
-            <div class="flex items-center justify-between text-[11px] font-bold text-content-primary uppercase">
-              <span>Интерактивные виджеты</span>
-              <span class="text-emerald-400">Audio & Домашка</span>
-            </div>
-
-            <!-- Interactive To-Do Checkbox preview -->
-            <div class="space-y-1.5 bg-bg-base p-2.5 rounded border border-line text-[11px]">
-              <label class="flex items-center space-x-2 cursor-pointer group">
-                <input type="checkbox" id="todoCheck1" checked class="rounded border-line text-accent-sky focus:ring-0">
-                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel1">Объяснить теорию и разобрать формулу</span>
-              </label>
-              <label class="flex items-center space-x-2 cursor-pointer group">
-                <input type="checkbox" id="todoCheck2" checked class="rounded border-line text-accent-sky focus:ring-0">
-                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel2">Повернуть стикер с подсказкой на 360°</span>
-              </label>
-              <label class="flex items-center space-x-2 cursor-pointer group">
-                <input type="checkbox" id="todoCheck3" class="rounded border-line text-accent-sky focus:ring-0">
-                <span class="text-content-secondary group-hover:text-content-primary" id="todoLabel3">Подать мягкий гонг окончания занятия</span>
-              </label>
-            </div>
-
-            <!-- Tibetan Singing Bowl Gong Audio Button -->
-            <button id="btnPlayChime" class="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded bg-bg-elevated hover:bg-bg-hover border border-line hover:border-emerald-500 text-content-primary transition-all">
-              <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-              </svg>
-              <span>🔊 Проверить тибетскую чашу (Web Audio Gong)</span>
-            </button>
-          </div>
-
-          <!-- Terminal Output Log -->
-          <div class="bg-bg-base border border-line rounded-lg p-4 font-mono text-xs">
-            <div class="flex items-center justify-between pb-2 border-b border-line mb-2 text-[10px] text-content-muted uppercase font-bold">
-              <span>События совместной сессии</span>
-              <span class="text-emerald-500">Синхронизировано</span>
-            </div>
-
-            <div id="termLog" class="space-y-1 text-[11px] text-content-secondary h-[110px] overflow-y-auto font-mono">
-              <div><span class="text-content-muted">[00:00.010]</span> LKBOARD_SYNC: Комната урока готова к подключению.</div>
-              <div><span class="text-content-muted">[00:00.015]</span> USER_JOINED: Ученик подключился по гостевой ссылке.</div>
-              <div><span class="text-accent-sky">[00:00.022]</span> ROTATION_EVENT: Стикер подсказки повернут.</div>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- =========================================================================
-       6. Detailed Comparison Table: LKBoard vs Miro vs Other Boards
-       ========================================================================= -->
-  <section class="py-16 border-b border-line bg-bg-surface/20" id="compare">
-    <div class="max-w-[1400px] mx-auto px-6">
-      
-      <div class="max-w-2xl mb-8">
-        <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Честное сравнение</div>
-        <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-content-primary">
-          LKBoard против Miro и тяжелых комбайнов
-        </h3>
-      </div>
-
-      <div class="overflow-x-auto border border-line rounded-lg bg-bg-surface">
-        <table class="w-full text-left font-mono text-xs">
-          <thead class="bg-bg-elevated border-b border-line text-content-muted">
-            <tr>
-              <th class="p-3.5">Критерий</th>
-              <th class="p-3.5 text-accent-sky font-bold text-sm bg-accent-sky/5">LKBoard (Наш проект)</th>
-              <th class="p-3.5">Miro (Бесплатный план)</th>
-              <th class="p-3.5">Miro (Платный план)</th>
-              <th class="p-3.5">Тяжелые Electron-доски</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-line text-content-secondary">
-            <tr>
-              <td class="p-3.5 font-medium text-content-primary">Стоимость</td>
-              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">0 ₽ (Бесплатно навсегда)</td>
-              <td class="p-3.5 text-content-muted">0 ₽ (Жесткие лимиты)</td>
-              <td class="p-3.5 text-rose-400 font-semibold">$10 – $16/мес за юзера</td>
-              <td class="p-3.5 text-rose-400">По подписке</td>
-            </tr>
-            <tr>
-              <td class="p-3.5 font-medium text-content-primary">Лимит на количество досок</td>
-              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">Безлимитно (Любое число)</td>
-              <td class="p-3.5 text-rose-400 font-semibold">Всего 3 доски на команду</td>
-              <td class="p-3.5 text-content-primary">Безлимитно</td>
-              <td class="p-3.5 text-content-muted">Зависит от тарифа</td>
-            </tr>
-            <tr>
-              <td class="p-3.5 font-medium text-content-primary">Вход ученика на созвоне</td>
-              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">По ссылке в 1 клик</td>
-              <td class="p-3.5 text-rose-400">Обязательная регистрация</td>
-              <td class="p-3.5 text-rose-400">Обязательная регистрация</td>
-              <td class="p-3.5 text-rose-400">Установка софта</td>
-            </tr>
-            <tr>
-              <td class="p-3.5 font-medium text-content-primary">Задержка пера (Input Lag)</td>
-              <td class="p-3.5 text-accent-sky font-bold bg-accent-sky/5">0.4 ms (Skia GPU)</td>
-              <td class="p-3.5 text-content-muted">15-25 ms (лагает в браузере)</td>
-              <td class="p-3.5 text-content-muted">15-25 ms</td>
-              <td class="p-3.5 text-content-muted">20-40 ms</td>
-            </tr>
-            <tr>
-              <td class="p-3.5 font-medium text-content-primary">Работа без интернета (Офлайн)</td>
-              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">100% Офлайн на Windows</td>
-              <td class="p-3.5 text-rose-400">Не работает без сети</td>
-              <td class="p-3.5 text-rose-400">Не работает без сети</td>
-              <td class="p-3.5 text-content-muted">Частично</td>
-            </tr>
-            <tr>
-              <td class="p-3.5 font-medium text-content-primary">Исходный код (Open Source)</td>
-              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">Да, GitHub (Лицензия MIT)</td>
-              <td class="p-3.5 text-content-muted">Закрытый проприетарный</td>
-              <td class="p-3.5 text-content-muted">Закрытый проприетарный</td>
-              <td class="p-3.5 text-content-muted">Закрытый</td>
-            </tr>
-            <tr>
-              <td class="p-3.5 font-medium text-content-primary">Риск блокировки аккаунта в РФ</td>
-              <td class="p-3.5 text-emerald-400 font-bold bg-accent-sky/5">0% (Код у вас, свои серверы)</td>
-              <td class="p-3.5 text-rose-400 font-semibold">Высокий (частые блокировки)</td>
-              <td class="p-3.5 text-rose-400 font-semibold">Высокий</td>
-              <td class="p-3.5 text-content-muted">Средний</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- =========================================================================
-       7. Fast Hotkeys Reference
-       ========================================================================= -->
-  <section class="py-12 border-b border-line" id="hotkeys">
-    <div class="max-w-[1400px] mx-auto px-6">
-      
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-line">
-        <div>
-          <div class="text-[11px] font-mono text-accent-sky font-semibold tracking-wider uppercase mb-1">Быстрое управление</div>
-          <h3 class="text-xl font-bold tracking-tight text-content-primary">
-            Горячие клавиши для мгновенной работы на созвоне
+          <div class="text-[11px] font-mono text-accent-sky font-semibold uppercase tracking-wider mb-1">Хотите узнать подробнее?</div>
+          <h3 class="text-lg sm:text-xl font-bold text-content-primary mb-1">
+            Интерактивная песочница, сравнение с Miro и история проекта
           </h3>
+          <p class="text-xs text-content-secondary max-w-xl leading-relaxed">
+            Мы собрали на отдельной странице подробное сравнение тарифов, живую песочницу со звуком тибетской чаши, хоткеи и технические детали.
+          </p>
         </div>
-      </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono text-xs">
-        <div class="bg-bg-surface border border-line p-3 rounded">
-          <div class="text-content-muted text-[10px] mb-1">Выделение</div>
-          <div class="text-content-primary font-bold text-sm">V</div>
-        </div>
-        <div class="bg-bg-surface border border-line p-3 rounded">
-          <div class="text-content-muted text-[10px] mb-1">Перо / Маркер</div>
-          <div class="text-content-primary font-bold text-sm">P</div>
-        </div>
-        <div class="bg-bg-surface border border-line p-3 rounded">
-          <div class="text-content-muted text-[10px] mb-1">График функции</div>
-          <div class="text-accent-sky font-bold text-sm">G</div>
-        </div>
-        <div class="bg-bg-surface border border-line p-3 rounded">
-          <div class="text-content-muted text-[10px] mb-1">Стикер с чекбоксами</div>
-          <div class="text-amber-400 font-bold text-sm">S</div>
-        </div>
-        <div class="bg-bg-surface border border-line p-3 rounded">
-          <div class="text-content-muted text-[10px] mb-1">Вращение ±90°</div>
-          <div class="text-content-primary font-bold text-sm">R / Ctrl+R</div>
-        </div>
-        <div class="bg-bg-surface border border-line p-3 rounded">
-          <div class="text-content-muted text-[10px] mb-1">Снимок в буфер</div>
-          <div class="text-content-primary font-bold text-sm">Ctrl+Shift+C</div>
-        </div>
+        <a href="/details.html" class="whitespace-nowrap flex items-center space-x-2 text-xs font-mono font-bold bg-bg-elevated hover:bg-bg-hover text-accent-sky border border-accent-sky/40 hover:border-accent-sky px-5 py-3 rounded transition-all">
+          <span>Читать подробнее о проекте →</span>
+        </a>
       </div>
 
     </div>
   </section>
 
   <!-- =========================================================================
-       8. Distribution & Download Section
+       5. Download & Get Started Section
        ========================================================================= -->
-  <section class="py-20" id="download">
-    <div class="max-w-[1400px] mx-auto px-6">
+  <section class="py-16 border-b border-line" id="download">
+    <div class="max-w-[1100px] mx-auto px-6">
       
-      <div class="text-center max-w-xl mx-auto mb-12">
-        <div class="text-[11px] font-mono text-emerald-400 font-semibold tracking-wider uppercase mb-1">Начните прямо сейчас</div>
-        <h2 class="text-3xl font-extrabold tracking-tight text-content-primary mb-3">
-          Доска готова к работе
+      <div class="text-center max-w-xl mx-auto mb-10">
+        <h2 class="text-2xl font-extrabold tracking-tight text-content-primary mb-2">
+          Начните работу прямо сейчас
         </h2>
         <p class="text-xs font-mono text-content-secondary">
-          Запустите в браузере без установки или скачайте нативное приложение для Windows.
+          Доска доступна в браузере без установки или в виде приложения для ПК.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
         
-        <!-- Card 1: Web Canvas (Instant) -->
-        <div class="bg-bg-surface border-2 border-accent-sky/60 rounded-lg p-6 flex flex-col justify-between relative shadow-lg">
+        <!-- Web Card -->
+        <div class="bg-bg-surface border-2 border-accent-sky/60 rounded-lg p-5 flex flex-col justify-between relative shadow-lg">
           <div class="absolute -top-2.5 right-4 bg-accent-sky text-bg-base text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase">
             В 1 клик
           </div>
-
           <div>
-            <div class="w-8 h-8 rounded bg-bg-elevated border border-line flex items-center justify-center text-accent-sky mb-4">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
-            </div>
-            <h3 class="text-lg font-bold text-content-primary font-sans mb-1">Web Доска Онлайн</h3>
-            <div class="text-xs font-mono text-accent-sky mb-4">Без установки · Любое устройство</div>
-            
-            <ul class="text-xs font-mono text-content-secondary space-y-2 mb-6">
-              <li class="flex items-center space-x-2">
-                <span class="text-emerald-400">✓</span>
-                <span>Мгновенный старт без регистрации</span>
-              </li>
-              <li class="flex items-center space-x-2">
-                <span class="text-emerald-400">✓</span>
-                <span>Ссылка для подключения учеников</span>
-              </li>
-              <li class="flex items-center space-x-2">
-                <span class="text-emerald-400">✓</span>
-                <span>iPad, планшеты, Mac, Windows, Android</span>
-              </li>
+            <div class="text-sm font-bold text-content-primary font-sans mb-1">Веб-доска онлайн</div>
+            <div class="text-xs font-mono text-accent-sky mb-3">Любой браузер · 0 сек до старта</div>
+            <ul class="text-xs font-mono text-content-secondary space-y-1.5 mb-5">
+              <li>✓ Вход без регистрации</li>
+              <li>✓ Ссылка для учеников</li>
+              <li>✓ Планшеты, Mac, Windows, Android</li>
             </ul>
           </div>
-
           <a href="/canvas" target="_blank" class="w-full text-center text-xs font-mono font-bold bg-accent-sky hover:bg-sky-300 text-bg-base py-2.5 rounded transition-all">
-            Открыть веб-доску онлайн ↗
+            Открыть доску ↗
           </a>
         </div>
 
-        <!-- Card 2: Windows Installer -->
-        <div class="bg-bg-surface border border-line rounded-lg p-6 flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- Windows .exe -->
+        <div class="bg-bg-surface border border-line rounded-lg p-5 flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
-            <div class="w-8 h-8 rounded bg-bg-elevated border border-line flex items-center justify-center text-content-primary mb-4">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75V22.05L0 20.701M10.949 12.6H24V24l-12.951-1.801"/>
-              </svg>
-            </div>
-            <h3 class="text-lg font-bold text-content-primary font-sans mb-1">Windows Приложение</h3>
-            <div class="text-xs font-mono text-content-muted mb-4">Lkboard-1.0.0.exe (114 MB)</div>
-            
-            <ul class="text-xs font-mono text-content-secondary space-y-2 mb-6">
-              <li class="flex items-center space-x-2">
-                <span class="text-accent-sky">✓</span>
-                <span>100% автономная работа без интернета</span>
-              </li>
-              <li class="flex items-center space-x-2">
-                <span class="text-accent-sky">✓</span>
-                <span>Встроенный JDK 21 (Java ставить не нужно)</span>
-              </li>
-              <li class="flex items-center space-x-2">
-                <span class="text-accent-sky">✓</span>
-                <span>Фоновые обновления без сбоев</span>
-              </li>
+            <div class="text-sm font-bold text-content-primary font-sans mb-1">Windows (.exe)</div>
+            <div class="text-xs font-mono text-content-muted mb-3">Lkboard-1.0.0.exe (114 MB)</div>
+            <ul class="text-xs font-mono text-content-secondary space-y-1.5 mb-5">
+              <li>✓ 100% офлайн без интернета</li>
+              <li>✓ Встроенный JVM Runtime 21</li>
+              <li>✓ Автообновления в фоне</li>
             </ul>
           </div>
-
           <a href="/downloads/Lkboard-1.0.0.exe" class="w-full text-center text-xs font-mono font-semibold bg-bg-elevated hover:bg-bg-hover text-content-primary border border-line py-2.5 rounded transition-all">
-            Скачать для Windows (.exe)
+            Скачать .exe
           </a>
         </div>
 
-        <!-- Card 3: Source Code -->
-        <div class="bg-bg-surface border border-line rounded-lg p-6 flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- GitHub -->
+        <div class="bg-bg-surface border border-line rounded-lg p-5 flex flex-col justify-between hover:border-line-bright transition-colors">
           <div>
-            <div class="w-8 h-8 rounded bg-bg-elevated border border-line flex items-center justify-center text-content-primary mb-4">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
-              </svg>
-            </div>
-            <h3 class="text-lg font-bold text-content-primary font-sans mb-1">Открытый код (GitHub)</h3>
-            <div class="text-xs font-mono text-content-muted mb-4">MIT License · Без корпоративных тайн</div>
-            
-            <ul class="text-xs font-mono text-content-secondary space-y-2 mb-6">
-              <li class="flex items-center space-x-2">
-                <span class="text-accent-sky">✓</span>
-                <span>Чистый Kotlin Multiplatform стек</span>
-              </li>
-              <li class="flex items-center space-x-2">
-                <span class="text-accent-sky">✓</span>
-                <span>Развертывание на собственном сервере</span>
-              </li>
-              <li class="flex items-center space-x-2">
-                <span class="text-accent-sky">✓</span>
-                <span>Никаких скрытых трекеров и телеметрии</span>
-              </li>
+            <div class="text-sm font-bold text-content-primary font-sans mb-1">GitHub Репозиторий</div>
+            <div class="text-xs font-mono text-content-muted mb-3">MIT License · Kotlin Multiplatform</div>
+            <ul class="text-xs font-mono text-content-secondary space-y-1.5 mb-5">
+              <li>✓ Полностью открытый код</li>
+              <li>✓ Развертывание на своем сервере</li>
+              <li>✓ Никаких скрытых трекеров</li>
             </ul>
           </div>
-
           <a href="https://github.com/Komti23/LKBoard" target="_blank" class="w-full text-center text-xs font-mono font-semibold bg-bg-elevated hover:bg-bg-hover text-content-primary border border-line py-2.5 rounded transition-all">
-            Репозиторий GitHub ↗
+            Репозиторий ↗
           </a>
         </div>
 
@@ -1062,353 +350,24 @@
   </section>
 
   <!-- =========================================================================
-       9. Minimalist Technical Footer
+       6. Minimal Clean Footer
        ========================================================================= -->
-  <footer class="mt-auto border-t border-line bg-bg-base py-8 font-mono text-xs text-content-muted">
-    <div class="max-w-[1400px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center space-x-3">
+  <footer class="mt-auto border-t border-line bg-bg-base py-6 font-mono text-xs text-content-muted">
+    <div class="max-w-[1100px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2">
         <span class="text-content-primary font-bold">LKBoard</span>
         <span>·</span>
-        <span>Открытый проект от людей для людей. Лицензия MIT.</span>
+        <span>Бесплатная открытая онлайн-доска. Лицензия MIT.</span>
       </div>
 
-      <div class="flex items-center space-x-6">
-        <a href="#why" class="hover:text-content-primary transition-colors">Почему LKBoard</a>
-        <a href="#sandbox" class="hover:text-content-primary transition-colors">Песочница</a>
-        <a href="/canvas" class="hover:text-content-primary transition-colors">Веб-доска</a>
-        <a href="/api/version" class="hover:text-content-primary transition-colors">Релизы</a>
-        <a href="https://github.com/Komti23/LKBoard" target="_blank" class="hover:text-content-primary transition-colors">GitHub</a>
+      <div class="flex items-center space-x-5">
+        <a href="/canvas" class="hover:text-content-primary">Веб-доска</a>
+        <a href="/details.html" class="hover:text-content-primary text-accent-sky">Подробнее</a>
+        <a href="/api/version" class="hover:text-content-primary">Версия API</a>
+        <a href="https://github.com/Komti23/LKBoard" target="_blank" class="hover:text-content-primary">GitHub</a>
       </div>
     </div>
   </footer>
 
-  <!-- =========================================================================
-       10. Vanilla JS: Live Desmos + 360° Rotatable Node + Audio Gong Sandbox
-       ========================================================================= -->
-  <script>
-    (function() {
-      const canvas = document.getElementById('sandboxCanvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-
-      const sliderFreq = document.getElementById('sliderFreq');
-      const sliderDamp = document.getElementById('sliderDamp');
-      const sliderRot = document.getElementById('sliderRot');
-
-      const valFreq = document.getElementById('valFreq');
-      const valDamp = document.getElementById('valDamp');
-      const valRot = document.getElementById('valRot');
-      const eqLabel = document.getElementById('eqLabel');
-      const nodeAngleLabel = document.getElementById('nodeAngleLabel');
-      const termLog = document.getElementById('termLog');
-
-      const btnRotMinus90 = document.getElementById('btnRotMinus90');
-      const btnRotPlus90 = document.getElementById('btnRotPlus90');
-      const btnRotReset = document.getElementById('btnRotReset');
-      const btnResetParams = document.getElementById('btnResetParams');
-      const btnPlayChime = document.getElementById('btnPlayChime');
-
-      const todoCheck1 = document.getElementById('todoCheck1');
-      const todoCheck2 = document.getElementById('todoCheck2');
-      const todoCheck3 = document.getElementById('todoCheck3');
-      const todoLabel1 = document.getElementById('todoLabel1');
-      const todoLabel2 = document.getElementById('todoLabel2');
-      const todoLabel3 = document.getElementById('todoLabel3');
-
-      let params = {
-        omega: parseFloat(sliderFreq.value),
-        gamma: parseFloat(sliderDamp.value),
-        angle: parseFloat(sliderRot.value)
-      };
-
-      function resizeCanvas() {
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-        drawSimulation();
-      }
-      window.addEventListener('resize', resizeCanvas);
-
-      function logEvent(msg, color = 'text-content-secondary') {
-        const time = (performance.now() / 1000).toFixed(3);
-        const div = document.createElement('div');
-        div.className = color;
-        div.innerHTML = `<span class="text-content-muted">[00:${time.padStart(6, '0')}]</span> ${msg}`;
-        termLog.appendChild(div);
-        termLog.scrollTop = termLog.scrollHeight;
-      }
-
-      function drawSimulation() {
-        const rect = canvas.getBoundingClientRect();
-        const w = rect.width;
-        const h = rect.height;
-
-        ctx.clearRect(0, 0, w, h);
-
-        // Subgrid lines
-        ctx.strokeStyle = '#1F242C';
-        ctx.lineWidth = 1;
-
-        const cy = h / 2;
-        const originX = 35;
-        const plotWidth = w * 0.58;
-
-        // X and Y Axes for Plot
-        ctx.beginPath();
-        ctx.moveTo(originX, 15);
-        ctx.lineTo(originX, h - 15);
-        ctx.moveTo(originX, cy);
-        ctx.lineTo(originX + plotWidth, cy);
-        ctx.stroke();
-
-        // Numeric evaluation of Desmos function: f(x) = exp(-gamma * x) * cos(omega * x)
-        ctx.strokeStyle = '#38BDF8';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-
-        const xMax = 12.0;
-        let started = false;
-
-        for (let px = 0; px <= plotWidth; px += 2) {
-          const t = (px / plotWidth) * xMax;
-          const yVal = Math.exp(-params.gamma * t) * Math.cos(params.omega * t);
-          const py = cy - (yVal * 55);
-
-          if (!started) {
-            ctx.moveTo(originX + px, py);
-            started = true;
-          } else {
-            ctx.lineTo(originX + px, py);
-          }
-        }
-        ctx.stroke();
-
-        // Damping envelope dashed lines
-        ctx.strokeStyle = '#363C48';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-
-        ctx.beginPath();
-        for (let px = 0; px <= plotWidth; px += 4) {
-          const t = (px / plotWidth) * xMax;
-          const env = Math.exp(-params.gamma * t);
-          const py = cy - (env * 55);
-          if (px === 0) ctx.moveTo(originX + px, py);
-          else ctx.lineTo(originX + px, py);
-        }
-        ctx.stroke();
-
-        ctx.beginPath();
-        for (let px = 0; px <= plotWidth; px += 4) {
-          const t = (px / plotWidth) * xMax;
-          const env = -Math.exp(-params.gamma * t);
-          const py = cy - (env * 55);
-          if (px === 0) ctx.moveTo(originX + px, py);
-          else ctx.lineTo(originX + px, py);
-        }
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Axis label
-        ctx.fillStyle = '#71717A';
-        ctx.font = '10px monospace';
-        ctx.fillText('0', originX - 12, cy + 12);
-        ctx.fillText('График для урока f(x)', originX + 5, 25);
-
-        // Divider separator line
-        ctx.strokeStyle = '#242830';
-        ctx.beginPath();
-        ctx.moveTo(originX + plotWidth + 25, 20);
-        ctx.lineTo(originX + plotWidth + 25, h - 20);
-        ctx.stroke();
-
-        // =========================================================================
-        // Render 360° Rotatable LKBoard Note on the right half
-        // =========================================================================
-        const nodeCenterX = originX + plotWidth + (w - (originX + plotWidth)) / 2;
-        const nodeCenterY = cy;
-        const cardW = 125;
-        const cardH = 82;
-
-        ctx.save();
-        ctx.translate(nodeCenterX, nodeCenterY);
-        ctx.rotate((params.angle * Math.PI) / 180);
-
-        // Rotation stem & circular knob
-        ctx.strokeStyle = '#38BDF8';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(0, -cardH / 2);
-        ctx.lineTo(0, -cardH / 2 - 22);
-        ctx.stroke();
-
-        ctx.fillStyle = '#38BDF8';
-        ctx.beginPath();
-        ctx.arc(0, -cardH / 2 - 22, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#0D0F12';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Card body
-        ctx.fillStyle = '#181B20';
-        ctx.strokeStyle = '#38BDF8';
-        ctx.lineWidth = 1.2;
-        ctx.fillRect(-cardW / 2, -cardH / 2, cardW, cardH);
-        ctx.strokeRect(-cardW / 2, -cardH / 2, cardW, cardH);
-
-        // Card header
-        ctx.fillStyle = '#1F2329';
-        ctx.fillRect(-cardW / 2, -cardH / 2, cardW, 20);
-
-        ctx.fillStyle = '#FBBF24';
-        ctx.font = 'bold 9px monospace';
-        ctx.fillText('📝 Подсказка урока', -cardW / 2 + 8, -cardH / 2 + 13);
-
-        ctx.fillStyle = '#A1A1AA';
-        ctx.font = '9px monospace';
-        ctx.fillText(`Угол θ = ${Math.round(params.angle)}°`, -cardW / 2 + 8, -cardH / 2 + 38);
-        ctx.fillText('Shift: шаг 15°', -cardW / 2 + 8, -cardH / 2 + 52);
-        ctx.fillText('Хоткей: [ R ]', -cardW / 2 + 8, -cardH / 2 + 66);
-
-        ctx.restore();
-
-        // Label for the right side
-        ctx.fillStyle = '#A1A1AA';
-        ctx.font = '10px monospace';
-        ctx.fillText('Стикер с вращением 360°', originX + plotWidth + 30, 30);
-      }
-
-      function updateParameters() {
-        params.omega = parseFloat(sliderFreq.value);
-        params.gamma = parseFloat(sliderDamp.value);
-        params.angle = parseFloat(sliderRot.value);
-
-        valFreq.textContent = `${params.omega.toFixed(2)} rad/s`;
-        valDamp.textContent = params.gamma.toFixed(2);
-        valRot.textContent = `${Math.round(params.angle)}°`;
-
-        eqLabel.textContent = `f(x) = 1.0·e^(-${params.gamma.toFixed(2)}x)·cos(${params.omega.toFixed(2)}x)`;
-        nodeAngleLabel.textContent = `θ = ${Math.round(params.angle)}°`;
-
-        drawSimulation();
-      }
-
-      sliderFreq.addEventListener('input', () => {
-        updateParameters();
-        logEvent(`MATH_UPDATE: ω = ${params.omega.toFixed(2)} rad/s`);
-      });
-
-      sliderDamp.addEventListener('input', () => {
-        updateParameters();
-        logEvent(`MATH_UPDATE: γ = ${params.gamma.toFixed(2)} (decay rate)`);
-      });
-
-      sliderRot.addEventListener('input', () => {
-        updateParameters();
-        logEvent(`ROTATE_TRANSFORM: θ = ${Math.round(params.angle)}°`, 'text-amber-400');
-      });
-
-      btnRotMinus90.addEventListener('click', () => {
-        params.angle = (params.angle - 90 + 360) % 360;
-        if (params.angle > 180) params.angle -= 360;
-        sliderRot.value = params.angle;
-        updateParameters();
-        logEvent(`ACTION: Поворот -90° -> θ = ${Math.round(params.angle)}°`, 'text-amber-400');
-      });
-
-      btnRotPlus90.addEventListener('click', () => {
-        params.angle = (params.angle + 90 + 360) % 360;
-        if (params.angle > 180) params.angle -= 360;
-        sliderRot.value = params.angle;
-        updateParameters();
-        logEvent(`ACTION: Поворот +90° -> θ = ${Math.round(params.angle)}°`, 'text-amber-400');
-      });
-
-      btnRotReset.addEventListener('click', () => {
-        params.angle = 0;
-        sliderRot.value = 0;
-        updateParameters();
-        logEvent('ACTION: Угол сброшен на 0°', 'text-accent-sky');
-      });
-
-      btnResetParams.addEventListener('click', () => {
-        sliderFreq.value = 3.0;
-        sliderDamp.value = 0.10;
-        sliderRot.value = 25;
-        updateParameters();
-        logEvent('SYSTEM: Параметры сброшены на начальные', 'text-accent-sky');
-      });
-
-      // Quick hover coordinates inspect
-      canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const originX = 35;
-        const plotWidth = rect.width * 0.58;
-        if (mx >= originX && mx <= originX + plotWidth) {
-          const t = ((mx - originX) / plotWidth) * 12.0;
-          const yVal = Math.exp(-params.gamma * t) * Math.cos(params.omega * t);
-          canvas.title = `x = ${t.toFixed(2)}, f(x) = ${yVal.toFixed(3)}`;
-        } else {
-          canvas.title = '';
-        }
-      });
-
-      // Interactive To-Do Checkbox logic
-      function updateTodo(check, label, name) {
-        if (check.checked) {
-          label.classList.add('line-through', 'text-content-muted');
-          label.classList.remove('text-content-secondary');
-          logEvent(`TODO_COMPLETED: "${name}"`, 'text-emerald-400');
-        } else {
-          label.classList.remove('line-through', 'text-content-muted');
-          label.classList.add('text-content-secondary');
-          logEvent(`TODO_UNCHECKED: "${name}"`, 'text-content-muted');
-        }
-      }
-
-      todoCheck1.addEventListener('change', () => updateTodo(todoCheck1, todoLabel1, 'Теория и формула'));
-      todoCheck2.addEventListener('change', () => updateTodo(todoCheck2, todoLabel2, 'Вращение подсказки 360°'));
-      todoCheck3.addEventListener('change', () => {
-        updateTodo(todoCheck3, todoLabel3, 'Гонг окончания занятия');
-        if (todoCheck3.checked) playHarmonicChime();
-      });
-
-      // Tibetan Singing Bowl Harmonic Bell Synthesis via Web Audio API
-      function playHarmonicChime() {
-        try {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          if (!AudioCtx) return;
-          const actx = new AudioCtx();
-          if (actx.state === 'suspended') actx.resume();
-          const now = actx.currentTime;
-
-          // Harmonic triad C5 (523.25 Hz), E5 (659.25 Hz), G5 (783.99 Hz) with gentle exponential decay
-          [523.25, 659.25, 783.99].forEach((freq, idx) => {
-            const osc = actx.createOscillator();
-            const gain = actx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-            gain.gain.setValueAtTime(0.22, now + idx * 0.08);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 2.8);
-            osc.connect(gain);
-            gain.connect(actx.destination);
-            osc.start(now + idx * 0.08);
-            osc.stop(now + idx * 0.08 + 2.9);
-          });
-          logEvent('AUDIO: Звуковой сигнал тибетской поющей чаши (523Hz + 659Hz + 784Hz)', 'text-emerald-400');
-        } catch(e) {
-          logEvent('AUDIO: Web Audio не поддерживается браузером', 'text-red-400');
-        }
-      }
-
-      btnPlayChime.addEventListener('click', playHarmonicChime);
-
-      setTimeout(resizeCanvas, 50);
-    })();
-  </script>
 </body>
 </html>
