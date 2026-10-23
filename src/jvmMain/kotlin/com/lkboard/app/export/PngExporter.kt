@@ -2,8 +2,11 @@ package com.lkboard.app.export
 
 import com.lkboard.app.model.BoardElement
 import com.lkboard.app.model.BoardState
+import com.lkboard.app.model.ConnectorStyle
 import com.lkboard.app.model.GeometryUtils
 import com.lkboard.app.model.ShapeType
+import com.lkboard.app.model.getAnchorOffset
+import com.lkboard.app.util.MathEvaluator
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Font
 import org.jetbrains.skia.Paint
@@ -57,7 +60,10 @@ object PngExporter {
                 is BoardElement.DrawingPath -> renderDrawingPath(canvas, element)
                 is BoardElement.ImageElement -> renderImageElement(canvas, element)
                 is BoardElement.DocumentFrame -> renderDocumentFrame(canvas, element, defaultTypeface)
-                else -> {}
+                is BoardElement.Connector -> renderConnector(canvas, element, state)
+                is BoardElement.MilestoneCard -> renderMilestoneCard(canvas, element, defaultTypeface)
+                is BoardElement.FunctionGraph -> renderFunctionGraph(canvas, element, defaultTypeface)
+                is BoardElement.KanbanBoard -> renderKanbanBoard(canvas, element, defaultTypeface, state)
             }
         }
 
@@ -557,6 +563,356 @@ object PngExporter {
             canvas.drawImageRect(skiaImage, dst)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    private fun renderConnector(
+        canvas: org.jetbrains.skia.Canvas,
+        conn: BoardElement.Connector,
+        state: BoardState
+    ) {
+        val startOffset = conn.startElementId?.let { id ->
+            state.elements[id]?.getAnchorOffset(conn.startAnchor)
+        } ?: conn.startPoint.toOffset()
+        val endOffset = conn.endElementId?.let { id ->
+            state.elements[id]?.getAnchorOffset(conn.endAnchor)
+        } ?: conn.endPoint.toOffset()
+
+        val strokePaint = Paint().apply {
+            color = conn.strokeColorHex.toInt()
+            mode = PaintMode.STROKE
+            strokeWidth = conn.strokeWidth
+            strokeCap = org.jetbrains.skia.PaintStrokeCap.ROUND
+            strokeJoin = org.jetbrains.skia.PaintStrokeJoin.ROUND
+            isAntiAlias = true
+        }
+
+        val path = Path().apply {
+            moveTo(startOffset.x, startOffset.y)
+            when (conn.style) {
+                ConnectorStyle.STRAIGHT -> lineTo(endOffset.x, endOffset.y)
+                ConnectorStyle.ORTHOGONAL -> {
+                    val midX = (startOffset.x + endOffset.x) / 2f
+                    lineTo(midX, startOffset.y)
+                    lineTo(midX, endOffset.y)
+                    lineTo(endOffset.x, endOffset.y)
+                }
+                ConnectorStyle.BEZIER -> {
+                    val dx = (endOffset.x - startOffset.x) * 0.5f
+                    cubicTo(startOffset.x + dx, startOffset.y, endOffset.x - dx, endOffset.y, endOffset.x, endOffset.y)
+                }
+            }
+        }
+        canvas.drawPath(path, strokePaint)
+
+        // Стрелка на конце
+        if (conn.hasEndArrow) {
+            val headLen = (conn.strokeWidth * 3.5f + 6f).coerceIn(10f, 22f)
+            val angle = kotlin.math.atan2((endOffset.y - startOffset.y).toDouble(), (endOffset.x - startOffset.x).toDouble())
+            val wingAngle = 0.45
+            val p1x = (endOffset.x - headLen * kotlin.math.cos(angle - wingAngle)).toFloat()
+            val p1y = (endOffset.y - headLen * kotlin.math.sin(angle - wingAngle)).toFloat()
+            val p2x = (endOffset.x - headLen * kotlin.math.cos(angle + wingAngle)).toFloat()
+            val p2y = (endOffset.y - headLen * kotlin.math.sin(angle + wingAngle)).toFloat()
+
+            val arrowPath = Path().apply {
+                moveTo(endOffset.x, endOffset.y)
+                lineTo(p1x, p1y)
+                lineTo(p2x, p2y)
+                closePath()
+            }
+            val fillPaint = Paint().apply {
+                color = conn.strokeColorHex.toInt()
+                mode = PaintMode.FILL
+                isAntiAlias = true
+            }
+            canvas.drawPath(arrowPath, fillPaint)
+        }
+    }
+
+    private fun renderMilestoneCard(
+        canvas: org.jetbrains.skia.Canvas,
+        card: BoardElement.MilestoneCard,
+        typeface: Typeface
+    ) {
+        val rrect = RRect.makeXYWH(card.x, card.y, card.width, card.height, 14f)
+
+        // Тень
+        val shadow = Paint().apply {
+            color = 0x18000000.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(RRect.makeXYWH(card.x + 2f, card.y + 4f, card.width, card.height, 14f), shadow)
+
+        // Фон
+        val bgPaint = Paint().apply {
+            color = 0xFFFFFFFF.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(rrect, bgPaint)
+
+        // Бордер
+        val borderPaint = Paint().apply {
+            color = 0xFFE2E8F0.toInt()
+            mode = PaintMode.STROKE
+            strokeWidth = 1.2f
+            isAntiAlias = true
+        }
+        canvas.drawRRect(rrect, borderPaint)
+
+        // Цветная полоска статуса
+        val stripeColor = card.status.colorHex.toInt()
+        val stripePaint = Paint().apply {
+            color = stripeColor
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(RRect.makeXYWH(card.x, card.y, 6f, card.height, 3f), stripePaint)
+
+        // Бейдж статуса
+        val badgeBg = Paint().apply {
+            color = (stripeColor and 0x00FFFFFF) or 0x22000000
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(RRect.makeXYWH(card.x + 16f, card.y + 12f, 95f, 22f, 6f), badgeBg)
+
+        val statusFont = Font(typeface, 11f)
+        val statusTextPaint = Paint().apply {
+            color = stripeColor
+            isAntiAlias = true
+        }
+        canvas.drawString("${card.status.icon} ${card.status.label}", card.x + 22f, card.y + 27f, statusFont, statusTextPaint)
+
+        // Заголовок
+        val titleFont = Font(typeface, 14f)
+        val titlePaint = Paint().apply {
+            color = 0xFF0F172A.toInt()
+            isAntiAlias = true
+        }
+        canvas.drawString(card.title, card.x + 16f, card.y + 56f, titleFont, titlePaint)
+
+        // Описание
+        if (card.description.isNotBlank()) {
+            val descFont = Font(typeface, 11f)
+            val descPaint = Paint().apply {
+                color = 0xFF64748B.toInt()
+                isAntiAlias = true
+            }
+            val shortDesc = if (card.description.length > 40) card.description.take(37) + "..." else card.description
+            canvas.drawString(shortDesc, card.x + 16f, card.y + 78f, descFont, descPaint)
+        }
+
+        // Прогресс бар
+        val barY = card.y + card.height - 30f
+        val barW = card.width - 65f
+        val barBg = Paint().apply {
+            color = 0xFFE2E8F0.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(RRect.makeXYWH(card.x + 16f, barY, barW, 5f, 2.5f), barBg)
+
+        val fillW = barW * card.progress.coerceIn(0f, 1f)
+        if (fillW > 0f) {
+            canvas.drawRRect(RRect.makeXYWH(card.x + 16f, barY, fillW, 5f, 2.5f), stripePaint)
+        }
+
+        val pctFont = Font(typeface, 10f)
+        val pctPaint = Paint().apply {
+            color = stripeColor
+            isAntiAlias = true
+        }
+        canvas.drawString("${(card.progress * 100).toInt()}%", card.x + 16f + barW + 8f, barY + 5f, pctFont, pctPaint)
+    }
+
+    private fun renderFunctionGraph(
+        canvas: org.jetbrains.skia.Canvas,
+        graph: BoardElement.FunctionGraph,
+        typeface: Typeface
+    ) {
+        val gScale = (graph.width / 440f).coerceIn(0.6f, 3.5f)
+        val rrect = RRect.makeXYWH(graph.x, graph.y, graph.width, graph.height, 12f * gScale)
+
+        // Фон
+        val bgPaint = Paint().apply {
+            color = 0xFFFFFFFF.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(rrect, bgPaint)
+
+        // Окантовка
+        val borderPaint = Paint().apply {
+            color = 0xFFCBD5E1.toInt()
+            mode = PaintMode.STROKE
+            strokeWidth = 1.2f * gScale
+            isAntiAlias = true
+        }
+        canvas.drawRRect(rrect, borderPaint)
+
+        // Шапка
+        val headerH = (34f * gScale).coerceAtLeast(26f)
+        val headerPaint = Paint().apply {
+            color = 0xFFF8FAFC.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(RRect.makeXYWH(graph.x, graph.y, graph.width, headerH, 12f * gScale), headerPaint)
+
+        val headerText = graph.expressions.joinToString(", ") { "f(x)=$it" }.ifBlank { graph.title }
+        val headerFont = Font(typeface, 11.5f * gScale)
+        val headerTextPaint = Paint().apply {
+            color = 0xFF1E293B.toInt()
+            isAntiAlias = true
+        }
+        canvas.drawString(headerText, graph.x + 12f * gScale, graph.y + headerH * 0.65f, headerFont, headerTextPaint)
+
+        // Область построения
+        val pad = 12f * gScale
+        val plotL = graph.x + pad
+        val plotT = graph.y + headerH + pad
+        val plotW = graph.width - pad * 2
+        val plotH = graph.height - headerH - pad * 2
+        if (plotW <= 10f || plotH <= 10f) return
+
+        canvas.save()
+        canvas.clipRect(Rect.makeXYWH(plotL, plotT, plotW, plotH))
+
+        val xMin = graph.xMin.toDouble()
+        val xMax = graph.xMax.toDouble()
+        val yMin = graph.yMin.toDouble()
+        val yMax = graph.yMax.toDouble()
+
+        fun toX(v: Double): Float = (plotL + ((v - xMin) / (xMax - xMin)) * plotW).toFloat()
+        fun toY(v: Double): Float = (plotT + ((yMax - v) / (yMax - yMin)) * plotH).toFloat()
+
+        val originX = toX(0.0).coerceIn(plotL, plotL + plotW)
+        val originY = toY(0.0).coerceIn(plotT, plotT + plotH)
+
+        // Оси
+        val axisPaint = Paint().apply {
+            color = 0xFF94A3B8.toInt()
+            mode = PaintMode.STROKE
+            strokeWidth = 1.5f * gScale
+            isAntiAlias = true
+        }
+        canvas.drawLine(plotL, originY, plotL + plotW, originY, axisPaint)
+        canvas.drawLine(originX, plotT, originX, plotT + plotH, axisPaint)
+
+        // Число 0
+        val numFont = Font(typeface, 9f * gScale)
+        val numPaint = Paint().apply {
+            color = 0xFF64748B.toInt()
+            isAntiAlias = true
+        }
+        canvas.drawString("0", originX + 4f, originY + 12f * gScale, numFont, numPaint)
+
+        // Кривые
+        val colors = graph.strokeColorsHex.ifEmpty { listOf(0xFF2563EBL) }
+        graph.expressions.forEachIndexed { idx, expr ->
+            if (expr.isBlank()) return@forEachIndexed
+            val curveColor = colors[idx % colors.size].toInt()
+            val curvePaint = Paint().apply {
+                color = curveColor
+                mode = PaintMode.STROKE
+                strokeWidth = 2.4f * gScale
+                strokeCap = org.jetbrains.skia.PaintStrokeCap.ROUND
+                strokeJoin = org.jetbrains.skia.PaintStrokeJoin.ROUND
+                isAntiAlias = true
+            }
+
+            val samples = MathEvaluator.sampleFunction(expr, xMin, xMax, 250)
+            val curvePath = Path()
+            var inPath = false
+            for ((sx, sy) in samples) {
+                if (sy == null || sy.isNaN() || sy.isInfinite() || sy < yMin - 100 || sy > yMax + 100) {
+                    inPath = false
+                    continue
+                }
+                val px = toX(sx)
+                val py = toY(sy)
+                if (!inPath) {
+                    curvePath.moveTo(px, py)
+                    inPath = true
+                } else {
+                    curvePath.lineTo(px, py)
+                }
+            }
+            canvas.drawPath(curvePath, curvePaint)
+        }
+
+        canvas.restore()
+    }
+
+    private fun renderKanbanBoard(
+        canvas: org.jetbrains.skia.Canvas,
+        kanban: BoardElement.KanbanBoard,
+        typeface: Typeface,
+        state: BoardState
+    ) {
+        val kScale = (kanban.width / 1000f).coerceIn(0.6f, 3.5f)
+        val rrect = RRect.makeXYWH(kanban.x, kanban.y, kanban.width, kanban.height, 16f * kScale)
+
+        // Фон
+        val bgPaint = Paint().apply {
+            color = 0xFFF8FAFC.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(rrect, bgPaint)
+
+        val borderPaint = Paint().apply {
+            color = 0xFFE2E8F0.toInt()
+            mode = PaintMode.STROKE
+            strokeWidth = 1.5f * kScale
+            isAntiAlias = true
+        }
+        canvas.drawRRect(rrect, borderPaint)
+
+        // Шапка
+        val headerH = (46f * kScale).coerceAtLeast(36f)
+        val headerPaint = Paint().apply {
+            color = 0xFFF1F5F9.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(RRect.makeXYWH(kanban.x, kanban.y, kanban.width, headerH, 16f * kScale), headerPaint)
+
+        val titleFont = Font(typeface, 15f * kScale)
+        val titlePaint = Paint().apply {
+            color = 0xFF0F172A.toInt()
+            isAntiAlias = true
+        }
+        canvas.drawString("📋 ${kanban.title}", kanban.x + 18f * kScale, kanban.y + headerH * 0.65f, titleFont, titlePaint)
+
+        // 4 Колонки
+        val cols = listOf("🔴 Бэклог", "🟡 В работе", "🟣 На ревью", "🟢 Готово")
+        val colW = kanban.width / 4f
+        val colH = kanban.height - headerH
+        val colHeadH = (38f * kScale).coerceAtLeast(28f)
+
+        val colLinePaint = Paint().apply {
+            color = 0xFFE2E8F0.toInt()
+            mode = PaintMode.STROKE
+            strokeWidth = 1f
+            isAntiAlias = true
+        }
+        val colFont = Font(typeface, 12.5f * kScale)
+        val colTextPaint = Paint().apply {
+            color = 0xFF334155.toInt()
+            isAntiAlias = true
+        }
+
+        for (i in 0 until 4) {
+            val cx = kanban.x + i * colW
+            val cy = kanban.y + headerH
+            if (i > 0) {
+                canvas.drawLine(cx, cy, cx, cy + colH, colLinePaint)
+            }
+            canvas.drawString(cols[i], cx + 14f * kScale, cy + colHeadH * 0.65f, colFont, colTextPaint)
         }
     }
 }

@@ -127,6 +127,7 @@ fun DashboardScreen(
                         BoardTemplate.ROADMAP -> "Дорожная карта: Проект 2026"
                         BoardTemplate.KANBAN -> "Канбан-доска"
                         BoardTemplate.BRAINSTORM -> "Мозговой штурм"
+                        BoardTemplate.MATH_STUDIO -> "Математика: Графики и Функции"
                     }
                     onCreateBoard(defaultName, template)
                 }
@@ -541,6 +542,7 @@ private fun BoardCard(
                         BoardTemplate.ROADMAP.name -> "🗺️ Дорожная карта"
                         BoardTemplate.KANBAN.name -> "📊 Канбан"
                         BoardTemplate.BRAINSTORM.name -> "💡 Mindmap"
+                        BoardTemplate.MATH_STUDIO.name -> "📈 Графики"
                         else -> "📄 Доска"
                     }
 

@@ -32,6 +32,11 @@ enum class BoardTemplate(val displayName: String, val icon: String, val descript
         displayName = "Мозговой штурм (Mind Map)",
         icon = "💡",
         description = "Центральная концепция и разноцветные ветви идей со стикерами"
+    ),
+    MATH_STUDIO(
+        displayName = "Математика (Desmos)",
+        icon = "📈",
+        description = "Интерактивные графики функций, координатные плоскости и формулы"
     )
 }
 
@@ -59,6 +64,7 @@ object BoardTemplateGenerator {
             BoardTemplate.ROADMAP -> generateRoadmap(title, defaultPen, defaultShape)
             BoardTemplate.KANBAN -> generateKanban(title, defaultPen, defaultShape)
             BoardTemplate.BRAINSTORM -> generateBrainstorm(title, defaultPen, defaultShape)
+            BoardTemplate.MATH_STUDIO -> generateMathStudio(title, defaultPen, defaultShape)
         }
     }
 
@@ -412,6 +418,106 @@ object BoardTemplateGenerator {
             penSettings = penSettings,
             shapeSettings = shapeSettings,
             gridType = GridType.DOTS,
+            backgroundColorHex = 0xFFFFFFFF
+        )
+    }
+
+    private fun generateMathStudio(
+        title: String,
+        penSettings: PenSettings,
+        shapeSettings: ShapeSettings
+    ): BoardState {
+        val elements = mutableMapOf<String, BoardElement>()
+
+        // 1. Заголовок
+        val header = BoardElement.Text(
+            id = "math-header",
+            x = 100f,
+            y = 50f,
+            width = 800f,
+            height = 45f,
+            text = "📈 $title",
+            fontSize = 26f,
+            isBold = true,
+            colorHex = 0xFF0F172A
+        )
+        elements[header.id] = header
+
+        val subheader = BoardElement.Text(
+            id = "math-sub",
+            x = 100f,
+            y = 100f,
+            width = 800f,
+            height = 30f,
+            text = "Интерактивная математическая студия: графики функций, формулы и исследование кривых",
+            fontSize = 15f,
+            colorHex = 0xFF64748B
+        )
+        elements[subheader.id] = subheader
+
+        // 2. График тригонометрии
+        val trigGraph = BoardElement.FunctionGraph(
+            id = "math-graph-trig",
+            x = 100f,
+            y = 150f,
+            width = 540f,
+            height = 380f,
+            title = "Тригонометрия и колебания",
+            expressions = listOf("sin(x)", "cos(x)", "sin(2 * x) * 0.5"),
+            xMin = -10f,
+            xMax = 10f,
+            yMin = -4f,
+            yMax = 4f,
+            strokeColorsHex = listOf(0xFF2563EB, 0xFFDC2626, 0xFF16A34A)
+        )
+        elements[trigGraph.id] = trigGraph
+
+        // 3. График полиномов и корней
+        val polyGraph = BoardElement.FunctionGraph(
+            id = "math-graph-poly",
+            x = 680f,
+            y = 150f,
+            width = 540f,
+            height = 380f,
+            title = "Степенные функции и полиномы",
+            expressions = listOf("x^2", "x^3 - 3 * x", "sqrt(abs(x))"),
+            xMin = -6f,
+            xMax = 6f,
+            yMin = -6f,
+            yMax = 6f,
+            strokeColorsHex = listOf(0xFF7C3AED, 0xFFEA580C, 0xFF0D9488)
+        )
+        elements[polyGraph.id] = polyGraph
+
+        // 4. Стикеры с полезными подсказками и формулами
+        val tipsNote = BoardElement.StickyNote(
+            id = "math-tips-note",
+            x = 100f,
+            y = 560f,
+            width = 380f,
+            height = 140f,
+            text = "💡 Инструкция:\n- Двойной клик на график открывает редактор\n- Доступна виртуальная клавиатура\n- Функции: sin, cos, tan, sqrt, abs, ln, exp, pi, e",
+            colorHex = 0xFFBAE6FD
+        )
+        elements[tipsNote.id] = tipsNote
+
+        val formulasNote = BoardElement.StickyNote(
+            id = "math-formulas-note",
+            x = 520f,
+            y = 560f,
+            width = 380f,
+            height = 140f,
+            text = "📐 Интересные кривые для ввода:\n- f(x) = exp(-0.1 * x^2) * cos(3 * x)\n- f(x) = tan(x)\n- f(x) = abs(x) - 2",
+            colorHex = 0xFFBBF7D0
+        )
+        elements[formulasNote.id] = formulasNote
+
+        return BoardState(
+            title = title,
+            elements = elements,
+            penSettings = penSettings,
+            shapeSettings = shapeSettings,
+            gridType = GridType.LINES,
             backgroundColorHex = 0xFFFFFFFF
         )
     }

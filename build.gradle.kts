@@ -51,6 +51,7 @@ compose.desktop {
             windows {
                 menuGroup = "Lkboard"
                 upgradeUuid = "b86e7a2c-e092-48a5-8dc8-fb3446927d61"
+                iconFile.set(project.file("src/jvmMain/resources/logo.ico"))
                 dirChooser = true
                 perUserInstall = false
                 shortcut = true

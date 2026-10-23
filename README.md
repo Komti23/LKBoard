@@ -135,6 +135,12 @@
 - **JDK 21** (Microsoft OpenJDK, Eclipse Temurin или Oracle JDK 21).
 - ОС: Windows 10/11, macOS (Intel/Apple Silicon) или Linux.
 
+### Быстрый запуск на Windows (скрипты в 1 клик)
+- **`run.bat`** — запуск приложения LKBoard
+- **`build-exe.bat`** — сборка автономного Windows-инсталлятора (`.exe`) со встроенным JDK
+- **`test.bat`** — запуск полного набора юнит-тестов
+- **`update.bat`** — получение обновлений из Git и сборка
+
 ### Запуск в режиме разработки
 ```bash
 # Windows

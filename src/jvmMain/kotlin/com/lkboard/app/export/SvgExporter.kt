@@ -178,6 +178,34 @@ object SvgExporter {
                     sb.appendLine("""  </g>""")
                 }
 
+                is BoardElement.KanbanBoard -> {
+                    sb.appendLine("""  <g id="${el.id}">""")
+                    sb.appendLine("""    <rect x="${el.x}" y="${el.y}" width="${el.width}" height="${el.height}" rx="16" ry="16" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>""")
+                    val headH = 44f
+                    sb.appendLine("""    <rect x="${el.x}" y="${el.y}" width="${el.width}" height="$headH" rx="16" ry="16" fill="#F1F5F9"/>""")
+                    sb.appendLine("""    <text x="${el.x + 18f}" y="${el.y + 28f}" font-family="sans-serif" font-size="15" font-weight="bold" fill="#0F172A">📋 ${escapeXml(el.title)}</text>""")
+                    val cols = listOf("🔴 Бэклог", "🟡 В работе", "🟣 На ревью", "🟢 Готово")
+                    val colW = el.width / 4f
+                    for (i in 0 until 4) {
+                        val cx = el.x + i * colW
+                        if (i > 0) {
+                            sb.appendLine("""    <line x1="$cx" y1="${el.y + headH}" x2="$cx" y2="${el.y + el.height}" stroke="#E2E8F0" stroke-width="1"/>""")
+                        }
+                        sb.appendLine("""    <text x="${cx + 14f}" y="${el.y + headH + 26f}" font-family="sans-serif" font-size="12" font-weight="bold" fill="#334155">${cols[i]}</text>""")
+                    }
+                    sb.appendLine("""  </g>""")
+                }
+
+                is BoardElement.DocumentFrame -> {
+                    sb.appendLine("""  <g id="${el.id}">""")
+                    sb.appendLine("""    <rect x="${el.x}" y="${el.y}" width="${el.width}" height="${el.height}" rx="10" ry="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.2"/>""")
+                    sb.appendLine("""    <rect x="${el.x}" y="${el.y}" width="${el.width}" height="38" rx="10" ry="10" fill="#F1F5F9"/>""")
+                    sb.appendLine("""    <text x="${el.x + 14f}" y="${el.y + 24f}" font-family="sans-serif" font-size="13" font-weight="bold" fill="#1E293B">${escapeXml(el.title)}</text>""")
+                    val pageTxt = if (el.totalPages > 0) "${el.currentPageIndex + 1} / ${el.totalPages}" else "Слайды"
+                    sb.appendLine("""    <text x="${el.x + el.width - 80f}" y="${el.y + 24f}" font-family="sans-serif" font-size="12" fill="#0284C7">$pageTxt</text>""")
+                    sb.appendLine("""  </g>""")
+                }
+
                 else -> {}
             }
         }
