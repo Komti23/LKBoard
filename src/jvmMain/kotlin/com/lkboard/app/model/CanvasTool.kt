@@ -15,6 +15,8 @@ enum class CanvasTool(val displayName: String) {
     CONNECTOR("Умный коннектор (C)"),
     MILESTONE("Веха / Roadmap (M)"),
     FUNCTION_GRAPH("График функций (G)"),
+    LATEX("Формула LaTeX (X)"),
+    PHYSICS_STENCIL("Конструктор физики (B)"),
     KANBAN("Канбан-доска (K)"),
     LASER_POINTER("Лазерная указка (L)")
 }

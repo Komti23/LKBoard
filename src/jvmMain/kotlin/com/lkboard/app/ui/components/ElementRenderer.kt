@@ -53,6 +53,8 @@ object ElementRenderer {
                 is BoardElement.Connector -> drawConnector(drawScope, element, allElements, textMeasurer)
                 is BoardElement.MilestoneCard -> drawMilestoneCard(drawScope, element, textMeasurer)
                 is BoardElement.FunctionGraph -> drawFunctionGraph(drawScope, element, textMeasurer)
+                is BoardElement.LatexFormula -> com.lkboard.app.util.LatexRenderer.drawLatex(drawScope, element, textMeasurer)
+                is BoardElement.PhysicsStencil -> com.lkboard.app.util.PhysicsStencilRenderer.draw(drawScope, element, textMeasurer)
                 is BoardElement.KanbanBoard -> drawKanbanBoard(drawScope, element, allElements, textMeasurer)
             }
         }

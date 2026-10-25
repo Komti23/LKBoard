@@ -31,6 +31,10 @@ import com.lkboard.app.ui.components.ShareBoardDialog
 import com.lkboard.app.ui.components.StickyNoteEditDialog
 import com.lkboard.app.ui.components.TextEditDialog
 import com.lkboard.app.ui.components.UpdateDialog
+import com.lkboard.app.ui.components.LatexEditDialog
+import com.lkboard.app.ui.components.PhysicsStencilDialog
+import com.lkboard.app.ui.components.FirstRunOnboardingDialog
+import com.lkboard.app.ui.components.SettingsDialog
 import com.lkboard.app.ui.dashboard.DashboardScreen
 import com.lkboard.app.ui.theme.LkboardTheme
 import com.lkboard.app.ui.viewmodel.AppScreen
@@ -62,6 +66,14 @@ fun main() = application {
     val laserTrail by viewModel.laserTrail.collectAsState()
     val activeGuides by viewModel.activeGuides.collectAsState()
     val currentFile by viewModel.currentFile.collectAsState()
+
+    val currentTheme by viewModel.currentTheme.collectAsState()
+    val currentUserRole by viewModel.currentUserRole.collectAsState()
+    val isOnboardingOpen by viewModel.isOnboardingOpen.collectAsState()
+    val isSettingsDialogOpen by viewModel.isSettingsDialogOpen.collectAsState()
+    val isLatexDialogOpen by viewModel.isLatexDialogOpen.collectAsState()
+    val editingLatexFormula by viewModel.editingLatexFormula.collectAsState()
+    val isPhysicsStencilDialogOpen by viewModel.isPhysicsStencilDialogOpen.collectAsState()
 
     val logoPainter = AppLogo.rememberLogoPainter()
 
@@ -248,6 +260,23 @@ fun main() = application {
                         viewModel.selectTool(CanvasTool.FRAME)
                         true
                     }
+                    !isCtrl && (keyEvent.key == Key.X || rawKeyCode == java.awt.event.KeyEvent.VK_X) -> {
+                        viewModel.selectTool(CanvasTool.LATEX)
+                        true
+                    }
+                    !isCtrl && (keyEvent.key == Key.B || rawKeyCode == java.awt.event.KeyEvent.VK_B) -> {
+                        viewModel.selectTool(CanvasTool.PHYSICS_STENCIL)
+                        true
+                    }
+                    isCtrl && isShift && (keyEvent.key == Key.E || rawKeyCode == java.awt.event.KeyEvent.VK_E) -> {
+                        if (boardState.selectedElementIds.isNotEmpty()) {
+                            val target = FileDialogs.exportPngFileDialog(defaultName = "${boardState.title}_selection.png")
+                            if (target != null) {
+                                viewModel.exportSelectionToPng(target)
+                            }
+                        }
+                        true
+                    }
                     isCtrl && isShift && (keyEvent.key == Key.K || rawKeyCode == java.awt.event.KeyEvent.VK_K) -> {
                         viewModel.createKanbanBoard(getPasteTargetWorldPos())
                         true
@@ -265,7 +294,7 @@ fun main() = application {
             } else false
         }
     ) {
-        LkboardTheme {
+        LkboardTheme(appTheme = currentTheme) {
             when (currentScreen) {
                 AppScreen.DASHBOARD -> {
                     DashboardScreen(
@@ -321,6 +350,9 @@ fun main() = application {
                                     is BoardElement.StickyNote -> {
                                         viewModel.openStickyNoteEditor(element)
                                     }
+                                    is BoardElement.LatexFormula -> {
+                                        viewModel.openLatexDialog(element)
+                                    }
                                     else -> {
                                         viewModel.startEditingElement(element)
                                     }
@@ -332,6 +364,8 @@ fun main() = application {
                             onCreateDocumentFrame = viewModel::createDocumentFrame,
                             onCreateMilestoneCard = viewModel::createMilestoneCard,
                             onCreateFunctionGraph = viewModel::createFunctionGraph,
+                            onCreateLatexFormula = { pos -> viewModel.openLatexDialog(position = pos) },
+                            onCreatePhysicsStencil = { pos -> viewModel.openPhysicsStencilDialog(position = pos) },
                             onCreateKanbanBoard = viewModel::createKanbanBoard,
                             onToggleStickyTodo = viewModel::toggleStickyTodo,
                             onCreateConnector = viewModel::createConnector,
@@ -494,7 +528,17 @@ fun main() = application {
                             onToggleLaser = viewModel::toggleLaserPointer,
                             isPresentationMode = isPresentationMode,
                             onExit = handleExit,
-                            onSelectAll = { viewModel.selectAll() }
+                            onSelectAll = { viewModel.selectAll() },
+                            enabledTools = boardState.enabledTools,
+                            onExportSelectionPng = {
+                                if (boardState.selectedElementIds.isNotEmpty()) {
+                                    val target = FileDialogs.exportPngFileDialog(window, "${boardState.title}_selection.png")
+                                    if (target != null) {
+                                        viewModel.exportSelectionToPng(target)
+                                    }
+                                }
+                            },
+                            onOpenSettings = viewModel::openSettingsDialog
                         )
 
                         // 3. Модальный редактор для стикеров (Apple Liquid Glass с палитрой и чекбоксами To-Do)
@@ -550,8 +594,44 @@ fun main() = application {
                                 onDismiss = viewModel::closeShareDialog
                             )
                         }
+
+                        // 7. Диалог создания и редактирования формул LaTeX
+                        if (isLatexDialogOpen) {
+                            LatexEditDialog(
+                                initialFormula = editingLatexFormula?.formula ?: "\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
+                                onDismiss = viewModel::closeLatexDialog,
+                                onSave = viewModel::saveLatexFormula
+                            )
+                        }
+
+                        // 8. Физический и инженерный конструктор (Stencils)
+                        if (isPhysicsStencilDialogOpen) {
+                            PhysicsStencilDialog(
+                                onDismiss = viewModel::closePhysicsStencilDialog,
+                                onSelectStencil = viewModel::addPhysicsStencil
+                            )
+                        }
+
+                        // 9. Диалог настроек темы и набора инструментов
+                        if (isSettingsDialogOpen) {
+                            SettingsDialog(
+                                currentTheme = currentTheme,
+                                currentRole = currentUserRole,
+                                enabledTools = boardState.enabledTools,
+                                onDismiss = viewModel::closeSettingsDialog,
+                                onSaveSettings = viewModel::applySettings
+                            )
+                        }
                     }
                 }
+            }
+
+            // Онбординг при первом запуске (выбор роли и фильтрация инструментов)
+            if (isOnboardingOpen) {
+                FirstRunOnboardingDialog(
+                    initialRole = currentUserRole,
+                    onComplete = viewModel::completeOnboarding
+                )
             }
 
             if (showUpdateDialog) {

@@ -212,6 +212,27 @@ object SvgExporter {
                     sb.appendLine("""  </g>""")
                 }
 
+                is BoardElement.LatexFormula -> {
+                    val color = String.format("#%06X", el.colorHex and 0xFFFFFFL)
+                    val readable = com.lkboard.app.util.LatexRenderer.formatLatexToReadable(el.formula)
+                        .replace("{", "").replace("}", "")
+                    sb.appendLine("""  <g id="${el.id}">""")
+                    if (el.hasBackgroundCard) {
+                        sb.appendLine("""    <rect x="${el.x}" y="${el.y}" width="${el.width}" height="${el.height}" rx="10" ry="10" fill="#F8FAFC" stroke="#38BDF8" stroke-width="1.2"/>""")
+                    }
+                    sb.appendLine("""    <text x="${el.x + 16f}" y="${el.y + el.height / 2f + 6f}" font-family="serif" font-style="italic" font-size="${el.fontSize}" fill="$color">${escapeXml(readable)}</text>""")
+                    sb.appendLine("""  </g>""")
+                }
+
+                is BoardElement.PhysicsStencil -> {
+                    val stroke = String.format("#%06X", el.strokeColorHex and 0xFFFFFFL)
+                    val label = if (el.label.isNotBlank()) el.label else el.stencilType.displayName
+                    sb.appendLine("""  <g id="${el.id}">""")
+                    sb.appendLine("""    <rect x="${el.x}" y="${el.y}" width="${el.width}" height="${el.height}" rx="8" ry="8" fill="#F8FAFC" stroke="$stroke" stroke-width="${el.strokeWidth}"/>""")
+                    sb.appendLine("""    <text x="${el.x + 10f}" y="${el.y + 20f}" font-family="sans-serif" font-size="12" font-weight="bold" fill="$stroke">${escapeXml(label)}</text>""")
+                    sb.appendLine("""  </g>""")
+                }
+
                 else -> {}
             }
             if (hasRotation) {

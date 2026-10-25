@@ -125,6 +125,9 @@ fun GlassToolbar(
     onExportPng: () -> Unit = {},
     onExportSvg: () -> Unit = {},
     onExportPdf: () -> Unit = {},
+    onExportSelectionPng: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
+    enabledTools: Set<CanvasTool> = CanvasTool.entries.toSet(),
     onCopyBoardImage: () -> Unit = {},
     onTogglePresentation: () -> Unit = {},
     onToggleLaser: () -> Unit = {},
@@ -189,7 +192,9 @@ fun GlassToolbar(
                 onGridTypeChange = { onGridTypeChange?.invoke(it) },
                 backgroundColorHex = backgroundColorHex,
                 onBackgroundColorChange = onBackgroundColorChange,
-                onImportDocument = onImportDocument
+                onImportDocument = onImportDocument,
+                onExportSelectionPng = onExportSelectionPng,
+                onOpenSettings = onOpenSettings
             )
 
             // Быстрые кнопки истории и буфера обмена
@@ -289,6 +294,7 @@ fun GlassToolbar(
             onResetShapeRotation = { onRotateSelectedBy?.invoke(0f) },
             gridType = gridType,
             onGridTypeChange = onGridTypeChange,
+            enabledTools = enabledTools,
             modifier = Modifier.align(Alignment.CenterStart)
         )
 

@@ -112,6 +112,8 @@ fun InfiniteCanvas(
     onCreateDocumentFrame: (Offset) -> Unit = {},
     onCreateMilestoneCard: (Offset) -> Unit = {},
     onCreateFunctionGraph: (Offset) -> Unit = {},
+    onCreateLatexFormula: (Offset) -> Unit = {},
+    onCreatePhysicsStencil: (Offset) -> Unit = {},
     onCreateKanbanBoard: (Offset) -> Unit = {},
     onToggleStickyTodo: (String, Int) -> Unit = { _, _ -> },
     onCreateConnector: (BoardElement.Connector) -> Unit = {},
@@ -188,6 +190,8 @@ fun InfiniteCanvas(
     val currentOnCreateDocumentFrame by rememberUpdatedState(onCreateDocumentFrame)
     val currentOnCreateMilestoneCard by rememberUpdatedState(onCreateMilestoneCard)
     val currentOnCreateFunctionGraph by rememberUpdatedState(onCreateFunctionGraph)
+    val currentOnCreateLatexFormula by rememberUpdatedState(onCreateLatexFormula)
+    val currentOnCreatePhysicsStencil by rememberUpdatedState(onCreatePhysicsStencil)
     val currentOnCreateKanbanBoard by rememberUpdatedState(onCreateKanbanBoard)
     val currentOnToggleStickyTodo by rememberUpdatedState(onToggleStickyTodo)
     val currentOnCreateConnector by rememberUpdatedState(onCreateConnector)
@@ -215,6 +219,8 @@ fun InfiniteCanvas(
         currentOnCreateDocumentFrame,
         currentOnCreateMilestoneCard,
         currentOnCreateFunctionGraph,
+        currentOnCreateLatexFormula,
+        currentOnCreatePhysicsStencil,
         currentOnCreateKanbanBoard,
         currentOnToggleStickyTodo,
         currentOnCreateConnector,
@@ -242,6 +248,8 @@ fun InfiniteCanvas(
             onCreateDocumentFrame = currentOnCreateDocumentFrame,
             onCreateMilestoneCard = currentOnCreateMilestoneCard,
             onCreateFunctionGraph = currentOnCreateFunctionGraph,
+            onCreateLatexFormula = currentOnCreateLatexFormula,
+            onCreatePhysicsStencil = currentOnCreatePhysicsStencil,
             onCreateKanbanBoard = currentOnCreateKanbanBoard,
             onToggleStickyTodo = currentOnToggleStickyTodo,
             onCreateConnector = currentOnCreateConnector,
@@ -287,7 +295,7 @@ fun InfiniteCanvas(
                 PointerIcon(Cursor.getPredefinedCursor(hoveredHandle.cursorType))
             mode is InteractionMode.Resizing -> PointerIcon(Cursor.getPredefinedCursor(mode.handle.cursorType))
             mode is InteractionMode.DraggingElements -> PointerIcon(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR))
-            state.activeTool in listOf(CanvasTool.STICKY_NOTE, CanvasTool.SHAPE, CanvasTool.TEXT) ->
+            state.activeTool in listOf(CanvasTool.STICKY_NOTE, CanvasTool.SHAPE, CanvasTool.TEXT, CanvasTool.LATEX, CanvasTool.PHYSICS_STENCIL) ->
                 PointerIcon(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR))
             else -> PointerIcon.Default
         }

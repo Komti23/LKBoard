@@ -39,6 +39,39 @@
             touch-action: none;
         }
 
+        body.dark-mode {
+            --bg-canvas: #0d0f12;
+            --glass-bg: rgba(19, 22, 26, 0.88);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.40), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent: #38bdf8;
+        }
+
+        body.dark-mode .modal-card {
+            background: #13161a;
+            color: #f4f4f5;
+            border-color: #242830;
+        }
+
+        body.dark-mode .modal-input,
+        body.dark-mode .modal-textarea {
+            background: #090a0b;
+            color: #f4f4f5;
+            border-color: #242830;
+        }
+
+        body.dark-mode .btn-header {
+            background: rgba(255, 255, 255, 0.06);
+            color: #f4f4f5;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .tool-btn {
+            color: #f4f4f5;
+        }
+
         #canvas {
             display: block;
             width: 100%;
@@ -438,6 +471,7 @@
         </div>
 
         <div class="header-actions">
+            <button class="btn-header" id="btnThemeToggle" title="Переключить тему оформления (Dark / Light)">🌓 Тема</button>
             <button class="btn-header" id="btnTemplates" title="Готовые шаблоны создания доски">📑 Шаблоны</button>
             <button class="btn-header" id="btnToggleTimer" title="Плавающий таймер Pomodoro">⏱️ Таймер</button>
             <button class="btn-header" id="btnExport" title="Экспорт доски в изображение или PDF">📤 Экспорт</button>
@@ -454,6 +488,8 @@
         <button class="tool-btn" id="toolEraser" title="Ластик (E)">🧹</button>
         <div class="tool-divider"></div>
         <button class="tool-btn" id="toolSticky" title="Создать стикер To-Do (S)">🗂️</button>
+        <button class="tool-btn" id="toolLatex" title="LaTeX формула «на лету» (X)" style="font-weight: 800; font-size: 16px;">∑</button>
+        <button class="tool-btn" id="toolStencil" title="Физический и инженерный конструктор (B)" style="font-size: 15px;">⚡</button>
         <button class="tool-btn" id="toolDesmos" title="График функции Desmos (G)">📈</button>
         <button class="tool-btn" id="toolKanban" title="Канбан-доска (K)">📋</button>
         <button class="tool-btn" id="toolMilestone" title="Карточка вехи (M)">🗺️</button>
@@ -594,8 +630,11 @@
                 <button class="modal-close" onclick="closeModal('modalExport')">✕</button>
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-header" style="justify-content: flex-start; padding: 12px;" onclick="exportSelectionAsPNG()">
+                    <span>✂️</span> <span>Экспорт выделенного фрагмента в PNG</span>
+                </button>
                 <button class="btn-header" style="justify-content: flex-start; padding: 12px;" onclick="exportAsPNG()">
-                    <span>🖼️</span> <span>Экспорт в изображение PNG (4K)</span>
+                    <span>🖼️</span> <span>Экспорт всей доски в PNG (4K)</span>
                 </button>
                 <button class="btn-header" style="justify-content: flex-start; padding: 12px;" onclick="copyBoardToClipboard()">
                     <span>📋</span> <span>Скопировать снимок в буфер обмена</span>
@@ -603,6 +642,67 @@
                 <button class="btn-header" style="justify-content: flex-start; padding: 12px;" onclick="exportAsJSON()">
                     <span>💾</span> <span>Сохранить файл проекта (.lkboard)</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: LaTeX Formula Editor -->
+    <div class="modal-overlay" id="modalLatex">
+        <div class="modal-card" style="max-width: 540px;">
+            <div class="modal-header">
+                <div class="modal-title">∑ Формула LaTeX «на лету»</div>
+                <button class="modal-close" onclick="closeModal('modalLatex')">✕</button>
+            </div>
+            <div style="background: rgba(13,15,18,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 14px; margin-bottom: 12px; text-align: center;">
+                <div style="font-size: 0.72rem; color: #71717a; font-family: monospace; margin-bottom: 4px;">ПРЕДПРОСМОТР:</div>
+                <div id="latexPreview" style="font-size: 1.25rem; font-style: italic; color: #38bdf8; font-family: 'Times New Roman', Cambria, serif; min-height: 32px; display: flex; align-items: center; justify-content: center;">
+                    \int_{0}^{\infty} e^{-x^2} dx = \frac{\sqrt{\pi}}{2}
+                </div>
+            </div>
+            <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">LaTeX выражение:</label>
+            <input type="text" id="inputLatexFormula" class="modal-input" value="\int_{0}^{\infty} e^{-x^2} dx = \frac{\sqrt{\pi}}{2}" placeholder="Например: E = mc^2 или \frac{a}{b}">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('\\frac{a}{b}')">Дробь</button>
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('\\sqrt{x}')">Корень</button>
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('x^{2}')">Степень</button>
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('\\int_{a}^{b} f(x) dx')">Интеграл</button>
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('\\sum_{i=1}^{n} x_i')">Сумма</button>
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('\\pi')">π</button>
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('\\alpha')">α</button>
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('\\Delta')">Δ</button>
+                <button class="btn-header" style="font-size: 0.75rem; padding: 4px 8px;" onclick="insertLatexSnippet('\\pm')">±</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-header" onclick="closeModal('modalLatex')">Отмена</button>
+                <button class="btn-header primary" id="btnConfirmLatex">Вставить формулу</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Physics & Engineering Stencils -->
+    <div class="modal-overlay" id="modalStencil">
+        <div class="modal-card" style="max-width: 560px;">
+            <div class="modal-header">
+                <div class="modal-title">⚡ Физический и инженерный конструктор (Stencils)</div>
+                <button class="modal-close" onclick="closeModal('modalStencil')">✕</button>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                Готовые физические схемы в 1 клик без ручного рисования:
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('INCLINED_PLANE', 'Наклонная плоскость')">📐 Наклонная плоскость (mg, N)</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('PULLEY_BLOCK', 'Блок с грузами')">⚙️ Блок с нитью (m1, m2)</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('SPRING', 'Пружинный маятник')">🌀 Пружина с грузом m</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('OPTICAL_LENS', 'Собирающая линза')">🔍 Линза с фокусами F, 2F</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('CIRCUIT_RESISTOR', 'Резистор')">⚡ Резистор R</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('CIRCUIT_BATTERY', 'Батарея')">🔋 Источник ЭДС (Батарея)</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('CIRCUIT_CAPACITOR', 'Конденсатор')">🔋 Конденсатор C</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('CIRCUIT_SWITCH', 'Ключ')">🔌 Выключатель (Ключ)</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('CIRCUIT_LAMP', 'Лампочка')">💡 Лампа накаливания</button>
+                <button class="btn-header" style="justify-content: flex-start; padding: 10px;" onclick="insertPhysicsStencil('CIRCUIT_INDUCTOR', 'Катушка L')">🌀 Катушка индуктивности L</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-header" onclick="closeModal('modalStencil')">Закрыть</button>
             </div>
         </div>
     </div>
@@ -825,7 +925,7 @@
             const dpr = window.devicePixelRatio;
             ctx.save();
             ctx.scale(dpr, dpr);
-            ctx.fillStyle = '#cbd5e1';
+            ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : '#cbd5e1';
             const step = 32 * scale;
             if (step > 9) {
                 const startX = (panX % step + step) % step;
@@ -860,6 +960,8 @@
             else if (type === 'function_graph' || el.expressions !== undefined) drawFunctionGraph(el);
             else if (type === 'shape' || el.shapeType !== undefined) drawShape(el);
             else if (type === 'connector' || el.startPoint !== undefined) drawConnector(el);
+            else if (type === 'latex_formula' || type === 'latex' || el.formula !== undefined) drawLatexFormula(el);
+            else if (type === 'physics_stencil' || type === 'stencil' || el.stencilType !== undefined) drawPhysicsStencil(el);
             else if (type === 'text') drawText(el);
             ctx.restore();
         }
@@ -1146,6 +1248,264 @@
             ctx.fillStyle = t.colorHex ? hexToColor(t.colorHex) : '#0f172a';
             ctx.font = (t.isBold ? 'bold ' : '') + (t.fontSize || 18) + 'px Inter, sans-serif';
             ctx.fillText(t.text || '', t.x, t.y + (t.fontSize || 18));
+        }
+
+        function formatLatexReadable(raw) {
+            if (!raw) return '';
+            let s = raw.trim();
+            const map = {
+                '\\alpha': 'α', '\\beta': 'β', '\\gamma': 'γ', '\\delta': 'δ',
+                '\\Delta': 'Δ', '\\epsilon': 'ε', '\\theta': 'θ', '\\lambda': 'λ',
+                '\\mu': 'μ', '\\pi': 'π', '\\rho': 'ρ', '\\sigma': 'σ',
+                '\\tau': 'τ', '\\phi': 'φ', '\\omega': 'ω', '\\Omega': 'Ω',
+                '\\pm': '±', '\\times': '×', '\\cdot': '·', '\\div': '÷',
+                '\\le': '≤', '\\ge': '≥', '\\ne': '≠', '\\approx': '≈',
+                '\\infty': '∞', '\\to': '→', '\\partial': '∂', '\\nabla': '∇',
+                '\\sum': '∑', '\\int': '∫', '\\prod': '∏', '\\sqrt': '√'
+            };
+            for (const [k, v] of Object.entries(map)) {
+                s = s.split(k).join(v);
+            }
+            return s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+                    .replace(/\{/g, '')
+                    .replace(/\}/g, '');
+        }
+
+        function drawLatexFormula(el) {
+            const x = el.x || 0, y = el.y || 0, w = el.width || 200, h = el.height || 80;
+            ctx.fillStyle = isDarkMode ? 'rgba(19, 22, 26, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+            ctx.strokeStyle = isDarkMode ? '#242830' : '#e2e8f0';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(x, y, w, h, 10);
+            else ctx.rect(x, y, w, h);
+            ctx.fill();
+            ctx.stroke();
+
+            // LaTeX math text
+            const text = formatLatexReadable(el.formula);
+            ctx.fillStyle = isDarkMode ? '#38bdf8' : '#0284c7';
+            ctx.font = 'italic 500 20px "Times New Roman", Cambria, serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x + w / 2, y + h / 2);
+            ctx.textAlign = 'start';
+            ctx.textBaseline = 'alphabetic';
+        }
+
+        function drawPhysicsStencil(el) {
+            const x = el.x || 0, y = el.y || 0, w = el.width || 140, h = el.height || 80;
+            const type = el.stencilType || 'INCLINED_PLANE';
+
+            ctx.save();
+            ctx.strokeStyle = isDarkMode ? '#38bdf8' : '#2563eb';
+            ctx.fillStyle = isDarkMode ? '#38bdf8' : '#2563eb';
+            ctx.lineWidth = 2.2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            switch (type) {
+                case 'INCLINED_PLANE': {
+                    ctx.beginPath();
+                    ctx.moveTo(x + 10, y + h - 10);
+                    ctx.lineTo(x + w - 10, y + h - 10);
+                    ctx.lineTo(x + 10, y + 10);
+                    ctx.closePath();
+                    ctx.fillStyle = isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(37, 99, 235, 0.10)';
+                    ctx.fill();
+                    ctx.stroke();
+
+                    const bx = x + w * 0.42, by = y + h * 0.46;
+                    ctx.save();
+                    ctx.translate(bx, by);
+                    ctx.rotate(-0.55);
+                    ctx.fillStyle = isDarkMode ? '#1e293b' : '#f1f5f9';
+                    ctx.fillRect(-18, -12, 36, 24);
+                    ctx.strokeRect(-18, -12, 36, 24);
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(0, 30);
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.stroke();
+                    ctx.restore();
+
+                    ctx.font = 'bold 11px monospace';
+                    ctx.fillStyle = isDarkMode ? '#f4f4f5' : '#0f172a';
+                    ctx.fillText(el.label || 'α = 30°', x + w - 45, y + h - 16);
+                    break;
+                }
+                case 'PULLEY_BLOCK': {
+                    ctx.beginPath();
+                    ctx.moveTo(x + w / 2 - 25, y + 10);
+                    ctx.lineTo(x + w / 2 + 25, y + 10);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(x + w / 2, y + 40, 20, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + w / 2 - 20, y + 40);
+                    ctx.lineTo(x + w / 2 - 20, y + h - 40);
+                    ctx.moveTo(x + w / 2 + 20, y + 40);
+                    ctx.lineTo(x + w / 2 + 20, y + h - 65);
+                    ctx.stroke();
+                    ctx.strokeRect(x + w / 2 - 32, y + h - 40, 24, 28);
+                    ctx.strokeRect(x + w / 2 + 8, y + h - 65, 24, 28);
+                    ctx.font = '10px monospace';
+                    ctx.fillText('m₁', x + w / 2 - 24, y + h - 22);
+                    ctx.fillText('m₂', x + w / 2 + 16, y + h - 47);
+                    break;
+                }
+                case 'SPRING': {
+                    ctx.beginPath();
+                    ctx.moveTo(x + 20, y + 10);
+                    ctx.lineTo(x + w - 20, y + 10);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + w / 2, y + 10);
+                    const zH = (h - 60) / 8;
+                    for (let i = 0; i < 8; i++) {
+                        const zx = (i % 2 === 0) ? (x + w / 2 - 14) : (x + w / 2 + 14);
+                        ctx.lineTo(zx, y + 10 + (i + 0.5) * zH);
+                    }
+                    ctx.lineTo(x + w / 2, y + h - 45);
+                    ctx.stroke();
+                    ctx.strokeRect(x + w / 2 - 20, y + h - 45, 40, 32);
+                    ctx.font = '11px monospace';
+                    ctx.fillText('m', x + w / 2 - 4, y + h - 25);
+                    break;
+                }
+                case 'OPTICAL_LENS': {
+                    ctx.beginPath();
+                    ctx.setLineDash([4, 4]);
+                    ctx.moveTo(x + 5, y + h / 2);
+                    ctx.lineTo(x + w - 5, y + h / 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(x + w / 2, y + 10);
+                    ctx.quadraticCurveTo(x + w / 2 + 16, y + h / 2, x + w / 2, y + h - 10);
+                    ctx.quadraticCurveTo(x + w / 2 - 16, y + h / 2, x + w / 2, y + 10);
+                    ctx.fillStyle = isDarkMode ? 'rgba(56, 189, 248, 0.20)' : 'rgba(37, 99, 235, 0.15)';
+                    ctx.fill();
+                    ctx.stroke();
+                    const f1x = x + w / 2 - 60, f2x = x + w / 2 + 60;
+                    ctx.beginPath();
+                    ctx.arc(f1x, y + h / 2, 3, 0, Math.PI * 2);
+                    ctx.arc(f2x, y + h / 2, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.font = '10px monospace';
+                    ctx.fillText('F', f1x - 3, y + h / 2 + 15);
+                    ctx.fillText('F\'', f2x - 3, y + h / 2 + 15);
+                    break;
+                }
+                case 'CIRCUIT_RESISTOR': {
+                    ctx.beginPath();
+                    ctx.moveTo(x + 5, y + h / 2);
+                    ctx.lineTo(x + 25, y + h / 2);
+                    ctx.stroke();
+                    ctx.strokeRect(x + 25, y + h / 2 - 14, w - 50, 28);
+                    ctx.beginPath();
+                    ctx.moveTo(x + w - 25, y + h / 2);
+                    ctx.lineTo(x + w - 5, y + h / 2);
+                    ctx.stroke();
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillText('R', x + w / 2 - 4, y + h / 2 + 4);
+                    break;
+                }
+                case 'CIRCUIT_BATTERY': {
+                    ctx.beginPath();
+                    ctx.moveTo(x + 5, y + h / 2);
+                    ctx.lineTo(x + w / 2 - 8, y + h / 2);
+                    ctx.moveTo(x + w / 2 + 8, y + h / 2);
+                    ctx.lineTo(x + w - 5, y + h / 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + w / 2 - 8, y + 14);
+                    ctx.lineTo(x + w / 2 - 8, y + h - 14);
+                    ctx.stroke();
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(x + w / 2 + 8, y + 24);
+                    ctx.lineTo(x + w / 2 + 8, y + h - 24);
+                    ctx.stroke();
+                    ctx.font = '12px monospace';
+                    ctx.fillText('+', x + w / 2 - 18, y + 18);
+                    ctx.fillText('−', x + w / 2 + 12, y + 18);
+                    break;
+                }
+                case 'CIRCUIT_CAPACITOR': {
+                    ctx.beginPath();
+                    ctx.moveTo(x + 5, y + h / 2);
+                    ctx.lineTo(x + w / 2 - 8, y + h / 2);
+                    ctx.moveTo(x + w / 2 + 8, y + h / 2);
+                    ctx.lineTo(x + w - 5, y + h / 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + w / 2 - 8, y + 16);
+                    ctx.lineTo(x + w / 2 - 8, y + h - 16);
+                    ctx.moveTo(x + w / 2 + 8, y + 16);
+                    ctx.lineTo(x + w / 2 + 8, y + h - 16);
+                    ctx.stroke();
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillText('C', x + w / 2 - 4, y + 12);
+                    break;
+                }
+                case 'CIRCUIT_INDUCTOR': {
+                    ctx.beginPath();
+                    ctx.moveTo(x + 5, y + h / 2);
+                    ctx.lineTo(x + 20, y + h / 2);
+                    ctx.stroke();
+                    const arcR = (w - 40) / 8;
+                    for (let i = 0; i < 4; i++) {
+                        ctx.beginPath();
+                        ctx.arc(x + 20 + arcR * (2 * i + 1), y + h / 2, arcR, Math.PI, 0);
+                        ctx.stroke();
+                    }
+                    ctx.beginPath();
+                    ctx.moveTo(x + w - 20, y + h / 2);
+                    ctx.lineTo(x + w - 5, y + h / 2);
+                    ctx.stroke();
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillText('L', x + w / 2 - 4, y + h / 2 + 20);
+                    break;
+                }
+                case 'CIRCUIT_SWITCH': {
+                    ctx.beginPath();
+                    ctx.moveTo(x + 5, y + h / 2);
+                    ctx.lineTo(x + 30, y + h / 2);
+                    ctx.moveTo(x + w - 30, y + h / 2);
+                    ctx.lineTo(x + w - 5, y + h / 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(x + 30, y + h / 2, 3, 0, Math.PI * 2);
+                    ctx.arc(x + w - 30, y + h / 2, 3, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + 30, y + h / 2);
+                    ctx.lineTo(x + w - 34, y + h / 2 - 20);
+                    ctx.stroke();
+                    break;
+                }
+                case 'CIRCUIT_LAMP': {
+                    ctx.beginPath();
+                    ctx.arc(x + w / 2, y + h / 2, 22, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + w / 2 - 14, y + h / 2 - 14);
+                    ctx.lineTo(x + w / 2 + 14, y + h / 2 + 14);
+                    ctx.moveTo(x + w / 2 + 14, y + h / 2 - 14);
+                    ctx.lineTo(x + w / 2 - 14, y + h / 2 + 14);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + 5, y + h / 2);
+                    ctx.lineTo(x + w / 2 - 22, y + h / 2);
+                    ctx.moveTo(x + w / 2 + 22, y + h / 2);
+                    ctx.lineTo(x + w - 5, y + h / 2);
+                    ctx.stroke();
+                    break;
+                }
+            }
+            ctx.restore();
         }
 
         function drawPointer(p) {
@@ -1525,6 +1885,8 @@
         document.getElementById('toolHighlighter').onclick = () => setTool('highlighter');
         document.getElementById('toolEraser').onclick = () => setTool('eraser');
         document.getElementById('toolSticky').onclick = () => setTool('sticky');
+        document.getElementById('toolLatex').onclick = () => openModal('modalLatex');
+        document.getElementById('toolStencil').onclick = () => openModal('modalStencil');
         document.getElementById('toolDesmos').onclick = () => openModal('modalGraph');
         document.getElementById('toolKanban').onclick = () => setTool('kanban');
         document.getElementById('toolMilestone').onclick = () => setTool('milestone');
@@ -1584,6 +1946,19 @@
             } else if (e.key === 'F5') {
                 e.preventDefault();
                 togglePresentationMode();
+            } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'e' || e.key === 'E' || e.key === 'у' || e.key === 'У')) {
+                e.preventDefault();
+                exportSelectionAsPNG();
+            } else if ((e.key === 'x' || e.key === 'X' || e.key === 'ч' || e.key === 'Ч') && !e.ctrlKey && !e.metaKey) {
+                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    openModal('modalLatex');
+                }
+            } else if ((e.key === 'b' || e.key === 'B' || e.key === 'и' || e.key === 'И') && !e.ctrlKey && !e.metaKey) {
+                if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    openModal('modalStencil');
+                }
             }
         });
 
@@ -1650,6 +2025,146 @@
 
         function setGraphPreset(f) {
             document.getElementById('inputGraphFormula').value = f;
+        }
+
+        // Theme Toggle (Dark Industrial / Light)
+        let isDarkMode = localStorage.getItem('lkboard_theme') === 'dark';
+        if (isDarkMode) document.body.classList.add('dark-mode');
+
+        const btnThemeToggle = document.getElementById('btnThemeToggle');
+        if (btnThemeToggle) {
+            btnThemeToggle.onclick = () => toggleTheme();
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            localStorage.setItem('lkboard_theme', isDarkMode ? 'dark' : 'light');
+            render();
+            showToast(isDarkMode ? 'Тёмная тема (Industrial Dark)' : 'Светлая тема');
+        }
+
+        // LaTeX Formula Modal
+        const inputLatex = document.getElementById('inputLatexFormula');
+        const latexPreview = document.getElementById('latexPreview');
+        if (inputLatex && latexPreview) {
+            inputLatex.oninput = (e) => {
+                latexPreview.textContent = formatLatexReadable(e.target.value);
+            };
+        }
+
+        function insertLatexSnippet(snip) {
+            if (!inputLatex) return;
+            inputLatex.value += (inputLatex.value ? ' ' : '') + snip;
+            if (latexPreview) latexPreview.textContent = formatLatexReadable(inputLatex.value);
+        }
+
+        const btnConfirmLatex = document.getElementById('btnConfirmLatex');
+        if (btnConfirmLatex) {
+            btnConfirmLatex.onclick = () => {
+                const formula = inputLatex ? inputLatex.value : 'E = mc^2';
+                const center = screenToWorld(window.innerWidth / 2, window.innerHeight / 2);
+                const latexEl = {
+                    id: 'latex-' + Math.random().toString(36).substring(2, 9),
+                    type: 'latex_formula',
+                    x: center.x - 140,
+                    y: center.y - 45,
+                    width: Math.max(200, formula.length * 12 + 40),
+                    height: 80,
+                    formula: formula,
+                    fontSize: 22,
+                    colorHex: 0xFFF4F4F5,
+                    zIndex: 30
+                };
+                elements[latexEl.id] = latexEl;
+                sendAction({ type: 'upsert_element', element: latexEl, senderId: clientId });
+                closeModal('modalLatex');
+                selectedElementId = latexEl.id;
+                setTool('select');
+                render();
+                showToast('Формула LaTeX добавлена');
+            };
+        }
+
+        // Physics Stencil Insertion
+        function insertPhysicsStencil(type, label) {
+            const center = screenToWorld(window.innerWidth / 2, window.innerHeight / 2);
+            const dims = {
+                'INCLINED_PLANE': [220, 150],
+                'PULLEY_BLOCK': [140, 180],
+                'SPRING': [120, 170],
+                'OPTICAL_LENS': [260, 160],
+                'CIRCUIT_RESISTOR': [140, 70],
+                'CIRCUIT_BATTERY': [110, 70],
+                'CIRCUIT_CAPACITOR': [100, 70],
+                'CIRCUIT_INDUCTOR': [140, 70],
+                'CIRCUIT_SWITCH': [120, 70],
+                'CIRCUIT_LAMP': [90, 90]
+            }[type] || [160, 120];
+
+            const stencil = {
+                id: 'stencil-' + Math.random().toString(36).substring(2, 9),
+                type: 'physics_stencil',
+                stencilType: type,
+                label: label,
+                x: center.x - dims[0] / 2,
+                y: center.y - dims[1] / 2,
+                width: dims[0],
+                height: dims[1],
+                strokeColorHex: 0xFF38BDF8,
+                strokeWidth: 2.2,
+                zIndex: 28
+            };
+
+            elements[stencil.id] = stencil;
+            sendAction({ type: 'upsert_element', element: stencil, senderId: clientId });
+            closeModal('modalStencil');
+            selectedElementId = stencil.id;
+            setTool('select');
+            render();
+            showToast('Примитив «' + label + '» добавлен');
+        }
+
+        function exportSelectionAsPNG() {
+            closeModal('modalExport');
+            const items = selectedElementId && elements[selectedElementId] ? [elements[selectedElementId]] : Object.values(elements);
+            if (items.length === 0) {
+                showToast('Нет элементов для экспорта');
+                return;
+            }
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            items.forEach(el => {
+                const x = el.x || 0, y = el.y || 0;
+                const w = el.width || 120, h = el.height || 80;
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x + w);
+                maxY = Math.max(maxY, y + h);
+            });
+            const pad = 36;
+            const cropW = Math.max(100, (maxX - minX) + pad * 2);
+            const cropH = Math.max(100, (maxY - minY) + pad * 2);
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = cropW * 2;
+            offCanvas.height = cropH * 2;
+            const offCtx = offCanvas.getContext('2d');
+            offCtx.scale(2, 2);
+            offCtx.fillStyle = isDarkMode ? '#0d0f12' : '#ffffff';
+            offCtx.fillRect(0, 0, cropW, cropH);
+
+            offCtx.translate(-minX + pad, -minY + pad);
+            const origCtx = ctx;
+            ctx = offCtx;
+            items.forEach(el => drawElement(el));
+            ctx = origCtx;
+
+            const dataUrl = offCanvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.download = (document.getElementById('boardTitleInput').value || 'LKBoard') + '_selection.png';
+            a.href = dataUrl;
+            a.click();
+            showToast('Выделенный фрагмент скачан в PNG');
         }
 
         // Templates

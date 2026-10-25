@@ -27,8 +27,11 @@ data class BoardState(
     val gridType: GridType = GridType.DOTS,
     val backgroundColorHex: Long = 0xFFFFFFFF,
     val isSpacePressed: Boolean = false,
-    val isPanning: Boolean = false
+    val isPanning: Boolean = false,
+    val enabledTools: Set<CanvasTool> = CanvasTool.entries.toSet()
 ) {
+    fun withEnabledTools(tools: Set<CanvasTool>): BoardState =
+        copy(enabledTools = tools)
     fun withGridType(type: GridType): BoardState =
         copy(gridType = type)
 

@@ -20,7 +20,10 @@ import com.lkboard.app.model.GridType
 import com.lkboard.app.model.PenSettings
 import com.lkboard.app.model.ShapeType
 import com.lkboard.app.model.ShapeSettings
+import com.lkboard.app.model.PhysicsStencilType
 import com.lkboard.app.data.AppPreferences
+import com.lkboard.app.data.AppTheme
+import com.lkboard.app.data.UserRole
 import com.lkboard.app.data.PreferencesManager
 import com.lkboard.app.util.DocumentImporter
 import kotlinx.coroutines.CoroutineScope
@@ -138,6 +141,31 @@ class BoardViewModel {
 
     private val _showUpdateDialog = MutableStateFlow(false)
     val showUpdateDialog: StateFlow<Boolean> = _showUpdateDialog.asStateFlow()
+
+    private val _currentTheme = MutableStateFlow(AppPreferences.loadAppTheme())
+    val currentTheme: StateFlow<AppTheme> = _currentTheme.asStateFlow()
+
+    private val _currentUserRole = MutableStateFlow(AppPreferences.loadUserRole())
+    val currentUserRole: StateFlow<UserRole> = _currentUserRole.asStateFlow()
+
+    private val _isOnboardingOpen = MutableStateFlow(AppPreferences.isFirstRun())
+    val isOnboardingOpen: StateFlow<Boolean> = _isOnboardingOpen.asStateFlow()
+
+    private val _isSettingsDialogOpen = MutableStateFlow(false)
+    val isSettingsDialogOpen: StateFlow<Boolean> = _isSettingsDialogOpen.asStateFlow()
+
+    private val _isLatexDialogOpen = MutableStateFlow(false)
+    val isLatexDialogOpen: StateFlow<Boolean> = _isLatexDialogOpen.asStateFlow()
+
+    private val _editingLatexFormula = MutableStateFlow<BoardElement.LatexFormula?>(null)
+    val editingLatexFormula: StateFlow<BoardElement.LatexFormula?> = _editingLatexFormula.asStateFlow()
+
+    private var pendingLatexPosition: Offset = Offset(200f, 200f)
+
+    private val _isPhysicsStencilDialogOpen = MutableStateFlow(false)
+    val isPhysicsStencilDialogOpen: StateFlow<Boolean> = _isPhysicsStencilDialogOpen.asStateFlow()
+
+    private var pendingPhysicsStencilPosition: Offset = Offset(200f, 200f)
 
     val collabManager: CollabManager = CollabManager(
         snapshotProvider = { BoardSerializer.stateToDocument(_state.value) },
@@ -528,6 +556,8 @@ class BoardViewModel {
                                 is BoardElement.MilestoneCard -> it.copy(id = newId, zIndex = nextZIndex())
                                 is BoardElement.FunctionGraph -> it.copy(id = newId, zIndex = nextZIndex())
                                 is BoardElement.KanbanBoard -> it.copy(id = newId, zIndex = nextZIndex())
+                                is BoardElement.LatexFormula -> it.copy(id = newId, zIndex = nextZIndex())
+                                is BoardElement.PhysicsStencil -> it.copy(id = newId, zIndex = nextZIndex())
                             }
                         }
                 }
@@ -621,20 +651,18 @@ class BoardViewModel {
         val others = current.elements.values.filter { it.id !in current.selectedElementIds }
         val selBounds = com.lkboard.app.model.GeometryUtils.computeBounds(selected)
 
-        val (effectiveDx, effectiveDy) = if (selBounds != null && others.isNotEmpty()) {
+        if (selBounds != null && others.isNotEmpty()) {
             val snapResult = SmartGuides.calculateSnap(selBounds, others, Offset(deltaX, deltaY))
             _activeGuides.value = snapResult.guides
-            Pair(snapResult.snappedDelta.x, snapResult.snappedDelta.y)
         } else {
             _activeGuides.value = emptyList()
-            Pair(deltaX, deltaY)
         }
 
         _state.update { curr ->
             val updated = curr.elements.toMutableMap()
             for (id in curr.selectedElementIds) {
                 val el = updated[id] ?: continue
-                updated[id] = el.translate(effectiveDx, effectiveDy)
+                updated[id] = el.translate(deltaX, deltaY)
             }
             curr.copy(elements = updated)
         }
@@ -1147,6 +1175,8 @@ class BoardViewModel {
                         is BoardElement.MilestoneCard -> it.copy(id = newId, zIndex = nextZIndex())
                         is BoardElement.FunctionGraph -> it.copy(id = newId, zIndex = nextZIndex())
                         is BoardElement.KanbanBoard -> it.copy(id = newId, zIndex = nextZIndex())
+                        is BoardElement.LatexFormula -> it.copy(id = newId, zIndex = nextZIndex())
+                        is BoardElement.PhysicsStencil -> it.copy(id = newId, zIndex = nextZIndex())
                     }
                 }
         }
@@ -1429,6 +1459,135 @@ class BoardViewModel {
         return PdfExporter.exportToPdf(file, _state.value)
     }
 
+    fun exportSelectionToPng(file: java.io.File): Boolean {
+        return PngExporter.exportToPng(file, _state.value, onlySelected = true)
+    }
+
+    // --- LaTeX-формулы на лету ---
+
+    fun openLatexDialog(element: BoardElement.LatexFormula? = null, position: Offset? = null) {
+        _editingLatexFormula.value = element
+        if (position != null) {
+            pendingLatexPosition = position
+        }
+        _isLatexDialogOpen.value = true
+    }
+
+    fun closeLatexDialog() {
+        _isLatexDialogOpen.value = false
+        _editingLatexFormula.value = null
+    }
+
+    fun saveLatexFormula(formulaText: String) {
+        val editing = _editingLatexFormula.value
+        if (editing != null) {
+            val estimated = com.lkboard.app.util.LatexRenderer.estimateSize(formulaText, editing.fontSize)
+            val w = estimated.first
+            val h = estimated.second
+            val updated = editing.copy(
+                formula = formulaText,
+                width = maxOf(140f, w + 32f),
+                height = maxOf(60f, h + 24f)
+            )
+            _state.update { it.withElement(updated) }
+            collabManager.broadcastElementUpsert(updated)
+            triggerAutoSave(immediate = false)
+        } else {
+            val estimated = com.lkboard.app.util.LatexRenderer.estimateSize(formulaText, 22f)
+            val w = estimated.first
+            val h = estimated.second
+            val newElement = BoardElement.LatexFormula(
+                id = UUID.randomUUID().toString(),
+                x = pendingLatexPosition.x,
+                y = pendingLatexPosition.y,
+                width = maxOf(160f, w + 32f),
+                height = maxOf(70f, h + 24f),
+                formula = formulaText,
+                fontSize = 22f,
+                zIndex = nextZIndex()
+            )
+            executeCommand(AddElementCommand(newElement))
+            _state.update { it.copy(selectedElementIds = setOf(newElement.id)) }
+        }
+        closeLatexDialog()
+    }
+
+    // --- Физический и инженерный конструктор (Stencils) ---
+
+    fun openPhysicsStencilDialog(position: Offset? = null) {
+        if (position != null) {
+            pendingPhysicsStencilPosition = position
+        }
+        _isPhysicsStencilDialogOpen.value = true
+    }
+
+    fun closePhysicsStencilDialog() {
+        _isPhysicsStencilDialogOpen.value = false
+    }
+
+    fun addPhysicsStencil(type: PhysicsStencilType, label: String = "") {
+        val (defW, defH) = when (type) {
+            PhysicsStencilType.INCLINED_PLANE -> 220f to 150f
+            PhysicsStencilType.PULLEY_BLOCK -> 140f to 180f
+            PhysicsStencilType.SPRING -> 120f to 170f
+            PhysicsStencilType.OPTICAL_LENS -> 260f to 160f
+            PhysicsStencilType.CIRCUIT_RESISTOR -> 140f to 70f
+            PhysicsStencilType.CIRCUIT_BATTERY -> 110f to 70f
+            PhysicsStencilType.CIRCUIT_CAPACITOR -> 100f to 70f
+            PhysicsStencilType.CIRCUIT_INDUCTOR -> 140f to 70f
+            PhysicsStencilType.CIRCUIT_SWITCH -> 120f to 70f
+            PhysicsStencilType.CIRCUIT_LAMP -> 90f to 90f
+        }
+        val newElement = BoardElement.PhysicsStencil(
+            id = UUID.randomUUID().toString(),
+            x = pendingPhysicsStencilPosition.x,
+            y = pendingPhysicsStencilPosition.y,
+            width = defW,
+            height = defH,
+            stencilType = type,
+            label = if (label.isNotBlank()) label else type.displayName,
+            zIndex = nextZIndex()
+        )
+        executeCommand(AddElementCommand(newElement))
+        _state.update { it.copy(selectedElementIds = setOf(newElement.id)) }
+        closePhysicsStencilDialog()
+    }
+
+    // --- Настройки, темы и профили онбординга ---
+
+    fun openSettingsDialog() {
+        _isSettingsDialogOpen.value = true
+    }
+
+    fun closeSettingsDialog() {
+        _isSettingsDialogOpen.value = false
+    }
+
+    fun applySettings(newTheme: AppTheme, newRole: UserRole, newTools: Set<CanvasTool>) {
+        updateTheme(newTheme)
+        _currentUserRole.value = newRole
+        AppPreferences.saveUserRole(newRole)
+        AppPreferences.saveEnabledTools(newTools)
+        _state.update { it.copy(enabledTools = newTools) }
+        closeSettingsDialog()
+    }
+
+    fun updateTheme(newTheme: AppTheme) {
+        _currentTheme.value = newTheme
+        AppPreferences.saveAppTheme(newTheme)
+        setBackgroundColor(newTheme.defaultBgColor)
+        setGridType(newTheme.defaultGridType)
+    }
+
+    fun completeOnboarding(selectedRole: UserRole) {
+        _currentUserRole.value = selectedRole
+        AppPreferences.saveUserRole(selectedRole)
+        AppPreferences.setFirstRunCompleted()
+        val tools = selectedRole.tools
+        _state.update { it.copy(enabledTools = tools) }
+        _isOnboardingOpen.value = false
+    }
+
     private fun nextZIndex(): Int {
         val maxZ = _state.value.elements.values.maxOfOrNull { it.zIndex } ?: 0
         return maxZ + 1
@@ -1440,7 +1599,8 @@ class BoardViewModel {
             if (autoSaveFile.exists() && autoSaveFile.length() > 0) {
                 val loaded = com.lkboard.app.data.BoardSerializer.load(autoSaveFile)
                 return loaded.copy(
-                    selectedElementIds = emptySet()
+                    selectedElementIds = emptySet(),
+                    enabledTools = AppPreferences.loadEnabledTools()
                 )
             }
         } catch (e: Exception) {
@@ -1525,7 +1685,8 @@ class BoardViewModel {
             penSettings = AppPreferences.loadPenSettings(),
             shapeSettings = AppPreferences.loadShapeSettings(),
             gridType = AppPreferences.loadGridType(),
-            backgroundColorHex = AppPreferences.loadBackgroundColor()
+            backgroundColorHex = AppPreferences.loadBackgroundColor(),
+            enabledTools = AppPreferences.loadEnabledTools()
         )
     }
 }

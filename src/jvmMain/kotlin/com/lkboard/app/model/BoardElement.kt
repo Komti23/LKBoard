@@ -93,10 +93,13 @@ sealed interface BoardElement {
     fun withRotation(newRotation: Float): BoardElement
 
     /**
-     * Проверяет попадание точки курсора в элемент с учетом его поворота вокруг центра.
+     * Проверяет попадание точки курсора в элемент с учетом его поворота вокруг центра
+     * и небольшого допуска (hit-padding 6px) для удобства выбора мышью.
      */
     fun isPointInside(point: Offset): Boolean {
-        if (rotation == 0f) return bounds.contains(point)
+        val pad = 6f
+        val inflated = bounds.inflate(pad)
+        if (rotation == 0f) return inflated.contains(point)
         val cx = x + width / 2f
         val cy = y + height / 2f
         val rad = -Math.toRadians(rotation.toDouble())
@@ -106,7 +109,7 @@ sealed interface BoardElement {
         val dy = point.y - cy
         val rx = (dx * cos - dy * sin).toFloat() + cx
         val ry = (dx * sin + dy * cos).toFloat() + cy
-        return bounds.contains(Offset(rx, ry))
+        return inflated.contains(Offset(rx, ry))
     }
 
     /**
@@ -460,6 +463,79 @@ sealed interface BoardElement {
             return Rect(left, y, left + colW, y + height)
         }
     }
+
+    /**
+     * Математическая формула LaTeX с быстрым рендерингом на холсте.
+     */
+    @Serializable
+    @SerialName("latex_formula")
+    data class LatexFormula(
+        override val id: String,
+        override val x: Float,
+        override val y: Float,
+        override val width: Float = 280f,
+        override val height: Float = 90f,
+        override val zIndex: Int = 0,
+        override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
+        val formula: String = "\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
+        val fontSize: Float = 22f,
+        val colorHex: Long = 0xFF1E293B,
+        val hasBackgroundCard: Boolean = true
+    ) : BoardElement {
+        override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
+        override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
+        override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
+    }
+
+    /**
+     * Инженерный и физический примитив (стенсил) с привязкой к сетке.
+     */
+    @Serializable
+    @SerialName("physics_stencil")
+    data class PhysicsStencil(
+        override val id: String,
+        override val x: Float,
+        override val y: Float,
+        override val width: Float = 180f,
+        override val height: Float = 120f,
+        override val zIndex: Int = 0,
+        override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
+        val stencilType: PhysicsStencilType = PhysicsStencilType.INCLINED_PLANE,
+        val label: String = "",
+        val strokeColorHex: Long = 0xFF2563EB,
+        val fillColorHex: Long? = 0x1A2563EB,
+        val strokeWidth: Float = 2.5f
+    ) : BoardElement {
+        override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
+        override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
+        override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
+    }
+}
+
+/**
+ * Типы инженерных и физических примитивов (Stencils).
+ */
+@Serializable
+enum class PhysicsStencilType(val displayName: String, val category: String) {
+    // Механика
+    INCLINED_PLANE("Наклонная плоскость", "Механика"),
+    PULLEY_BLOCK("Блок с нитью и грузами", "Механика"),
+    SPRING("Пружина с грузом", "Механика"),
+
+    // Оптика
+    OPTICAL_LENS("Собирающая линза", "Оптика"),
+
+    // Электрические цепи
+    CIRCUIT_RESISTOR("Резистор", "Электричество"),
+    CIRCUIT_BATTERY("Источник тока (Батарея)", "Электричество"),
+    CIRCUIT_CAPACITOR("Конденсатор", "Электричество"),
+    CIRCUIT_INDUCTOR("Катушка индуктивности", "Электричество"),
+    CIRCUIT_SWITCH("Ключ (выключатель)", "Электричество"),
+    CIRCUIT_LAMP("Лампочка", "Электричество")
 }
 
 /**

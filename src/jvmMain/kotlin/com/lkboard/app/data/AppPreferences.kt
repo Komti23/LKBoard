@@ -1,5 +1,6 @@
 package com.lkboard.app.data
 
+import com.lkboard.app.model.CanvasTool
 import com.lkboard.app.model.GridType
 import com.lkboard.app.model.PenSettings
 import com.lkboard.app.model.ShapeSettings
@@ -8,12 +9,62 @@ import com.lkboard.app.model.StrokeStyle
 import java.util.prefs.Preferences
 
 /**
+ * Тема оформления приложения Lkboard.
+ */
+enum class AppTheme(val displayName: String, val isDark: Boolean, val defaultBgColor: Long, val defaultGridType: GridType) {
+    DARK("Тёмная (Industrial Dark)", true, 0xFF0D0F12, GridType.DOTS),
+    LIGHT("Светлая (Чистая бумага)", false, 0xFFFFFFFF, GridType.DOTS),
+    NOTEBOOK("Тетрадь в клетку", false, 0xFFF8FAFC, GridType.LINES)
+}
+
+/**
+ * Профиль использования Lkboard при онбординге и в настройках.
+ */
+enum class UserRole(
+    val title: String,
+    val subtitle: String,
+    val icon: String,
+    val tools: Set<CanvasTool>
+) {
+    TUTOR_STEM(
+        title = "Репетитор (Математика и Физика)",
+        subtitle = "LaTeX-формулы, физический конструктор, графики Desmos, стикеры с домашкой",
+        icon = "👨‍🏫",
+        tools = setOf(
+            CanvasTool.SELECT, CanvasTool.PEN, CanvasTool.ERASER, CanvasTool.TEXT,
+            CanvasTool.LATEX, CanvasTool.PHYSICS_STENCIL, CanvasTool.FUNCTION_GRAPH,
+            CanvasTool.STICKY_NOTE, CanvasTool.SHAPE
+        )
+    ),
+    TEAM_COLLAB(
+        title = "Команда и созвоны",
+        subtitle = "Канбан-доски, вехи дорожной карты, стикеры, умные стрелки-коннекторы",
+        icon = "💼",
+        tools = setOf(
+            CanvasTool.SELECT, CanvasTool.STICKY_NOTE, CanvasTool.KANBAN,
+            CanvasTool.MILESTONE, CanvasTool.CONNECTOR, CanvasTool.SHAPE,
+            CanvasTool.TEXT, CanvasTool.PEN, CanvasTool.ERASER
+        )
+    ),
+    SKETCH_NOTE(
+        title = "Скетчи и быстрое рисование",
+        subtitle = "Перо, ластик, базовые фигуры, текст — чистота и фокус",
+        icon = "🎨",
+        tools = setOf(
+            CanvasTool.SELECT, CanvasTool.PEN, CanvasTool.ERASER,
+            CanvasTool.SHAPE, CanvasTool.TEXT
+        )
+    ),
+    ALL_TOOLS(
+        title = "Полный набор (Все инструменты)",
+        subtitle = "Максимальный функционал без ограничений для опытных пользователей",
+        icon = "⚡",
+        tools = CanvasTool.entries.toSet()
+    )
+}
+
+/**
  * Синглтон настроек приложения Lkboard на базе java.util.prefs.Preferences.
- *
- * Сохраняет:
- * - Параметры пера: цвет, толщина, режим прямой линии, режим хайлайтера.
- * - Параметры сетки: DOTS, LINES, NONE.
- * - Параметры геометрических фигур: тип фигуры, цвет обводки, цвет заливки, толщина линии, стиль штриха (SOLID, DASHED, DOTTED).
  */
 object AppPreferences {
     private const val KEY_PEN_COLOR = "pen_color_argb"
@@ -29,6 +80,11 @@ object AppPreferences {
     private const val KEY_SHAPE_STROKE_WIDTH = "shape_stroke_width"
     private const val KEY_SHAPE_STROKE_STYLE = "shape_stroke_style"
     private const val KEY_SHAPE_CORNER_RADIUS = "shape_corner_radius"
+
+    private const val KEY_APP_THEME = "app_theme_mode"
+    private const val KEY_USER_ROLE = "user_role_profile"
+    private const val KEY_FIRST_RUN_DONE = "first_run_onboarding_completed"
+    private const val KEY_ENABLED_TOOLS = "enabled_tools_csv"
 
     private val prefs: Preferences by lazy {
         Preferences.userNodeForPackage(AppPreferences::class.java)
@@ -147,6 +203,81 @@ object AppPreferences {
             prefs.putFloat(KEY_SHAPE_STROKE_WIDTH, settings.strokeWidth)
             prefs.put(KEY_SHAPE_STROKE_STYLE, settings.strokeStyle.name)
             prefs.putFloat(KEY_SHAPE_CORNER_RADIUS, settings.cornerRadius)
+            prefs.flush()
+        } catch (_: Exception) {}
+    }
+
+    // --- Тема оформления ---
+
+    fun loadAppTheme(): AppTheme {
+        return try {
+            val name = prefs.get(KEY_APP_THEME, AppTheme.DARK.name)
+            AppTheme.valueOf(name)
+        } catch (_: Exception) {
+            AppTheme.DARK
+        }
+    }
+
+    fun saveAppTheme(theme: AppTheme) {
+        try {
+            prefs.put(KEY_APP_THEME, theme.name)
+            prefs.flush()
+        } catch (_: Exception) {}
+    }
+
+    // --- Онбординг и профиль пользователя ---
+
+    fun isFirstRun(): Boolean {
+        return try {
+            !prefs.getBoolean(KEY_FIRST_RUN_DONE, false)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun setFirstRunCompleted() {
+        try {
+            prefs.putBoolean(KEY_FIRST_RUN_DONE, true)
+            prefs.flush()
+        } catch (_: Exception) {}
+    }
+
+    fun loadUserRole(): UserRole {
+        return try {
+            val name = prefs.get(KEY_USER_ROLE, UserRole.ALL_TOOLS.name)
+            UserRole.valueOf(name)
+        } catch (_: Exception) {
+            UserRole.ALL_TOOLS
+        }
+    }
+
+    fun saveUserRole(role: UserRole) {
+        try {
+            prefs.put(KEY_USER_ROLE, role.name)
+            saveEnabledTools(role.tools)
+            prefs.flush()
+        } catch (_: Exception) {}
+    }
+
+    // --- Включенные инструменты тулбара ---
+
+    fun loadEnabledTools(): Set<CanvasTool> {
+        return try {
+            val csv = prefs.get(KEY_ENABLED_TOOLS, null) ?: return CanvasTool.entries.toSet()
+            if (csv.isBlank()) return CanvasTool.entries.toSet()
+            val tools = csv.split(",").mapNotNull { name ->
+                try { CanvasTool.valueOf(name.trim()) } catch (_: Exception) { null }
+            }.toSet()
+            if (tools.isEmpty()) CanvasTool.entries.toSet() else tools
+        } catch (_: Exception) {
+            CanvasTool.entries.toSet()
+        }
+    }
+
+    fun saveEnabledTools(tools: Set<CanvasTool>) {
+        try {
+            val csv = tools.joinToString(",") { it.name }
+            prefs.put(KEY_ENABLED_TOOLS, csv)
             prefs.flush()
         } catch (_: Exception) {}
     }

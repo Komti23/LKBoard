@@ -107,6 +107,8 @@ data class CanvasGestureCallbacks(
     val onCreateDocumentFrame: (Offset) -> Unit,
     val onCreateMilestoneCard: (Offset) -> Unit = {},
     val onCreateFunctionGraph: (Offset) -> Unit = {},
+    val onCreateLatexFormula: (Offset) -> Unit = {},
+    val onCreatePhysicsStencil: (Offset) -> Unit = {},
     val onCreateKanbanBoard: (Offset) -> Unit = {},
     val onToggleStickyTodo: (noteId: String, lineIndex: Int) -> Unit = { _, _ -> },
     val onCreateConnector: (BoardElement.Connector) -> Unit = {},
@@ -283,16 +285,15 @@ class CanvasGestureHandler(
                                         currentBounds = el.bounds
                                     )
                                 } else if (hitElement != null) {
-                                    // Клик по элементу (фигура, текст, заметка, штрих)
-                                    if (hitElement.id !in boardState.selectedElementIds) {
+                                    // Клик по элементу (фигура, текст, заметка, штрих, стенсил)
+                                    val targetIds = if (hitElement.id in boardState.selectedElementIds) {
+                                        boardState.selectedElementIds
+                                    } else {
                                         callbacks.onSelectElement(hitElement.id, isShift)
+                                        if (isShift) boardState.selectedElementIds + hitElement.id else setOf(hitElement.id)
                                     }
                                     interactionMode = InteractionMode.DraggingElements(
-                                        elementIds = if (hitElement.id in boardState.selectedElementIds) {
-                                            boardState.selectedElementIds
-                                        } else {
-                                            setOf(hitElement.id)
-                                        },
+                                        elementIds = targetIds,
                                         startWorld = worldPos,
                                         accumulatedDelta = Offset.Zero
                                     )
@@ -369,6 +370,18 @@ class CanvasGestureHandler(
 
                         CanvasTool.FUNCTION_GRAPH -> {
                             callbacks.onCreateFunctionGraph(worldPos)
+                            interactionMode = InteractionMode.Idle
+                            change.consume()
+                        }
+
+                        CanvasTool.LATEX -> {
+                            callbacks.onCreateLatexFormula(worldPos)
+                            interactionMode = InteractionMode.Idle
+                            change.consume()
+                        }
+
+                        CanvasTool.PHYSICS_STENCIL -> {
+                            callbacks.onCreatePhysicsStencil(worldPos)
                             interactionMode = InteractionMode.Idle
                             change.consume()
                         }
@@ -578,8 +591,12 @@ class CanvasGestureHandler(
                     }
 
                     is InteractionMode.BoxSelecting -> {
-                        val box = Rect(mode.startWorld, mode.currentWorld)
-                        if (box.width > 4f || box.height > 4f) {
+                        val left = minOf(mode.startWorld.x, mode.currentWorld.x)
+                        val top = minOf(mode.startWorld.y, mode.currentWorld.y)
+                        val right = maxOf(mode.startWorld.x, mode.currentWorld.x)
+                        val bottom = maxOf(mode.startWorld.y, mode.currentWorld.y)
+                        val box = Rect(left, top, right, bottom)
+                        if (box.width > 3f || box.height > 3f) {
                             val insideElements = GeometryUtils.findElementsInBox(
                                 box,
                                 boardState.elements.values

@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.ViewKanban
 import androidx.compose.material.icons.filled.Slideshow
@@ -123,6 +124,8 @@ fun TopMenuBar(
     backgroundColorHex: Long = 0xFFFFFFFFL,
     onBackgroundColorChange: (Long) -> Unit = {},
     onImportDocument: () -> Unit = {},
+    onExportSelectionPng: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isFileMenuOpen by remember { mutableStateOf(false) }
@@ -291,6 +294,16 @@ fun TopMenuBar(
                         onClick = {
                             isFileMenuOpen = false
                             onExportPng()
+                        }
+                    )
+                    StyledMenuItem(
+                        text = "Экспорт выделения в PNG...",
+                        shortcut = "Ctrl+Shift+E",
+                        icon = Icons.Default.Image,
+                        enabled = hasSelection,
+                        onClick = {
+                            isFileMenuOpen = false
+                            onExportSelectionPng()
                         }
                     )
                     StyledMenuItem(
@@ -665,6 +678,29 @@ fun TopMenuBar(
                         color = Color(0xFF0284C7)
                     )
                 }
+            }
+
+            Spacer(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(14.dp)
+                    .background(Color.Black.copy(alpha = 0.10f))
+            )
+
+            // Кнопка «Настройки приложения»
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onOpenSettings() }
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Настройки",
+                    tint = Color(0xFF64748B),
+                    modifier = Modifier.size(15.dp)
+                )
             }
         }
     }

@@ -68,6 +68,8 @@ object PngExporter {
                 is BoardElement.Connector -> renderConnector(canvas, element, state)
                 is BoardElement.MilestoneCard -> renderMilestoneCard(canvas, element, defaultTypeface)
                 is BoardElement.FunctionGraph -> renderFunctionGraph(canvas, element, defaultTypeface)
+                is BoardElement.LatexFormula -> com.lkboard.app.util.LatexRenderer.renderSkia(canvas, element, defaultTypeface)
+                is BoardElement.PhysicsStencil -> com.lkboard.app.util.PhysicsStencilRenderer.renderSkia(canvas, element, defaultTypeface)
                 is BoardElement.KanbanBoard -> renderKanbanBoard(canvas, element, defaultTypeface, state)
             }
             if (hasRotation) {
