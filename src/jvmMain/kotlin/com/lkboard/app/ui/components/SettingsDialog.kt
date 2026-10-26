@@ -300,10 +300,16 @@ fun SettingsSidePanel(
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 AppTheme.entries.forEach { appTheme ->
                                     val isSelected = appTheme == theme
+                                    val (themeIcon, themeLabel) = when(appTheme) {
+                                        AppTheme.SYSTEM -> "🖥️" to "Система"
+                                        AppTheme.DARK -> "🌙" to "Тёмная"
+                                        AppTheme.LIGHT -> "☀️" to "Светлая"
+                                        AppTheme.NOTEBOOK -> "📖" to "Тетрадь"
+                                    }
                                     Box(
                                         modifier = Modifier
                                             .weight(1f)
@@ -319,15 +325,19 @@ fun SettingsSidePanel(
                                                 RoundedCornerShape(8.dp)
                                             )
                                             .clickable { theme = appTheme }
-                                            .padding(vertical = 10.dp),
+                                            .padding(vertical = 8.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(
-                                            text = appTheme.displayName,
-                                            fontSize = 11.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
-                                        )
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(text = themeIcon, fontSize = 13.sp)
+                                            Spacer(Modifier.height(2.dp))
+                                            Text(
+                                                text = themeLabel,
+                                                fontSize = 10.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -989,48 +999,127 @@ fun SettingsSidePanel(
                             }
                         }
 
-                        // 5. ВЫБОРОЧНАЯ НАСТРОЙКА ВИДИМОСТИ ИНСТРУМЕНТОВ
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = "ВИДИМОСТЬ ИНСТРУМЕНТОВ НА ПАНЕЛИ:",
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
-                            )
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                        // 5. ВЫБОРОЧНАЯ НАСТРОЙКА ВИДИМОСТИ ИНСТРУМЕНТОВ (СПИСКОМ С ПРОКРУТКОЙ)
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                CanvasTool.entries.filter { it != CanvasTool.SELECT && it != CanvasTool.HAND }.forEach { tool ->
-                                    val isEnabled = tool in tools
-                                    Row(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
-                                            .border(1.dp, if (isDark) Color(0xFF333842) else Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
-                                            .clickable {
-                                                tools = if (isEnabled) tools - tool else tools + tool
+                                Text(
+                                    text = "ВИДИМОСТЬ ИНСТРУМЕНТОВ НА ПАНЕЛИ:",
+                                    fontSize = 10.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                )
+                                Text(
+                                    text = "Включено: ${tools.size}/${CanvasTool.entries.size}",
+                                    fontSize = 10.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(240.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isDark) Color(0xFF0F1217) else Color(0xFFF1F5F9))
+                                    .border(1.dp, if (isDark) Color(0xFF232833) else Color(0xFFCBD5E1), RoundedCornerShape(12.dp))
+                                    .padding(6.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState()),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    CanvasTool.entries.filter { it != CanvasTool.SELECT && it != CanvasTool.HAND }.forEach { tool ->
+                                        val isEnabled = tool in tools
+                                        val (toolIcon, toolShortcut) = when(tool) {
+                                            CanvasTool.PEN -> "✏️" to "Q / P · Рисование стилусом и пером"
+                                            CanvasTool.ERASER -> "🧹" to "E · Стирание штрихов"
+                                            CanvasTool.STICKY_NOTE -> "📝" to "S · Заметки и списки задач To-Do"
+                                            CanvasTool.SHAPE -> "📐" to "R · Прямоугольники, круги, стрелки"
+                                            CanvasTool.LATEX -> "∑" to "X · Математические уравнения и формулы"
+                                            CanvasTool.PHYSICS_STENCIL -> "⚡" to "B · Физический конструктор и лаборатория"
+                                            CanvasTool.CONNECTOR -> "🔀" to "C · Умные стрелки и связки блоков"
+                                            CanvasTool.MILESTONE -> "🚩" to "M · Вехи и этапы дорожной карты"
+                                            CanvasTool.KANBAN -> "📋" to "K · Доски задач To Do / Done"
+                                            CanvasTool.FUNCTION_GRAPH -> "📈" to "G · Графики математических функций"
+                                            CanvasTool.TEXT -> "🔤" to "T · Текстовые блоки"
+                                            CanvasTool.FRAME -> "🖼️" to "F · Слайды и рамки презентации"
+                                            CanvasTool.LASER_POINTER -> "🔴" to "L · Лазерная указка для объяснений"
+                                            else -> "🛠️" to ""
+                                        }
+
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(
+                                                    if (isEnabled) (if (isDark) Color(0xFF19202E) else Color.White)
+                                                    else (if (isDark) Color(0xFF14171E) else Color(0xFFF8FAFC))
+                                                )
+                                                .border(
+                                                    1.dp,
+                                                    if (isEnabled) (if (isDark) Color(0xFF2E3D59) else Color(0xFFBFDBFE))
+                                                    else (if (isDark) Color(0xFF1E232D) else Color(0xFFE2E8F0)),
+                                                    RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable {
+                                                    tools = if (isEnabled) tools - tool else tools + tool
+                                                }
+                                                .padding(horizontal = 10.dp, vertical = 7.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(28.dp)
+                                                        .clip(RoundedCornerShape(6.dp))
+                                                        .background(if (isEnabled) (if (isDark) Color(0xFF202A3C) else Color(0xFFDBEAFE)) else (if (isDark) Color(0xFF1A1E26) else Color(0xFFE2E8F0))),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(text = toolIcon, fontSize = 13.sp)
+                                                }
+
+                                                Column {
+                                                    Text(
+                                                        text = tool.displayName.substringBefore(" ("),
+                                                        fontSize = 11.sp,
+                                                        fontWeight = if (isEnabled) FontWeight.SemiBold else FontWeight.Normal,
+                                                        color = if (isEnabled) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)) else (if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8))
+                                                    )
+                                                    if (toolShortcut.isNotBlank()) {
+                                                        Text(
+                                                            text = toolShortcut,
+                                                            fontSize = 9.sp,
+                                                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                                        )
+                                                    }
+                                                }
                                             }
-                                            .padding(horizontal = 8.dp, vertical = 2.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Checkbox(
-                                            checked = isEnabled,
-                                            onCheckedChange = { checked ->
-                                                tools = if (checked) tools + tool else tools - tool
-                                            },
-                                            colors = CheckboxDefaults.colors(
-                                                checkedColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
-                                                checkmarkColor = if (isDark) Color(0xFF0F1115) else Color.White,
-                                                uncheckedColor = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)
+
+                                            Checkbox(
+                                                checked = isEnabled,
+                                                onCheckedChange = { checked ->
+                                                    tools = if (checked) tools + tool else tools - tool
+                                                },
+                                                colors = CheckboxDefaults.colors(
+                                                    checkedColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
+                                                    checkmarkColor = if (isDark) Color(0xFF0F1115) else Color.White,
+                                                    uncheckedColor = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)
+                                                )
                                             )
-                                        )
-                                        Text(
-                                            text = tool.displayName.substringBefore(" ("),
-                                            fontSize = 11.sp,
-                                            color = if (isEnabled) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)) else (if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8))
-                                        )
+                                        }
                                     }
                                 }
                             }

@@ -646,14 +646,14 @@ class BoardViewModel {
 
     fun zoomIn(center: Offset) {
         _state.update {
-            it.withTransform(it.transform.zoomAround(center, CanvasTransform.ZOOM_IN_STEP))
+            it.withTransform(it.transform.zoomInStep(center))
         }
         triggerAutoSave(immediate = false)
     }
 
     fun zoomOut(center: Offset) {
         _state.update {
-            it.withTransform(it.transform.zoomAround(center, CanvasTransform.ZOOM_OUT_STEP))
+            it.withTransform(it.transform.zoomOutStep(center))
         }
         triggerAutoSave(immediate = false)
     }

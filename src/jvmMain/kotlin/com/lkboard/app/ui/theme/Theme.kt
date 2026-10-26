@@ -1,15 +1,44 @@
 package com.lkboard.app.ui.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.lkboard.app.data.AppTheme
 
 val LocalAppTheme = staticCompositionLocalOf { AppTheme.LIGHT }
+
+/**
+ * Современное системное семейство шрифтов (Segoe UI на Windows / SF Pro на macOS),
+ * обеспечивающее чёткую, стильную типографику интерфейса.
+ */
+val ModernFontFamily = FontFamily.SansSerif
+
+val LkboardTypography = Typography(
+    displayLarge = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Normal, fontSize = 57.sp),
+    displayMedium = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Normal, fontSize = 45.sp),
+    displaySmall = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Normal, fontSize = 36.sp),
+    headlineLarge = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 32.sp),
+    headlineMedium = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 28.sp),
+    headlineSmall = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 24.sp),
+    titleLarge = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 20.sp),
+    titleMedium = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 16.sp),
+    titleSmall = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Medium, fontSize = 14.sp),
+    bodyLarge = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Normal, fontSize = 16.sp),
+    bodyMedium = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Normal, fontSize = 14.sp),
+    bodySmall = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp),
+    labelLarge = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Medium, fontSize = 14.sp),
+    labelMedium = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp),
+    labelSmall = TextStyle(fontFamily = ModernFontFamily, fontWeight = FontWeight.Medium, fontSize = 11.sp)
+)
 
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFF38BDF8),
@@ -55,14 +84,15 @@ fun LkboardTheme(
     appTheme: AppTheme = AppTheme.LIGHT,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when (appTheme) {
-        AppTheme.DARK -> DarkColorScheme
-        AppTheme.LIGHT -> LightColorScheme
-        AppTheme.NOTEBOOK -> NotebookColorScheme
+    val colorScheme = when {
+        appTheme == AppTheme.NOTEBOOK -> NotebookColorScheme
+        appTheme.isDark -> DarkColorScheme
+        else -> LightColorScheme
     }
     CompositionLocalProvider(LocalAppTheme provides appTheme) {
         MaterialTheme(
             colorScheme = colorScheme,
+            typography = LkboardTypography,
             content = content
         )
     }

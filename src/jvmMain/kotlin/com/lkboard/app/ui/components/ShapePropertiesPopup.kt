@@ -1,6 +1,7 @@
 package com.lkboard.app.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -609,19 +610,19 @@ fun ShapePropertiesPopup(
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         StrokeStyleSegment(
-                            title = "Сплошная",
+                            style = StrokeStyle.SOLID,
                             isSelected = settings.strokeStyle == StrokeStyle.SOLID,
                             onClick = { onSettingsChange(settings.copy(strokeStyle = StrokeStyle.SOLID)) },
                             modifier = Modifier.weight(1f)
                         )
                         StrokeStyleSegment(
-                            title = "Пунктир",
+                            style = StrokeStyle.DASHED,
                             isSelected = settings.strokeStyle == StrokeStyle.DASHED,
                             onClick = { onSettingsChange(settings.copy(strokeStyle = StrokeStyle.DASHED)) },
                             modifier = Modifier.weight(1f)
                         )
                         StrokeStyleSegment(
-                            title = "Точки",
+                            style = StrokeStyle.DOTTED,
                             isSelected = settings.strokeStyle == StrokeStyle.DOTTED,
                             onClick = { onSettingsChange(settings.copy(strokeStyle = StrokeStyle.DOTTED)) },
                             modifier = Modifier.weight(1f)
@@ -931,31 +932,78 @@ private fun ShapeTypeButton(
 }
 
 /**
- * Элемент выбора стиля линии в Segmented Control.
+ * Элемент выбора стиля линии в Segmented Control с визуальным изображением линии (сплошная / пунктир / точки).
  */
 @Composable
 private fun StrokeStyleSegment(
-    title: String,
+    style: com.lkboard.app.model.StrokeStyle,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val activeColor = Color(0xFF007AFF)
+    val inactiveColor = Color(0xFF3C3C43).copy(alpha = 0.65f)
+    val lineColor = if (isSelected) activeColor else inactiveColor
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .clip(RoundedCornerShape(8.dp))
             .background(
-                if (isSelected) Color(0xFF007AFF).copy(alpha = 0.15f)
+                if (isSelected) activeColor.copy(alpha = 0.16f)
                 else Color.Transparent
             )
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 6.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = title,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-            color = if (isSelected) Color(0xFF007AFF) else Color(0xFF3C3C43).copy(alpha = 0.70f)
-        )
+        Canvas(modifier = Modifier.fillMaxWidth().height(16.dp)) {
+            val centerY = size.height / 2f
+            val startX = 4f
+            val endX = size.width - 4f
+
+            when (style) {
+                com.lkboard.app.model.StrokeStyle.SOLID -> {
+                    drawLine(
+                        color = lineColor,
+                        start = Offset(startX, centerY),
+                        end = Offset(endX, centerY),
+                        strokeWidth = 2.5f,
+                        cap = StrokeCap.Round
+                    )
+                }
+                com.lkboard.app.model.StrokeStyle.DASHED -> {
+                    val path = Path().apply {
+                        moveTo(startX, centerY)
+                        lineTo(endX, centerY)
+                    }
+                    drawPath(
+                        path = path,
+                        color = lineColor,
+                        style = Stroke(
+                            width = 2.5f,
+                            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+                                intervals = floatArrayOf(8f, 5f),
+                                phase = 0f
+                            ),
+                            cap = StrokeCap.Round
+                        )
+                    )
+                }
+                com.lkboard.app.model.StrokeStyle.DOTTED -> {
+                    val dotRadius = 1.8f
+                    val dotSpacing = 6.5f
+                    var currentX = startX + dotRadius
+                    while (currentX <= endX - dotRadius) {
+                        drawCircle(
+                            color = lineColor,
+                            radius = dotRadius,
+                            center = Offset(currentX, centerY)
+                        )
+                        currentX += dotSpacing
+                    }
+                }
+            }
+        }
     }
 }

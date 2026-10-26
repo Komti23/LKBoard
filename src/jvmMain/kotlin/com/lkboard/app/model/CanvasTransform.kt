@@ -26,6 +26,13 @@ data class CanvasTransform(
         const val MAX_SCALE = 4.00f // 400%
         const val ZOOM_IN_STEP = 1.15f
         const val ZOOM_OUT_STEP = 1f / ZOOM_IN_STEP
+
+        // Пресеты масштаба для аккуратного и понятного округления процентов
+        val PRESET_SCALES = floatArrayOf(
+            0.10f, 0.25f, 0.33f, 0.50f, 0.67f, 0.75f, 0.90f,
+            1.00f,
+            1.10f, 1.25f, 1.50f, 1.75f, 2.00f, 2.50f, 3.00f, 4.00f
+        )
     }
 
     val pan: Offset get() = Offset(panX, panY)
@@ -79,19 +86,20 @@ data class CanvasTransform(
     }
 
     /**
-     * Масштабирует холст относительно экранной позиции курсора [pivotScreen].
-     * Мировая точка, находившаяся под курсором до изменения масштаба,
-     * гарантированно остаётся ровно под курсором после зума.
+     * Масштабирует холст к точному целевому масштабу [targetScaleRaw] относительно экранной точки [pivotScreen].
+     * Включает магнитное притягивание к 100% при приближении на ±3.5%.
      */
-    fun zoomAround(pivotScreen: Offset, zoomMultiplier: Float): CanvasTransform {
-        val targetScale = (scale * zoomMultiplier).coerceIn(MIN_SCALE, MAX_SCALE)
+    fun zoomTo(pivotScreen: Offset, targetScaleRaw: Float): CanvasTransform {
+        val targetScale = when {
+            kotlin.math.abs(targetScaleRaw - 1.0f) <= 0.035f -> 1.0f
+            else -> targetScaleRaw
+        }.coerceIn(MIN_SCALE, MAX_SCALE)
+
         if (targetScale == scale) return this
 
-        // Вычисляем мировую точку под курсором до масштабирования:
         val worldPivotX = (pivotScreen.x - panX) / scale
         val worldPivotY = (pivotScreen.y - panY) / scale
 
-        // Вычисляем новое смещение панорамирования, чтобы точка осталась на том же экранном пикселе:
         val newPanX = pivotScreen.x - worldPivotX * targetScale
         val newPanY = pivotScreen.y - worldPivotY * targetScale
 
@@ -103,9 +111,34 @@ data class CanvasTransform(
     }
 
     /**
-     * Сброс масштаба к 100% с фокусом на центр экрана [viewportCenter].
+     * Пошаговый зум вперед с аккуратным переходом по пресетам масштаба (25%, 50%, 75%, 100%, 125%...).
+     */
+    fun zoomInStep(pivotScreen: Offset): CanvasTransform {
+        val nextScale = PRESET_SCALES.firstOrNull { it > scale + 0.02f } ?: (scale * 1.2f).coerceAtMost(MAX_SCALE)
+        return zoomTo(pivotScreen, nextScale)
+    }
+
+    /**
+     * Пошаговый зум назад с аккуратным переходом по пресетам масштаба.
+     */
+    fun zoomOutStep(pivotScreen: Offset): CanvasTransform {
+        val prevScale = PRESET_SCALES.lastOrNull { it < scale - 0.02f } ?: (scale / 1.2f).coerceAtLeast(MIN_SCALE)
+        return zoomTo(pivotScreen, prevScale)
+    }
+
+    /**
+     * Масштабирует холст относительно экранной позиции курсора [pivotScreen].
+     */
+    fun zoomAround(pivotScreen: Offset, zoomMultiplier: Float): CanvasTransform {
+        val rawScale = scale * zoomMultiplier
+        val targetScale = if (kotlin.math.abs(rawScale - 1.0f) <= 0.035f) 1.0f else rawScale
+        return zoomTo(pivotScreen, targetScale)
+    }
+
+    /**
+     * Сброс масштаба строго к 100% (1.0f) с фокусом на центр экрана [viewportCenter].
      */
     fun resetZoom(viewportCenter: Offset): CanvasTransform {
-        return zoomAround(viewportCenter, 1.0f / scale)
+        return zoomTo(viewportCenter, 1.0f)
     }
 }

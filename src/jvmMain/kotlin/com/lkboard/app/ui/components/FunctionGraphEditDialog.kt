@@ -1,10 +1,19 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,18 +30,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,8 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -51,39 +61,46 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.roundToInt
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.lkboard.app.model.BoardElement
 import com.lkboard.app.ui.theme.LocalAppTheme
 import com.lkboard.app.util.MathEvaluator
+import kotlin.math.roundToInt
 
 /**
- * Полноценная математическая студия графиков в стиле Desmos.
- * Включает виртуальную экранную математическую клавиатуру, интерактивный предпросмотр в реальном времени
- * и удобный перенос графиков на бесконечный холст.
+ * Боковая панель математической студии графиков Desmos (Side Drawer):
+ * - Плавно выезжает справа, оставляя холст открытым.
+ * - Интерактивный предпросмотр графика f(x) с осями и сеткой.
+ * - Настройка диапазона X/Y и виртуальная математическая клавиатура.
  */
 @Composable
-fun FunctionGraphEditDialog(
-    element: BoardElement.FunctionGraph,
+fun FunctionGraphSidePanel(
+    isOpen: Boolean,
+    element: BoardElement.FunctionGraph?,
     onSave: (BoardElement.FunctionGraph) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val textMeasurer = rememberTextMeasurer()
-    var title by remember { mutableStateOf(element.title) }
+    var lastElement by remember { mutableStateOf<BoardElement.FunctionGraph?>(null) }
+    if (element != null) {
+        lastElement = element
+    }
+    val activeElement = element ?: lastElement
+    if (activeElement == null) return
 
-    val initialExpressions = if (element.expressions.isEmpty()) listOf("sin(x)") else element.expressions
-    val expressions = remember { mutableStateListOf(*initialExpressions.toTypedArray()) }
+    var title by remember(activeElement.title, isOpen) { mutableStateOf(activeElement.title) }
+
+    val initialExpressions = if (activeElement.expressions.isEmpty()) listOf("sin(x)") else activeElement.expressions
+    val expressions = remember(activeElement.id, isOpen) { mutableStateListOf(*initialExpressions.toTypedArray()) }
     var activeExpressionIndex by remember { mutableStateOf(0) }
 
-    var xMinText by remember { mutableStateOf(element.xMin.toString()) }
-    var xMaxText by remember { mutableStateOf(element.xMax.toString()) }
-    var yMinText by remember { mutableStateOf(element.yMin.toString()) }
-    var yMaxText by remember { mutableStateOf(element.yMax.toString()) }
+    var xMinText by remember(activeElement.xMin, isOpen) { mutableStateOf(activeElement.xMin.toString()) }
+    var xMaxText by remember(activeElement.xMax, isOpen) { mutableStateOf(activeElement.xMax.toString()) }
+    var yMinText by remember(activeElement.yMin, isOpen) { mutableStateOf(activeElement.yMin.toString()) }
+    var yMaxText by remember(activeElement.yMax, isOpen) { mutableStateOf(activeElement.yMax.toString()) }
 
     val paletteColors = listOf(
         0xFF2563EBL, // Blue
@@ -129,81 +146,357 @@ fun FunctionGraphEditDialog(
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
         unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
-        focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
-        unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+        focusedContainerColor = if (isDark) Color(0xFF1E2430) else Color.White,
+        unfocusedContainerColor = if (isDark) Color(0xFF1E2430) else Color.White,
         cursorColor = Color(0xFF2563EB),
         focusedBorderColor = Color(0xFF2563EB),
         unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1),
         focusedLabelColor = Color(0xFF3B82F6),
-        unfocusedLabelColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
-        focusedPlaceholderColor = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8),
-        unfocusedPlaceholderColor = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
+        unfocusedLabelColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
     )
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = if (isDark) Color(0xFF181B20) else Color.White,
-            border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
-            shadowElevation = 24.dp,
-            modifier = Modifier
-                .width(960.dp)
-                .height(680.dp)
-                .padding(16.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Затемняющий оверлей
+        AnimatedVisibility(
+            visible = isOpen,
+            enter = fadeIn(animationSpec = tween(180)),
+            exit = fadeOut(animationSpec = tween(180))
         ) {
-            CompositionLocalProvider(LocalContentColor provides (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp)
-                ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF2563EB)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("📈", fontSize = 16.sp)
-                            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.40f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onDismiss
+                    )
+            )
+        }
+
+        // Правая боковая панель с плавной анимацией выезда
+        AnimatedVisibility(
+            visible = isOpen,
+            enter = slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
+            ) + fadeIn(),
+            exit = slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
+            ) + fadeOut(),
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(520.dp)
+                    .shadow(
+                        elevation = 24.dp,
+                        shape = RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp),
+                        ambientColor = Color.Black.copy(alpha = 0.12f),
+                        spotColor = Color.Black.copy(alpha = 0.28f)
+                    )
+                    .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
+                    .background(if (isDark) Color(0xFF14171D) else Color.White)
+                    .border(
+                        1.dp,
+                        if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0),
+                        RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp)
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    )
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Шапка
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(if (isDark) Color(0xFF181B22) else Color(0xFFF8FAFC))
+                            .border(1.dp, if (isDark) Color(0xFF232730) else Color(0xFFE2E8F0))
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
                             Text(
-                                text = "Desmos Математическая Студия",
-                                fontSize = 20.sp,
+                                text = "📈 График функций f(x)",
+                                fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                             )
+                            Text(
+                                text = "Интерактивная математическая студия",
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
+                            )
                         }
-                        Text(
-                            text = "Интерактивное построение функций с математической клавиатурой",
-                            fontSize = 12.sp,
-                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
-                        )
+
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isDark) Color(0xFF282D37) else Color(0xFFE2E8F0))
+                                .clickable(onClick = onDismiss),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Закрыть",
+                                tint = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Скроллируемое тело студии
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        // Поле названия графика
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text("Название графика") },
+                            singleLine = true,
+                            colors = fieldColors,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        // Интерактивный Canvas-предпросмотр графика
+                        GraphPreviewBox(
+                            expressions = expressions,
+                            xMin = parsedXMin,
+                            xMax = parsedXMax,
+                            yMin = parsedYMin,
+                            yMax = parsedYMax,
+                            paletteColors = paletteColors,
+                            isDark = isDark,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                        )
+
+                        // Список выражений функций f(x)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "МАТЕМАТИЧЕСКИЕ ВЫРАЖЕНИЯ:",
+                                    fontSize = 10.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                )
+                                if (expressions.size < 5) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            expressions.add("cos(x)")
+                                            activeExpressionIndex = expressions.size - 1
+                                        },
+                                        shape = RoundedCornerShape(6.dp),
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                        modifier = Modifier.height(26.dp)
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("+ Функция", fontSize = 10.sp)
+                                    }
+                                }
+                            }
+
+                            expressions.forEachIndexed { idx, expr ->
+                                val isSelected = idx == activeExpressionIndex
+                                val colorVal = paletteColors[idx % paletteColors.size]
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) (if (isDark) Color(0xFF192233) else Color(0xFFEFF6FF)) else (if (isDark) Color(0xFF14171E) else Color(0xFFF8FAFC)))
+                                        .border(1.dp, if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF2A3142) else Color(0xFFE2E8F0)), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(colorVal))
+                                    )
+                                    Text(
+                                        text = "f${idx + 1}(x) =",
+                                        fontSize = 11.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(colorVal)
+                                    )
+                                    OutlinedTextField(
+                                        value = expr,
+                                        onValueChange = { expressions[idx] = it },
+                                        singleLine = true,
+                                        colors = fieldColors,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable { activeExpressionIndex = idx }
+                                    )
+                                    if (expressions.size > 1) {
+                                        IconButton(
+                                            onClick = {
+                                                expressions.removeAt(idx)
+                                                if (activeExpressionIndex >= expressions.size) {
+                                                    activeExpressionIndex = (expressions.size - 1).coerceAtLeast(0)
+                                                }
+                                            },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(Icons.Default.DeleteOutline, contentDescription = "Удалить", tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Диапазон осей X и Y
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "ДИАПАЗОН ОСЕЙ СЕТКИ:",
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = xMinText,
+                                    onValueChange = { xMinText = it },
+                                    label = { Text("X min") },
+                                    singleLine = true,
+                                    colors = fieldColors,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = xMaxText,
+                                    onValueChange = { xMaxText = it },
+                                    label = { Text("X max") },
+                                    singleLine = true,
+                                    colors = fieldColors,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = yMinText,
+                                    onValueChange = { yMinText = it },
+                                    label = { Text("Y min") },
+                                    singleLine = true,
+                                    colors = fieldColors,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = yMaxText,
+                                    onValueChange = { yMaxText = it },
+                                    label = { Text("Y max") },
+                                    singleLine = true,
+                                    colors = fieldColors,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+
+                        // Математическая экранная клавиатура
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "МАТЕМАТИЧЕСКАЯ КЛАВИАТУРА:",
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                            )
+
+                            val keyRows = listOf(
+                                listOf("sin", "cos", "tan", "sqrt", "^", "(" , ")"),
+                                listOf("x", "7", "8", "9", "/", "abs", "pi"),
+                                listOf("e", "4", "5", "6", "*", "ln", "log"),
+                                listOf("±", "1", "2", "3", "-", "⌫", "C"),
+                                listOf("0", ".", "+", "x²", "1/x")
+                            )
+
+                            keyRows.forEach { rowKeys ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    rowKeys.forEach { k ->
+                                        MathKey(
+                                            label = k,
+                                            isDigit = k in "0".."9" || k == ".",
+                                            isSpecial = k in listOf("⌫", "C"),
+                                            isDark = isDark,
+                                            modifier = Modifier.weight(1f),
+                                            onClick = {
+                                                when (k) {
+                                                    "⌫" -> backspaceActive()
+                                                    "C" -> clearActive()
+                                                    "x²" -> insertIntoActive("^2")
+                                                    "1/x" -> insertIntoActive("1/")
+                                                    "sqrt" -> insertIntoActive("sqrt(")
+                                                    "sin" -> insertIntoActive("sin(")
+                                                    "cos" -> insertIntoActive("cos(")
+                                                    "tan" -> insertIntoActive("tan(")
+                                                    "abs" -> insertIntoActive("abs(")
+                                                    "ln" -> insertIntoActive("ln(")
+                                                    "log" -> insertIntoActive("log(")
+                                                    "pi" -> insertIntoActive("pi")
+                                                    "±" -> insertIntoActive("-")
+                                                    else -> insertIntoActive(k)
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Нижняя панель действий
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(if (isDark) Color(0xFF181B22) else Color(0xFFF8FAFC))
+                            .border(1.dp, if (isDark) Color(0xFF232730) else Color(0xFFE2E8F0))
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         OutlinedButton(
                             onClick = onDismiss,
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                            ),
                             border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1))
                         ) {
-                            Text("Отмена", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569))
+                            Text("Отмена", fontSize = 12.sp)
                         }
+
                         Button(
                             onClick = {
                                 val validExprs = expressions.map { it.trim() }.filter { it.isNotEmpty() }
                                 val finalExprs = if (validExprs.isEmpty()) listOf("x^2") else validExprs
-                                val updated = element.copy(
+                                val updated = activeElement.copy(
                                     title = title.ifBlank { "График функций" },
                                     expressions = finalExprs,
                                     xMin = parsedXMin,
@@ -213,432 +506,15 @@ fun FunctionGraphEditDialog(
                                     strokeColorsHex = paletteColors.take(finalExprs.size)
                                 )
                                 onSave(updated)
+                                onDismiss()
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                            shape = RoundedCornerShape(10.dp)
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2563EB),
+                                contentColor = Color.White
+                            )
                         ) {
-                            Text("✓ Перенести на холст LKBoard", fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // 2-Column Content Layout
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(18.dp)
-                ) {
-                    // LEFT COLUMN: Expressions & Math Keypad
-                    Column(
-                        modifier = Modifier
-                            .weight(1.05f)
-                            .fillMaxHeight()
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = title,
-                            onValueChange = { title = it },
-                            label = { Text("Заголовок графика") },
-                            singleLine = true,
-                            colors = fieldColors,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Text(
-                            text = "Функции f(x):",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
-                        )
-
-                        // Expressions list
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            expressions.forEachIndexed { idx, expr ->
-                                val colorHex = paletteColors[idx % paletteColors.size]
-                                val isActive = activeExpressionIndex == idx
-
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .border(
-                                            width = if (isActive) 1.5.dp else 1.dp,
-                                            color = if (isActive) Color(0xFF2563EB) else (if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
-                                            shape = RoundedCornerShape(10.dp)
-                                        )
-                                        .background(
-                                            if (isActive) (if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
-                                            else (if (isDark) Color(0xFF1E222A) else Color.White)
-                                        )
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(12.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(colorHex))
-                                    )
-                                    Text(
-                                        text = "f${idx + 1}(x) =",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(colorHex)
-                                    )
-                                    OutlinedTextField(
-                                        value = expr,
-                                        onValueChange = { expressions[idx] = it },
-                                        placeholder = { Text("например: sin(x) или x^2 - 4") },
-                                        singleLine = true,
-                                        colors = fieldColors,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clickable { activeExpressionIndex = idx }
-                                    )
-                                    if (expressions.size > 1) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .clip(CircleShape)
-                                                .clickable {
-                                                    expressions.removeAt(idx)
-                                                    if (activeExpressionIndex >= expressions.size) {
-                                                        activeExpressionIndex = expressions.size - 1
-                                                    }
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text("✕", fontSize = 12.sp, color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8))
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (expressions.size < 5) {
-                                Button(
-                                    onClick = {
-                                        val presets = listOf("cos(x)", "0.5*x^2 - 2", "sqrt(x)", "2*sin(x)", "1 / (x^2 + 1)")
-                                        val nextPreset = presets.getOrNull(expressions.size) ?: "x + 1"
-                                        expressions.add(nextPreset)
-                                        activeExpressionIndex = expressions.size - 1
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Text("+ Добавить функцию", color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        // DESMOS VIRTUAL MATH KEYPAD
-                        Text(
-                            text = "Виртуальная математическая клавиатура:",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)
-                        )
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                                .padding(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            // Row 1: Variables & Powers
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                MathKey("x", onClick = { insertIntoActive("x") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("y", onClick = { insertIntoActive("y") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("x²", onClick = { insertIntoActive("^2") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("x^", onClick = { insertIntoActive("^") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("√x", onClick = { insertIntoActive("sqrt(") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("|x|", onClick = { insertIntoActive("abs(") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("π", onClick = { insertIntoActive("pi") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("e", onClick = { insertIntoActive("e") }, modifier = Modifier.weight(1f), isDark = isDark)
-                            }
-
-                            // Row 2: Trig & Log
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                MathKey("sin", onClick = { insertIntoActive("sin(") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("cos", onClick = { insertIntoActive("cos(") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("tan", onClick = { insertIntoActive("tan(") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("ln", onClick = { insertIntoActive("log(") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("(", onClick = { insertIntoActive("(") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey(")", onClick = { insertIntoActive(")") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("⌫", onClick = { backspaceActive() }, isSpecial = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("C", onClick = { clearActive() }, isSpecial = true, modifier = Modifier.weight(1f), isDark = isDark)
-                            }
-
-                            // Row 3: Digits 7,8,9 and Operators
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                MathKey("7", onClick = { insertIntoActive("7") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("8", onClick = { insertIntoActive("8") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("9", onClick = { insertIntoActive("9") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("/", onClick = { insertIntoActive(" / ") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("*", onClick = { insertIntoActive("*") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("-", onClick = { insertIntoActive("-") }, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("+", onClick = { insertIntoActive("+") }, modifier = Modifier.weight(1f), isDark = isDark)
-                            }
-
-                            // Row 4: Digits 4,5,6, 1,2,3, 0
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                MathKey("4", onClick = { insertIntoActive("4") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("5", onClick = { insertIntoActive("5") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("6", onClick = { insertIntoActive("6") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("1", onClick = { insertIntoActive("1") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("2", onClick = { insertIntoActive("2") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("3", onClick = { insertIntoActive("3") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey("0", onClick = { insertIntoActive("0") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
-                                MathKey(".", onClick = { insertIntoActive(".") }, modifier = Modifier.weight(1f), isDark = isDark)
-                            }
-                        }
-
-                        // Ranges (X min, X max, Y min, Y max)
-                        Text(
-                            text = "Диапазон осей:",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = xMinText,
-                                onValueChange = { xMinText = it },
-                                label = { Text("X min") },
-                                singleLine = true,
-                                colors = fieldColors,
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedTextField(
-                                value = xMaxText,
-                                onValueChange = { xMaxText = it },
-                                label = { Text("X max") },
-                                singleLine = true,
-                                colors = fieldColors,
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedTextField(
-                                value = yMinText,
-                                onValueChange = { yMinText = it },
-                                label = { Text("Y min") },
-                                singleLine = true,
-                                colors = fieldColors,
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedTextField(
-                                value = yMaxText,
-                                onValueChange = { yMaxText = it },
-                                label = { Text("Y max") },
-                                singleLine = true,
-                                colors = fieldColors,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-
-                    // RIGHT COLUMN: Live Interactive Desmos Preview
-                    Column(
-                        modifier = Modifier
-                            .weight(1.15f)
-                            .fillMaxHeight(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Интерактивный предпросмотр (Live Preview):",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
-                            )
-                            Text(
-                                text = "Обрезается строго по рамке",
-                                fontSize = 11.sp,
-                                color = Color(0xFF10B981),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .clip(RoundedCornerShape(14.dp))
-                                .border(1.5.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFCBD5E1), RoundedCornerShape(14.dp))
-                                .background(if (isDark) Color(0xFF0F1115) else Color(0xFFFAFAFA))
-                        ) {
-                            Canvas(modifier = Modifier.fillMaxSize()) {
-                                val w = size.width
-                                val h = size.height
-
-                                clipRect(left = 0f, top = 0f, right = w, bottom = h) {
-                                    val xMin = parsedXMin.toDouble()
-                                    val xMax = parsedXMax.toDouble()
-                                    val yMin = parsedYMin.toDouble()
-                                    val yMax = parsedYMax.toDouble()
-
-                                    fun toScreenX(xVal: Double): Float {
-                                        return (((xVal - xMin) / (xMax - xMin)) * w).toFloat()
-                                    }
-
-                                    fun toScreenY(yVal: Double): Float {
-                                        return (((yMax - yVal) / (yMax - yMin)) * h).toFloat()
-                                    }
-
-                                    val originX = toScreenX(0.0).coerceIn(0f, w)
-                                    val originY = toScreenY(0.0).coerceIn(0f, h)
-
-                                    fun calculateNiceStep(span: Double, targetCount: Int = 8): Double {
-                                        if (span <= 0.0) return 1.0
-                                        val rawStep = span / targetCount.coerceAtLeast(1).toDouble()
-                                        val magnitude = java.lang.Math.pow(10.0, kotlin.math.floor(kotlin.math.log10(rawStep)))
-                                        val residual = rawStep / magnitude
-                                        val niceResidual = when {
-                                            residual < 1.5 -> 1.0
-                                            residual < 3.5 -> 2.0
-                                            residual < 7.5 -> 5.0
-                                            else -> 10.0
-                                        }
-                                        return niceResidual * magnitude
-                                    }
-
-                                    fun formatCoord(value: Double): String {
-                                        return if (kotlin.math.abs(value - kotlin.math.round(value)) < 1e-5) {
-                                            value.roundToInt().toString()
-                                        } else {
-                                            String.format(java.util.Locale.US, "%.1f", value)
-                                        }
-                                    }
-
-                                    val targetXCount = (w / 65f).toInt().coerceIn(4, 12)
-                                    val targetYCount = (h / 55f).toInt().coerceIn(4, 10)
-                                    val xStep = calculateNiceStep(xMax - xMin, targetXCount)
-                                    val yStep = calculateNiceStep(yMax - yMin, targetYCount)
-
-                                    val numStyle = TextStyle(
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
-                                    )
-
-                                    // X Grid & Numbers
-                                    val startX = kotlin.math.ceil(xMin / xStep) * xStep
-                                    var currentX = startX
-                                    while (currentX <= xMax + 1e-6) {
-                                        val sx = toScreenX(currentX)
-                                        if (kotlin.math.abs(currentX) > 1e-5) {
-                                            drawLine(
-                                                color = if (isDark) Color(0xFF242830) else Color(0xFFE2E8F0),
-                                                start = Offset(sx, 0f),
-                                                end = Offset(sx, h),
-                                                strokeWidth = 1f
-                                            )
-                                            drawLine(
-                                                color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
-                                                start = Offset(sx, originY - 3.5f),
-                                                end = Offset(sx, originY + 3.5f),
-                                                strokeWidth = 1.2f
-                                            )
-                                            val textRes = textMeasurer.measure(formatCoord(currentX), style = numStyle)
-                                            val labelY = (originY + 5f).coerceIn(4f, h - textRes.size.height - 4f)
-                                            val labelX = (sx - textRes.size.width / 2f).coerceIn(4f, w - textRes.size.width - 4f)
-                                            drawText(textRes, topLeft = Offset(labelX, labelY))
-                                        }
-                                        currentX += xStep
-                                    }
-
-                                    // Y Grid & Numbers
-                                    val startY = kotlin.math.ceil(yMin / yStep) * yStep
-                                    var currentY = startY
-                                    while (currentY <= yMax + 1e-6) {
-                                        val sy = toScreenY(currentY)
-                                        if (kotlin.math.abs(currentY) > 1e-5) {
-                                            drawLine(
-                                                color = if (isDark) Color(0xFF242830) else Color(0xFFE2E8F0),
-                                                start = Offset(0f, sy),
-                                                end = Offset(w, sy),
-                                                strokeWidth = 1f
-                                            )
-                                            drawLine(
-                                                color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
-                                                start = Offset(originX - 3.5f, sy),
-                                                end = Offset(originX + 3.5f, sy),
-                                                strokeWidth = 1.2f
-                                            )
-                                            val textRes = textMeasurer.measure(formatCoord(currentY), style = numStyle)
-                                            val labelX = (originX - textRes.size.width - 5f).coerceIn(4f, w - textRes.size.width - 4f)
-                                            val labelY = (sy - textRes.size.height / 2f).coerceIn(4f, h - textRes.size.height - 4f)
-                                            drawText(textRes, topLeft = Offset(labelX, labelY))
-                                        }
-                                        currentY += yStep
-                                    }
-
-                                    // Axes
-                                    drawLine(
-                                        color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
-                                        start = Offset(0f, originY),
-                                        end = Offset(w, originY),
-                                        strokeWidth = 1.5f
-                                    )
-                                    drawLine(
-                                        color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
-                                        start = Offset(originX, 0f),
-                                        end = Offset(originX, h),
-                                        strokeWidth = 1.5f
-                                    )
-
-                                    // Zero
-                                    val zeroRes = textMeasurer.measure("0", style = numStyle)
-                                    val zeroX = (originX - zeroRes.size.width - 5f).coerceIn(4f, w - zeroRes.size.width - 4f)
-                                    val zeroY = (originY + 5f).coerceIn(4f, h - zeroRes.size.height - 4f)
-                                    drawText(zeroRes, topLeft = Offset(zeroX, zeroY))
-
-                                    // Curves
-                                    expressions.forEachIndexed { exprIdx, expr ->
-                                        if (expr.isBlank()) return@forEachIndexed
-                                        val curveColor = Color(paletteColors[exprIdx % paletteColors.size])
-                                        val samples = MathEvaluator.sampleFunction(expr, xMin, xMax, steps = 300)
-
-                                        val curvePath = Path()
-                                        var inPath = false
-
-                                        for ((sxVal, syVal) in samples) {
-                                            if (syVal == null || syVal.isNaN() || syVal.isInfinite() || syVal < yMin - 100 || syVal > yMax + 100) {
-                                                inPath = false
-                                                continue
-                                            }
-                                            val px = toScreenX(sxVal)
-                                            val py = toScreenY(syVal)
-
-                                            if (!inPath) {
-                                                curvePath.moveTo(px, py)
-                                                inPath = true
-                                            } else {
-                                                curvePath.lineTo(px, py)
-                                            }
-                                        }
-
-                                        drawPath(
-                                            path = curvePath,
-                                            color = curveColor,
-                                            style = Stroke(width = 2.8f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                        )
-                                    }
-                                }
-                            }
+                            Text("✓ Применить график на доску", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -646,6 +522,94 @@ fun FunctionGraphEditDialog(
         }
     }
 }
+
+@Composable
+private fun GraphPreviewBox(
+    expressions: List<String>,
+    xMin: Float,
+    xMax: Float,
+    yMin: Float,
+    yMax: Float,
+    paletteColors: List<Long>,
+    isDark: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val textMeasurer = rememberTextMeasurer()
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isDark) Color(0xFF0F1115) else Color.White)
+            .border(1.dp, if (isDark) Color(0xFF2A3142) else Color(0xFFCBD5E1), RoundedCornerShape(12.dp))
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+
+            clipRect(0f, 0f, w, h) {
+                val spanX = (xMax - xMin).coerceAtLeast(0.001f).toDouble()
+                val spanY = (yMax - yMin).coerceAtLeast(0.001f).toDouble()
+
+                fun toScreenX(vx: Double): Float = ((vx - xMin) / spanX * w).toFloat()
+                fun toScreenY(vy: Double): Float = (h - (vy - yMin) / spanY * h).toFloat()
+
+                val originX = toScreenX(0.0).coerceIn(0f, w)
+                val originY = toScreenY(0.0).coerceIn(0f, h)
+
+                // Сетка и оси
+                val numStyle = TextStyle(
+                    fontSize = 9.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
+                )
+
+                // Оси
+                drawLine(
+                    color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
+                    start = Offset(0f, originY),
+                    end = Offset(w, originY),
+                    strokeWidth = 1.2f
+                )
+                drawLine(
+                    color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
+                    start = Offset(originX, 0f),
+                    end = Offset(originX, h),
+                    strokeWidth = 1.2f
+                )
+
+                // Кривые функций
+                expressions.forEachIndexed { exprIdx, expr ->
+                    if (expr.isBlank()) return@forEachIndexed
+                    val curveColor = Color(paletteColors[exprIdx % paletteColors.size])
+                    val samples = MathEvaluator.sampleFunction(expr, xMin.toDouble(), xMax.toDouble(), steps = 250)
+
+                    val curvePath = Path()
+                    var inPath = false
+
+                    for ((sxVal, syVal) in samples) {
+                        if (syVal == null || syVal.isNaN() || syVal.isInfinite() || syVal < yMin - 50 || syVal > yMax + 50) {
+                            inPath = false
+                            continue
+                        }
+                        val px = toScreenX(sxVal)
+                        val py = toScreenY(syVal)
+
+                        if (!inPath) {
+                            curvePath.moveTo(px, py)
+                            inPath = true
+                        } else {
+                            curvePath.lineTo(px, py)
+                        }
+                    }
+
+                    drawPath(
+                        path = curvePath,
+                        color = curveColor,
+                        style = Stroke(width = 2.4f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -670,18 +634,35 @@ private fun MathKey(
 
     Box(
         modifier = modifier
-            .height(34.dp)
+            .height(30.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(bg)
-            .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+            .border(1.dp, if (isDark) Color(0xFF333D4F) else Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = textColor
         )
     }
+}
+
+/**
+ * Обратная совместимость для вызова FunctionGraphEditDialog.
+ */
+@Composable
+fun FunctionGraphEditDialog(
+    element: BoardElement.FunctionGraph,
+    onSave: (BoardElement.FunctionGraph) -> Unit,
+    onDismiss: () -> Unit
+) {
+    FunctionGraphSidePanel(
+        isOpen = true,
+        element = element,
+        onSave = onSave,
+        onDismiss = onDismiss
+    )
 }

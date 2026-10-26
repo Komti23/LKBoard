@@ -9,12 +9,52 @@ import com.lkboard.app.model.StrokeStyle
 import java.util.prefs.Preferences
 
 /**
+ * Детектор системной темы Windows (Dark / Light Mode).
+ */
+object SystemThemeDetector {
+    private var cachedIsDark: Boolean? = null
+    private var lastCheckTime = 0L
+
+    fun isSystemDark(): Boolean {
+        val now = System.currentTimeMillis()
+        if (cachedIsDark != null && now - lastCheckTime < 4000L) {
+            return cachedIsDark!!
+        }
+        val isDark = try {
+            val process = ProcessBuilder("reg", "query", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "/v", "AppsUseLightTheme")
+                .redirectErrorStream(true)
+                .start()
+            val output = process.inputStream.bufferedReader().readText()
+            process.waitFor()
+            if (output.contains("0x0")) true else if (output.contains("0x1")) false else true
+        } catch (_: Exception) {
+            true
+        }
+        cachedIsDark = isDark
+        lastCheckTime = now
+        return isDark
+    }
+}
+
+/**
  * Тема оформления приложения Lkboard.
  */
-enum class AppTheme(val displayName: String, val isDark: Boolean, val defaultBgColor: Long, val defaultGridType: GridType) {
+enum class AppTheme(
+    val displayName: String,
+    private val rawIsDark: Boolean,
+    private val rawBgColor: Long,
+    val defaultGridType: GridType
+) {
+    SYSTEM("Как на компьютере (Авто)", true, 0xFF0D0F12, GridType.DOTS),
     DARK("Тёмная (Industrial Dark)", true, 0xFF0D0F12, GridType.DOTS),
     LIGHT("Светлая (Чистая бумага)", false, 0xFFFFFFFF, GridType.DOTS),
-    NOTEBOOK("Тетрадь в клетку", false, 0xFFF8FAFC, GridType.LINES)
+    NOTEBOOK("Тетрадь в клетку", false, 0xFFF8FAFC, GridType.LINES);
+
+    val isDark: Boolean
+        get() = if (this == SYSTEM) SystemThemeDetector.isSystemDark() else rawIsDark
+
+    val defaultBgColor: Long
+        get() = if (this == SYSTEM) (if (SystemThemeDetector.isSystemDark()) 0xFF0D0F12 else 0xFFFFFFFF) else rawBgColor
 }
 
 /**

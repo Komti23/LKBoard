@@ -27,13 +27,17 @@ import com.lkboard.app.ui.canvas.InfiniteCanvas
 import com.lkboard.app.ui.components.AppLogo
 import com.lkboard.app.ui.components.GlassToolbar
 import com.lkboard.app.ui.components.MilestoneEditDialog
+import com.lkboard.app.ui.components.MilestoneSidePanel
 import com.lkboard.app.ui.components.FunctionGraphEditDialog
+import com.lkboard.app.ui.components.FunctionGraphSidePanel
 import com.lkboard.app.ui.components.ShareBoardDialog
 import com.lkboard.app.ui.components.StickyNoteEditDialog
 import com.lkboard.app.ui.components.TextEditDialog
 import com.lkboard.app.ui.components.UpdateDialog
 import com.lkboard.app.ui.components.LatexEditDialog
+import com.lkboard.app.ui.components.LatexSidePanel
 import com.lkboard.app.ui.components.PhysicsStencilDialog
+import com.lkboard.app.ui.components.PhysicsLabSidePanel
 import com.lkboard.app.ui.components.FirstRunOnboardingDialog
 import com.lkboard.app.ui.components.SettingsDialog
 import com.lkboard.app.ui.components.SettingsSidePanel
@@ -154,6 +158,24 @@ fun main() = application {
                     }
                     isPresentationMode && !isCtrl && (keyEvent.key == Key.L || rawKeyCode == java.awt.event.KeyEvent.VK_L) -> {
                         viewModel.toggleLaserPointer()
+                        true
+                    }
+
+                    // Закрытие открытых боковых панелей или диалогов по нажатию Escape
+                    (keyEvent.key == Key.Escape || rawKeyCode == java.awt.event.KeyEvent.VK_ESCAPE) && (
+                        isSettingsDialogOpen || isLatexDialogOpen || isPhysicsStencilDialogOpen ||
+                        isShareDialogOpen || editingMilestone != null || editingFunctionGraph != null ||
+                        editingStickyNote != null || editingElement != null || showVersionDetailsDialog
+                    ) -> {
+                        if (isSettingsDialogOpen) viewModel.closeSettingsDialog()
+                        if (isLatexDialogOpen) viewModel.closeLatexDialog()
+                        if (isPhysicsStencilDialogOpen) viewModel.closePhysicsStencilDialog()
+                        if (isShareDialogOpen) viewModel.closeShareDialog()
+                        if (editingMilestone != null) viewModel.closeMilestoneDialog()
+                        if (editingFunctionGraph != null) viewModel.closeFunctionGraphDialog()
+                        if (editingStickyNote != null) viewModel.closeStickyNoteEditor()
+                        if (editingElement != null) viewModel.cancelTextEdit()
+                        if (showVersionDetailsDialog) showVersionDetailsDialog = false
                         true
                     }
 
@@ -596,23 +618,21 @@ fun main() = application {
                             )
                         }
 
-                        // 4. Модальный редактор для вех дорожной карты
-                        if (editingMilestone != null) {
-                            MilestoneEditDialog(
-                                element = editingMilestone!!,
-                                onSave = viewModel::updateMilestoneCard,
-                                onDismiss = viewModel::closeMilestoneDialog
-                            )
-                        }
+                        // 4. Боковая панель для вех дорожной карты
+                        MilestoneSidePanel(
+                            isOpen = editingMilestone != null,
+                            element = editingMilestone,
+                            onSave = viewModel::updateMilestoneCard,
+                            onDismiss = viewModel::closeMilestoneDialog
+                        )
 
-                        // 5. Модальный редактор для математических графиков
-                        if (editingFunctionGraph != null) {
-                            FunctionGraphEditDialog(
-                                element = editingFunctionGraph!!,
-                                onSave = viewModel::updateFunctionGraph,
-                                onDismiss = viewModel::closeFunctionGraphDialog
-                            )
-                        }
+                        // 5. Боковая панель математической студии графиков
+                        FunctionGraphSidePanel(
+                            isOpen = editingFunctionGraph != null,
+                            element = editingFunctionGraph,
+                            onSave = viewModel::updateFunctionGraph,
+                            onDismiss = viewModel::closeFunctionGraphDialog
+                        )
 
                         // 6. Диалог совместной работы и шеринга ссылки на доску
                         if (isShareDialogOpen) {
@@ -627,23 +647,21 @@ fun main() = application {
                             )
                         }
 
-                        // 7. Диалог создания и редактирования формул LaTeX
-                        if (isLatexDialogOpen) {
-                            LatexEditDialog(
-                                initialFormula = editingLatexFormula?.formula ?: "\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
-                                initialFontSize = editingLatexFormula?.fontSize ?: 24f,
-                                onDismiss = viewModel::closeLatexDialog,
-                                onSave = { formula, fontSize -> viewModel.saveLatexFormula(formula, fontSize) }
-                            )
-                        }
+                        // 7. Боковая панель создания и редактирования формул LaTeX
+                        LatexSidePanel(
+                            isOpen = isLatexDialogOpen,
+                            initialFormula = editingLatexFormula?.formula ?: "\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
+                            initialFontSize = editingLatexFormula?.fontSize ?: 24f,
+                            onDismiss = viewModel::closeLatexDialog,
+                            onSave = { formula, fontSize -> viewModel.saveLatexFormula(formula, fontSize) }
+                        )
 
-                        // 8. Физический и инженерный конструктор (Stencils)
-                        if (isPhysicsStencilDialogOpen) {
-                            PhysicsStencilDialog(
-                                onDismiss = viewModel::closePhysicsStencilDialog,
-                                onSelectStencil = viewModel::addPhysicsStencil
-                            )
-                        }
+                        // 8. Боковая панель физического конструктора и интерактивной мини-лаборатории
+                        PhysicsLabSidePanel(
+                            isOpen = isPhysicsStencilDialogOpen,
+                            onDismiss = viewModel::closePhysicsStencilDialog,
+                            onSelectStencil = viewModel::addPhysicsStencil
+                        )
                     }
                 }
             }
