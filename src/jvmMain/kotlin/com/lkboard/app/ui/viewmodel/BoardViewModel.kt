@@ -191,13 +191,28 @@ class BoardViewModel {
                 panX = transform.pan.x,
                 panY = transform.pan.y,
                 scale = transform.scale,
-                width = 1366f,
-                height = 850f,
+                width = currentCanvasWidth,
+                height = currentCanvasHeight,
                 backgroundColorHex = _state.value.backgroundColorHex
             )
         }
     )
     val collabState: StateFlow<CollabSessionState> = collabManager.state
+
+    @Volatile
+    private var currentCanvasWidth: Float = 1920f
+    @Volatile
+    private var currentCanvasHeight: Float = 1080f
+
+    /**
+     * Обновление актуального экранного размера холста на ПК для безупречной 1:1 проекции координат планшета.
+     */
+    fun updateCanvasDimensions(width: Float, height: Float) {
+        if (width > 50f && height > 50f) {
+            currentCanvasWidth = width
+            currentCanvasHeight = height
+        }
+    }
 
     private val _isTabletModeEnabled = MutableStateFlow(false)
     val isTabletModeEnabled: StateFlow<Boolean> = _isTabletModeEnabled.asStateFlow()

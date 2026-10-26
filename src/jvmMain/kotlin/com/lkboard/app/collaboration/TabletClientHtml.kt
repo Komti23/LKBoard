@@ -316,17 +316,39 @@ object TabletClientHtml {
             background-image: radial-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px);
             background-size: 24px 24px;
         }
+
+        /* Угловые маркеры активной зоны дигитайзера (соответствие 4 углам монитора ПК) */
+        .digitizer-corner {
+            position: fixed;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 18px;
+            font-family: monospace;
+            font-weight: 900;
+            pointer-events: none;
+            user-select: none;
+            z-index: 85;
+            line-height: 1;
+        }
+        .corner-tl { top: 10px; left: 10px; }
+        .corner-tr { top: 10px; right: 10px; }
+        .corner-bl { bottom: 68px; left: 10px; }
+        .corner-br { bottom: 68px; right: 10px; }
     </style>
 </head>
 <body>
 
     <div class="tablet-grid"></div>
+    <div class="digitizer-corner corner-tl" title="Верхний левый угол монитора">⌜</div>
+    <div class="digitizer-corner corner-tr" title="Верхний правый угол монитора">⌝</div>
+    <div class="digitizer-corner corner-bl" title="Нижний левый угол монитора">⌞</div>
+    <div class="digitizer-corner corner-br" title="Нижний правый угол монитора">⌟</div>
+
     <canvas id="canvas"></canvas>
 
     <!-- Индикатор подключения -->
     <div class="status-badge">
         <div class="status-dot" id="status-dot"></div>
-        <span id="status-text">Подключено к LKBoard</span>
+        <span id="status-text">Графический планшет · 1:1 монитор</span>
     </div>
 
     <!-- Кнопка повторного входа в полный экран -->
@@ -532,19 +554,23 @@ object TabletClientHtml {
             window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
             resizeCanvas();
 
-            // Запрос вьюпорта с ПК
+            // Запрос актуальной геометрии экрана и масштаба с ПК
             async function fetchViewport() {
                 try {
                     const res = await fetch('/api/viewport');
                     if (res.ok) {
-                        pcViewport = await res.json();
+                        const vp = await res.json();
+                        if (vp && vp.width > 50 && vp.height > 50) {
+                            pcViewport = vp;
+                        }
                     }
                 } catch (_) {}
             }
             fetchViewport();
-            setInterval(fetchViewport, 2000);
+            setInterval(fetchViewport, 800);
 
-            // Пересчет экранных координат телефона в мировые координаты доски ПК
+            // Пересчет экранных координат планшета (0..phoneW, 0..phoneH) в мировые координаты доски ПК
+            // Гарантирует абсолютное 1:1 соответствие: угол телефона = угол экрана монитора!
             function phoneToWorld(px, py) {
                 const phoneW = window.innerWidth;
                 const phoneH = window.innerHeight;
@@ -557,9 +583,13 @@ object TabletClientHtml {
                 const worldW = worldRight - worldLeft;
                 const worldH = worldBottom - worldTop;
 
+                // Клампинг координат строго внутри экрана планшета
+                const cx = Math.max(0, Math.min(phoneW, px));
+                const cy = Math.max(0, Math.min(phoneH, py));
+
                 return {
-                    x: worldLeft + (px / phoneW) * worldW,
-                    y: worldTop + (py / phoneH) * worldH
+                    x: worldLeft + (cx / phoneW) * worldW,
+                    y: worldTop + (cy / phoneH) * worldH
                 };
             }
 
@@ -593,6 +623,47 @@ object TabletClientHtml {
                 });
             }
 
+            // Потоковая передача рисуемого штриха в реальном времени на монитор ПК
+            let activeStrokeId = null;
+            let lastLiveStreamTime = 0;
+
+            async function streamLiveStroke(isFinal) {
+                if (!isDrawing || currentStrokePoints.length < 2) return;
+                const now = performance.now();
+                if (!isFinal && now - lastLiveStreamTime < 32) return; // ~30 fps
+                lastLiveStreamTime = now;
+
+                if (!activeStrokeId) {
+                    activeStrokeId = 'tablet-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+                }
+
+                const isHighlighter = currentTool === 'highlighter';
+                const strokeWidth = currentWidth;
+
+                const drawingPath = {
+                    type: 'drawing_path',
+                    id: activeStrokeId,
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                    zIndex: 10,
+                    isLocked: false,
+                    rotation: 0,
+                    points: currentStrokePoints.slice(),
+                    strokeColorHex: currentColorHex,
+                    strokeWidth: strokeWidth,
+                    isHighlighter: isHighlighter
+                };
+
+                await sendAction({
+                    type: 'upsert_element',
+                    element: drawingPath,
+                    senderId: 'phone-tablet-stylus',
+                    senderName: 'Стилус (Телефон)'
+                });
+            }
+
             // Обработка касаний стилуса / пальца
             canvas.addEventListener('pointerdown', (e) => {
                 if (activePointerId !== null) return;
@@ -614,6 +685,7 @@ object TabletClientHtml {
                 const py = e.clientY - rect.top;
                 const pressure = e.pressure > 0 ? e.pressure : 0.5;
 
+                activeStrokeId = 'tablet-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
                 const world = phoneToWorld(px, py);
                 currentStrokePoints = [{ x: world.x, y: world.y }];
 
@@ -648,6 +720,7 @@ object TabletClientHtml {
                     ctx.stroke();
 
                     streamPointerMove(world);
+                    streamLiveStroke(false);
                 }
             });
 
@@ -656,41 +729,19 @@ object TabletClientHtml {
                 isDrawing = false;
                 activePointerId = null;
 
-                if (currentStrokePoints.length < 2) {
-                    currentStrokePoints = [];
-                    return;
+                if (currentStrokePoints.length >= 2) {
+                    await streamLiveStroke(true);
+                    if (activeStrokeId) {
+                        strokesHistory.push(activeStrokeId);
+                    }
                 }
 
-                const strokeId = 'tablet-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
-                const isHighlighter = currentTool === 'highlighter';
-                const strokeWidth = currentWidth;
-
-                const drawingPath = {
-                    type: 'drawing_path',
-                    id: strokeId,
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0,
-                    zIndex: 10,
-                    isLocked: false,
-                    rotation: 0,
-                    points: currentStrokePoints,
-                    strokeColorHex: currentColorHex,
-                    strokeWidth: strokeWidth,
-                    isHighlighter: isHighlighter
-                };
-
-                strokesHistory.push(strokeId);
-
-                await sendAction({
-                    type: 'upsert_element',
-                    element: drawingPath,
-                    senderId: 'phone-tablet-stylus',
-                    senderName: 'Стилус (Телефон)'
-                });
-
+                activeStrokeId = null;
                 currentStrokePoints = [];
+
+                // Планшет очищает локальный экран после завершения штриха (режим чистого дигитайзера),
+                // а постоянный рисунок в высоком разрешении сохраняется на мониторе ПК!
+                setTimeout(redrawLocalCanvas, 250);
             }
 
             canvas.addEventListener('pointerup', finishStroke);

@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -329,7 +330,13 @@ fun main() = application {
                 }
 
                 AppScreen.CANVAS -> {
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .onSizeChanged { size ->
+                                viewModel.updateCanvasDimensions(size.width.toFloat(), size.height.toFloat())
+                            }
+                    ) {
                         // 1. Бесконечный холст с поддержкой рисования стилусом и inline-редактирования
                         InfiniteCanvas(
                             state = boardState,

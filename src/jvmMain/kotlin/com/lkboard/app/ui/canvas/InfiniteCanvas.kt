@@ -593,26 +593,79 @@ fun InfiniteCanvas(
                 }
 
                 // 2.5 Отрисовка удаленных курсоров участников совместной сессии
+                val nowTime = System.currentTimeMillis()
                 for ((_, pointer) in remotePointers) {
+                    if (nowTime - pointer.lastUpdated > 5000L) continue // скрывать, если перо неактивно
+
                     val pColor = Color(pointer.colorHex)
                     val pCenter = Offset(pointer.x, pointer.y)
-                    val pRadius = if (pointer.isLaser) 7f / state.transform.scale else 4.5f / state.transform.scale
+                    val isStylus = pointer.peerId == "phone-tablet-stylus"
 
-                    drawCircle(
-                        color = pColor.copy(alpha = 0.35f),
-                        radius = pRadius * 2.2f,
-                        center = pCenter
-                    )
-                    drawCircle(
-                        color = pColor,
-                        radius = pRadius,
-                        center = pCenter
-                    )
-                    drawCircle(
-                        color = Color.White,
-                        radius = pRadius * 0.45f,
-                        center = pCenter
-                    )
+                    if (isStylus) {
+                        // Точный дигитайзер-прицел пера графического планшета
+                        val crosshair = 9f / state.transform.scale
+                        val strokeW = 1.4f / state.transform.scale
+
+                        // Тонкое перекрестие пера с контрастной обводкой
+                        drawLine(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            start = Offset(pCenter.x - crosshair, pCenter.y),
+                            end = Offset(pCenter.x + crosshair, pCenter.y),
+                            strokeWidth = strokeW * 2f
+                        )
+                        drawLine(
+                            color = pColor,
+                            start = Offset(pCenter.x - crosshair, pCenter.y),
+                            end = Offset(pCenter.x + crosshair, pCenter.y),
+                            strokeWidth = strokeW
+                        )
+                        drawLine(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            start = Offset(pCenter.x, pCenter.y - crosshair),
+                            end = Offset(pCenter.x, pCenter.y + crosshair),
+                            strokeWidth = strokeW * 2f
+                        )
+                        drawLine(
+                            color = pColor,
+                            start = Offset(pCenter.x, pCenter.y - crosshair),
+                            end = Offset(pCenter.x, pCenter.y + crosshair),
+                            strokeWidth = strokeW
+                        )
+
+                        // Центральная точка пера с легким ореолом
+                        drawCircle(
+                            color = pColor.copy(alpha = 0.25f),
+                            radius = 6f / state.transform.scale,
+                            center = pCenter
+                        )
+                        drawCircle(
+                            color = Color.White,
+                            radius = 3f / state.transform.scale,
+                            center = pCenter
+                        )
+                        drawCircle(
+                            color = pColor,
+                            radius = 1.6f / state.transform.scale,
+                            center = pCenter
+                        )
+                    } else {
+                        val pRadius = if (pointer.isLaser) 7f / state.transform.scale else 4.5f / state.transform.scale
+                        drawCircle(
+                            color = pColor.copy(alpha = 0.35f),
+                            radius = pRadius * 2.2f,
+                            center = pCenter
+                        )
+                        drawCircle(
+                            color = pColor,
+                            radius = pRadius,
+                            center = pCenter
+                        )
+                        drawCircle(
+                            color = Color.White,
+                            radius = pRadius * 0.45f,
+                            center = pCenter
+                        )
+                    }
                 }
 
                 // 3. Отрисовка Bounding Box и маркеров для выделенных элементов (для инструмента SELECT или при активном выделении)
