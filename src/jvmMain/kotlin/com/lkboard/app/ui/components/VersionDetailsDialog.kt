@@ -1,9 +1,8 @@
 package com.lkboard.app.ui.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -41,7 +40,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +54,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -78,8 +75,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Выдвижная вкладка с подробными данными о версии приложения LKBoard и новыми функциями (What's New).
- * Вытаскивается сверху с тактильной пружинной анимацией при клике на бейдж версии,
- * и сворачивается обратно наверх при закрытии.
+ * Выдвигается сверху с плавной slide-анимацией без артефактов и искажения шрифтов.
  */
 @Composable
 fun VersionDetailsDialog(
@@ -100,8 +96,8 @@ fun VersionDetailsDialog(
             animProgress.animateTo(
                 targetValue = 0f,
                 animationSpec = tween(
-                    durationMillis = 240,
-                    easing = FastOutSlowInEasing
+                    durationMillis = 160,
+                    easing = FastOutLinearInEasing
                 )
             )
             onDismiss()
@@ -111,9 +107,9 @@ fun VersionDetailsDialog(
     LaunchedEffect(Unit) {
         animProgress.animateTo(
             targetValue = 1f,
-            animationSpec = spring(
-                dampingRatio = 0.74f,
-                stiffness = Spring.StiffnessMediumLow
+            animationSpec = tween(
+                durationMillis = 200,
+                easing = FastOutSlowInEasing
             )
         )
     }
@@ -136,11 +132,11 @@ fun VersionDetailsDialog(
             },
         contentAlignment = Alignment.TopCenter
     ) {
-        // Затемняющий фон (scrim), закрывающийся при клике снаружи
+        // Затемняющий фон (scrim), плавно закрывающийся при клике
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.50f * animProgress.value.coerceIn(0f, 1f)))
+                .background(Color.Black.copy(alpha = 0.45f * animProgress.value.coerceIn(0f, 1f)))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -149,288 +145,261 @@ fun VersionDetailsDialog(
                 }
         )
 
-        // Выдвигающаяся и сворачивающаяся карточка-вкладка
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        // Выдвигающаяся карточка-шторка (чистый вертикальный slide без растягивания текста и без артефактов)
+        val progress = animProgress.value.coerceIn(0f, 1f)
+        Box(
             modifier = Modifier
-                .padding(top = 18.dp, bottom = 24.dp)
+                .padding(top = 28.dp, bottom = 28.dp)
                 .graphicsLayer {
                     transformOrigin = TransformOrigin(0.5f, 0f)
-                    // Вытаскивание сверху и сворачивание наверх
-                    translationY = (1f - animProgress.value) * -260.dp.toPx()
-                    // Пружинное вертикальное и горизонтальное складывание как вкладка
-                    scaleX = 0.93f + 0.07f * animProgress.value
-                    scaleY = 0.65f + 0.35f * animProgress.value
-                    alpha = animProgress.value.coerceIn(0f, 1f)
+                    // Плавный вертикальный сдвиг без растяжения шрифтов
+                    translationY = (1f - progress) * -42.dp.toPx()
+                    scaleX = 0.98f + 0.02f * progress
+                    scaleY = 0.98f + 0.02f * progress
+                    alpha = progress
                 }
+                .widthIn(max = 660.dp)
+                .heightIn(max = 680.dp)
+                .shadow(
+                    elevation = 16.dp,
+                    shape = RoundedCornerShape(20.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.05f),
+                    spotColor = Color.Black.copy(alpha = 0.12f)
+                )
+                .clip(RoundedCornerShape(20.dp))
+                .background(if (isDark) Color(0xFF16181D) else Color.White)
+                .border(
+                    BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
+                    RoundedCornerShape(20.dp)
+                )
         ) {
-            // Верхний язычок вкладки (Pull Tab / Grab Handle)
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                    .background(
-                        if (isDark) Brush.verticalGradient(listOf(Color(0xFF242A36), Color(0xFF1C2028)))
-                        else Brush.verticalGradient(listOf(Color(0xFFFFFFFF), Color(0xFFEFF4FA)))
-                    )
-                    .border(
-                        BorderStroke(1.dp, if (isDark) Color(0xFF3B4456) else Color(0xFFCBD5E1)),
-                        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-                    )
-                    .bouncyClickable { collapseAndDismiss() }
-                    .padding(horizontal = 24.dp, vertical = 6.dp)
+            Column(
+                modifier = Modifier.padding(22.dp)
             ) {
+                // Аккуратный индикатор-язычок шторки в стиле Apple
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .size(width = 38.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(if (isDark) Color(0xFF333A48) else Color(0xFFCBD5E1))
+                )
+
+                Spacer(Modifier.height(14.dp))
+
+                // Заголовок с логотипом приложения и кнопкой закрытия
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Свернуть вкладку",
-                        tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Вкладка LKBoard v${AppVersion.VERSION_NAME} • Нажмите, чтобы свернуть",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF334155)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Свернуть вкладку",
-                        tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-
-            // Основной корпус выдвинутой вкладки
-            Surface(
-                modifier = Modifier
-                    .widthIn(max = 660.dp)
-                    .heightIn(max = 680.dp),
-                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp, topStart = 16.dp, topEnd = 16.dp),
-                color = if (isDark) Color(0xFF16181D) else Color.White,
-                border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
-                shadowElevation = 32.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    // Заголовок с увеличенной иконкой приложения и кнопкой сворачивания
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            AppLogo.LogoIcon(size = 54.dp)
+                        AppLogo.LogoIcon(size = 48.dp)
 
-                            Column {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "LKBoard Pro",
+                                    fontSize = 19.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                                    letterSpacing = (-0.5).sp
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (isDark) Color(0xFF1E293B) else Color(0xFFEFF6FF))
+                                        .border(1.dp, if (isDark) Color(0xFF38BDF8).copy(alpha = 0.4f) else Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 7.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = "LKBoard Pro",
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
-                                        letterSpacing = (-0.5).sp
+                                        text = "v${AppVersion.VERSION_NAME}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
                                     )
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(if (isDark) Color(0xFF1E293B) else Color(0xFFEFF6FF))
-                                            .border(1.dp, if (isDark) Color(0xFF38BDF8).copy(alpha = 0.4f) else Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
-                                            .padding(horizontal = 7.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = "v${AppVersion.VERSION_NAME}",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
-                                        )
-                                    }
                                 }
-                                Spacer(Modifier.height(3.dp))
-                                Text(
-                                    text = "Сборка ${AppVersion.VERSION_CODE} • ${AppVersion.RELEASE_DATE} • Актуальная стабильная версия",
-                                    fontSize = 12.sp,
-                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
-                                )
                             }
-                        }
-
-                        IconButton(
-                            onClick = { collapseAndDismiss() },
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                                .bouncyClickable { collapseAndDismiss() }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Свернуть вкладку",
-                                tint = if (isDark) Color(0xFFCBD5E1) else Color(0xFF64748B),
-                                modifier = Modifier.size(18.dp)
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                text = "Сборка ${AppVersion.VERSION_CODE} • ${AppVersion.RELEASE_DATE} • Актуальная стабильная версия",
+                                fontSize = 12.sp,
+                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                             )
                         }
                     }
 
-                    Spacer(Modifier.height(16.dp))
-
-                    // Вкладки переключения: Что нового / О системе
-                    Row(
+                    IconButton(
+                        onClick = { collapseAndDismiss() },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
+                            .size(32.dp)
+                            .clip(CircleShape)
                             .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            .bouncyClickable { collapseAndDismiss() }
                     ) {
-                        TabButton(
-                            title = "✨ Новые функции",
-                            icon = Icons.Default.Stars,
-                            isSelected = selectedTab == 0,
-                            isDark = isDark,
-                            modifier = Modifier.weight(1f),
-                            onClick = { selectedTab = 0 }
-                        )
-                        TabButton(
-                            title = "ℹ️ О системе",
-                            icon = Icons.Default.Info,
-                            isSelected = selectedTab == 1,
-                            isDark = isDark,
-                            modifier = Modifier.weight(1f),
-                            onClick = { selectedTab = 1 }
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Свернуть вкладку",
+                            tint = if (isDark) Color(0xFFCBD5E1) else Color(0xFF64748B),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
+                }
 
-                    Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(16.dp))
 
-                    // Содержимое выбранной вкладки (со скроллом)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                    ) {
-                        if (selectedTab == 0) {
-                            // Список новых функций релиза
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .verticalScroll(rememberScrollState()),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                AppVersion.WHAT_IS_NEW.forEach { item ->
-                                    FeatureCard(item = item, isDark = isDark)
-                                }
-                            }
-                        } else {
-                            // Подробные данные системы и окружения
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .verticalScroll(rememberScrollState()),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                SystemInfoCard(
-                                    title = "Окружение и движок",
-                                    isDark = isDark,
-                                    rows = listOf(
-                                        "Версия приложения" to "v${AppVersion.VERSION_NAME} (Build ${AppVersion.VERSION_CODE})",
-                                        "Среда выполнения Java" to "${System.getProperty("java.version")} (${System.getProperty("java.vendor")})",
-                                        "Операционная система" to "${System.getProperty("os.name")} ${System.getProperty("os.version")} (${System.getProperty("os.arch")})",
-                                        "Графический стек" to "Compose Multiplatform Desktop + Skia",
-                                        "Поддержка стилуса" to "Windows Pointer Events & Pressure API",
-                                        "Сервер синхронизации" to AppVersion.UPDATE_URL
-                                    )
-                                )
+                // Вкладки переключения: Что нового / О системе
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    TabButton(
+                        title = "✨ Новые функции",
+                        icon = Icons.Default.Stars,
+                        isSelected = selectedTab == 0,
+                        isDark = isDark,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedTab = 0 }
+                    )
+                    TabButton(
+                        title = "ℹ️ О системе",
+                        icon = Icons.Default.Info,
+                        isSelected = selectedTab == 1,
+                        isDark = isDark,
+                        modifier = Modifier.weight(1f),
+                        onClick = { selectedTab = 1 }
+                    )
+                }
 
-                                SystemInfoCard(
-                                    title = "Ресурсы и ссылки",
-                                    isDark = isDark,
-                                    rows = listOf(
-                                        "Официальный сайт" to AppVersion.WEBSITE_URL,
-                                        "Страница загрузок" to AppVersion.DOWNLOAD_PAGE_URL,
-                                        "Разработчик" to "LKBoard Engineering Team"
-                                    )
-                                )
+                Spacer(Modifier.height(14.dp))
+
+                // Содержимое выбранной вкладки (со скроллом)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    if (selectedTab == 0) {
+                        // Список новых функций релиза
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            AppVersion.WHAT_IS_NEW.forEach { item ->
+                                FeatureCard(item = item, isDark = isDark)
                             }
                         }
+                    } else {
+                        // Подробные данные системы и окружения
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            SystemInfoCard(
+                                title = "Окружение и движок",
+                                isDark = isDark,
+                                rows = listOf(
+                                    "Версия приложения" to "v${AppVersion.VERSION_NAME} (Build ${AppVersion.VERSION_CODE})",
+                                    "Среда выполнения Java" to "${System.getProperty("java.version")} (${System.getProperty("java.vendor")})",
+                                    "Операционная система" to "${System.getProperty("os.name")} ${System.getProperty("os.version")} (${System.getProperty("os.arch")})",
+                                    "Графический стек" to "Compose Multiplatform Desktop + Skia",
+                                    "Поддержка стилуса" to "Windows Pointer Events & Pressure API",
+                                    "Сервер синхронизации" to AppVersion.UPDATE_URL
+                                )
+                            )
+
+                            SystemInfoCard(
+                                title = "Ресурсы и ссылки",
+                                isDark = isDark,
+                                rows = listOf(
+                                    "Официальный сайт" to AppVersion.WEBSITE_URL,
+                                    "Страница загрузок" to AppVersion.DOWNLOAD_PAGE_URL,
+                                    "Разработчик" to "LKBoard Engineering Team"
+                                )
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // Нижняя панель действий
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                Desktop.getDesktop().browse(URI.create(AppVersion.WEBSITE_URL))
+                            } catch (_: Exception) {}
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
+                        ),
+                        border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFCBD5E1)),
+                        modifier = Modifier.bouncyClickable {
+                            try {
+                                Desktop.getDesktop().browse(URI.create(AppVersion.WEBSITE_URL))
+                            } catch (_: Exception) {}
+                        }
+                    ) {
+                        Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Сайт LKBoard", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     }
 
-                    Spacer(Modifier.height(16.dp))
-
-                    // Нижняя панель действий
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedButton(
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(
                             onClick = {
-                                try {
-                                    Desktop.getDesktop().browse(URI.create(AppVersion.WEBSITE_URL))
-                                } catch (_: Exception) {}
+                                collapseAndDismiss()
+                                onCheckForUpdates()
                             },
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9),
+                                contentColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                             ),
-                            border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFCBD5E1)),
+                            border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)),
                             modifier = Modifier.bouncyClickable {
-                                try {
-                                    Desktop.getDesktop().browse(URI.create(AppVersion.WEBSITE_URL))
-                                } catch (_: Exception) {}
+                                collapseAndDismiss()
+                                onCheckForUpdates()
                             }
                         ) {
-                            Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Сайт LKBoard", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Проверить обновления", fontSize = 12.sp, fontWeight = FontWeight.Medium)
                         }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Button(
-                                onClick = {
-                                    collapseAndDismiss()
-                                    onCheckForUpdates()
-                                },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9),
-                                    contentColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
-                                ),
-                                border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)),
-                                modifier = Modifier.bouncyClickable {
-                                    collapseAndDismiss()
-                                    onCheckForUpdates()
-                                }
-                            ) {
-                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Проверить обновления", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                            }
-
-                            Button(
-                                onClick = { collapseAndDismiss() },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF2563EB),
-                                    contentColor = Color.White
-                                ),
-                                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 10.dp),
-                                modifier = Modifier.bouncyClickable { collapseAndDismiss() }
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Свернуть вкладку", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
+                        Button(
+                            onClick = { collapseAndDismiss() },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2563EB),
+                                contentColor = Color.White
+                            ),
+                            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 10.dp),
+                            modifier = Modifier.bouncyClickable { collapseAndDismiss() }
+                        ) {
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Свернуть", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
