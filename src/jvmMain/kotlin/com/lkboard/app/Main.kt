@@ -75,6 +75,7 @@ fun main() = application {
     val isLatexDialogOpen by viewModel.isLatexDialogOpen.collectAsState()
     val editingLatexFormula by viewModel.editingLatexFormula.collectAsState()
     val isPhysicsStencilDialogOpen by viewModel.isPhysicsStencilDialogOpen.collectAsState()
+    val isTabletModeActive by viewModel.isTabletModeEnabled.collectAsState()
 
     val logoPainter = AppLogo.rememberLogoPainter()
 
@@ -637,6 +638,10 @@ fun main() = application {
                     currentTheme = currentTheme,
                     currentRole = currentUserRole,
                     enabledTools = boardState.enabledTools,
+                    isTabletModeActive = isTabletModeActive,
+                    tabletWebLink = collabState.tabletWebLink,
+                    connectedTabletClientsCount = collabState.connectedPeers.count { it.clientType == "Tablet" || it.id.contains("tablet") },
+                    onToggleTabletMode = viewModel::toggleTabletMode,
                     onDismiss = viewModel::closeSettingsDialog,
                     onSaveSettings = viewModel::applySettings
                 )

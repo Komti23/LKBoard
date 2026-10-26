@@ -26,6 +26,13 @@ object NetworkUtils {
     }
 
     /**
+     * Создает локальную ссылку для режима графического планшета на смартфоне.
+     */
+    fun buildTabletWebLink(localIp: String, port: Int): String {
+        return "http://$localIp:$port/tablet"
+    }
+
+    /**
      * Возвращает список доступных локальных IPv4 адресов машины (Wi-Fi, Ethernet).
      */
     fun getLocalIpAddresses(): List<String> {

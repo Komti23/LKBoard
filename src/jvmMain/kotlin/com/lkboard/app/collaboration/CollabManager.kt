@@ -25,6 +25,7 @@ data class CollabSessionState(
     val appShareLink: String = "",
     val publicWebShareLink: String = "",
     val publicAppShareLink: String = "",
+    val tabletWebLink: String = "",
     val roomCode: String = "",
     val hostUrl: String = "",
     val statusMessage: String = "Совместная работа выключена",
@@ -44,7 +45,8 @@ class CollabManager(
     private val onRemoteElementUpsert: (BoardElement) -> Unit,
     private val onRemoteElementDelete: (List<String>) -> Unit,
     private val onRemoteSnapshotReceived: (BoardDocument) -> Unit,
-    private val onRemoteToggleStickyTodo: (noteId: String, lineIndex: Int) -> Unit
+    private val onRemoteToggleStickyTodo: (noteId: String, lineIndex: Int) -> Unit,
+    private val viewportProvider: () -> ViewportInfo = { ViewportInfo() }
 ) {
 
     private val scope = CoroutineScope(Dispatchers.Default + Job())
@@ -92,7 +94,8 @@ class CollabManager(
 
         val s = CollabServer(
             snapshotProvider = snapshotProvider,
-            onActionReceived = ::handleRemoteAction
+            onActionReceived = ::handleRemoteAction,
+            viewportProvider = viewportProvider
         )
 
         val actualPort = s.start(port = port, boardTitle = boardTitle, hostName = userName)
@@ -102,6 +105,7 @@ class CollabManager(
         val appLink = NetworkUtils.buildAppLink(primaryIp, actualPort)
         val publicWebLink = NetworkUtils.buildPublicWebLink(roomCode)
         val publicAppLink = NetworkUtils.buildPublicAppLink(roomCode)
+        val tabletLink = NetworkUtils.buildTabletWebLink(primaryIp, actualPort)
 
         _state.update {
             it.copy(
@@ -113,6 +117,7 @@ class CollabManager(
                 appShareLink = appLink,
                 publicWebShareLink = publicWebLink,
                 publicAppShareLink = publicAppLink,
+                tabletWebLink = tabletLink,
                 roomCode = roomCode,
                 userName = userName,
                 statusMessage = "Трансляция активна (Локально + Облако)",

@@ -20,7 +20,8 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class CollabServer(
     private var snapshotProvider: () -> BoardDocument,
-    private val onActionReceived: (CollabAction) -> Unit
+    private val onActionReceived: (CollabAction) -> Unit,
+    private val viewportProvider: () -> ViewportInfo = { ViewportInfo() }
 ) {
 
     private var server: HttpServer? = null
@@ -63,6 +64,44 @@ class CollabServer(
                 }
             } catch (_: Exception) {
                 sendNotFound(exchange)
+            }
+        }
+
+        // 1.5. Режим графического планшета для телефона (Stylus Digitizer)
+        s.createContext("/tablet") { exchange ->
+            try {
+                if (exchange.requestMethod.equals("GET", ignoreCase = true)) {
+                    val primaryIp = NetworkUtils.getPrimaryLocalIp()
+                    val html = TabletClientHtml.generateHtml(boardTitle, actualPort, primaryIp)
+                    val bytes = html.toByteArray(Charsets.UTF_8)
+                    exchange.responseHeaders.set("Content-Type", "text/html; charset=UTF-8")
+                    exchange.responseHeaders.set("Access-Control-Allow-Origin", "*")
+                    exchange.sendResponseHeaders(200, bytes.size.toLong())
+                    exchange.responseBody.use { it.write(bytes) }
+                } else {
+                    sendNotFound(exchange)
+                }
+            } catch (_: Exception) {
+                sendNotFound(exchange)
+            }
+        }
+
+        // 1.6. Геометрия текущего экрана ПК для точного позиционирования штрихов
+        s.createContext("/api/viewport") { exchange ->
+            handleCors(exchange)
+            if (exchange.requestMethod.equals("OPTIONS", ignoreCase = true)) {
+                exchange.sendResponseHeaders(204, -1)
+                return@createContext
+            }
+            try {
+                val vp = viewportProvider()
+                val json = kotlinx.serialization.json.Json.encodeToString(vp)
+                val bytes = json.toByteArray(Charsets.UTF_8)
+                exchange.responseHeaders.set("Content-Type", "application/json; charset=UTF-8")
+                exchange.sendResponseHeaders(200, bytes.size.toLong())
+                exchange.responseBody.use { it.write(bytes) }
+            } catch (_: Exception) {
+                sendInternalError(exchange)
             }
         }
 

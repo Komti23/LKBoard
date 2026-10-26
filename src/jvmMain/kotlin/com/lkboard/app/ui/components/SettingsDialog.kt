@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,13 +41,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.lkboard.app.collaboration.NetworkUtils
 import com.lkboard.app.data.AppTheme
 import com.lkboard.app.data.UserRole
 import com.lkboard.app.model.CanvasTool
+import com.lkboard.app.ui.animation.bouncyClickable
+import com.lkboard.app.update.AppVersion
+import java.awt.Desktop
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
+import java.net.URI
 
 /**
  * Диалог настроек LKBoard:
  * - Выбор темы приложения (Тёмная, Светлая, Тетрадь в клетку).
+ * - Режим графического планшета (смартфон / планшет со стилусом как графический планшет).
  * - Выбор быстрого профиля роли (Репетитор, Команда, Скетчи, Все инструменты).
  * - Выборочное включение / отключение инструментов на панели.
  */
@@ -53,23 +65,33 @@ fun SettingsDialog(
     currentTheme: AppTheme,
     currentRole: UserRole,
     enabledTools: Set<CanvasTool>,
+    isTabletModeActive: Boolean = false,
+    tabletWebLink: String = "",
+    connectedTabletClientsCount: Int = 0,
+    onToggleTabletMode: (Boolean) -> Unit = {},
     onDismiss: () -> Unit,
     onSaveSettings: (newTheme: AppTheme, newRole: UserRole, newEnabledTools: Set<CanvasTool>) -> Unit
 ) {
     var theme by remember { mutableStateOf(currentTheme) }
     var role by remember { mutableStateOf(currentRole) }
     var tools by remember { mutableStateOf(enabledTools) }
+    var isTabletActive by remember(isTabletModeActive) { mutableStateOf(isTabletModeActive) }
+    var isCopied by remember { mutableStateOf(false) }
     val isDark = theme.isDark
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.width(560.dp),
-            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier
+                .width(620.dp)
+                .heightIn(max = 740.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF181B20) else Color.White),
             border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0))
         ) {
             Column(
-                modifier = Modifier.padding(22.dp),
+                modifier = Modifier
+                    .padding(22.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Заголовок
@@ -85,7 +107,7 @@ fun SettingsDialog(
                         color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                     )
                     Text(
-                        text = "LKBoard v1.0",
+                        text = "LKBoard v${AppVersion.VERSION_NAME}",
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
                         color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
@@ -135,7 +157,153 @@ fun SettingsDialog(
                     }
                 }
 
-                // 2. Быстрый профиль инструментов
+                // 2. Режим графического планшета (смартфон со стилусом)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📱 РЕЖИМ ГРАФИЧЕСКОГО ПЛАНШЕТА (ТЕЛЕФОН СО СТИЛУСОМ):",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                        )
+
+                        // Переключатель режима планшета
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isTabletActive) (if (isDark) Color(0xFF1E3A8A) else Color(0xFFDBEAFE))
+                                    else (if (isDark) Color(0xFF27272A) else Color(0xFFF1F5F9))
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isTabletActive) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
+                                    else (if (isDark) Color(0xFF3F3F46) else Color(0xFFCBD5E1)),
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .bouncyClickable {
+                                    val nextState = !isTabletActive
+                                    isTabletActive = nextState
+                                    onToggleTabletMode(nextState)
+                                }
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (isTabletActive) "ВКЛЮЧЕНО ✓" else "ВЫКЛЮЧЕНО",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isTabletActive) (if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFF71717A) else Color(0xFF64748B))
+                            )
+                        }
+                    }
+
+                    if (isTabletActive) {
+                        val activeUrl = tabletWebLink.ifEmpty {
+                            val ip = NetworkUtils.getPrimaryLocalIp()
+                            NetworkUtils.buildTabletWebLink(ip, NetworkUtils.DEFAULT_PORT)
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isDark) Color(0xFF121824) else Color(0xFFF0F7FF))
+                                .border(1.dp, if (isDark) Color(0xFF1E3A8A) else Color(0xFFBFDBFE), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "🟢 Сервер планшета активен • Откройте ссылку на телефоне:",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)
+                                    )
+                                    if (connectedTabletClientsCount > 0) {
+                                        Text(
+                                            text = "📱 Подключено: $connectedTabletClientsCount",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF16A34A)
+                                        )
+                                    }
+                                }
+
+                                // Поле ссылки с кнопками
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isDark) Color(0xFF0D1117) else Color.White)
+                                        .border(1.dp, if (isDark) Color(0xFF283244) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = activeUrl,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                                        modifier = Modifier.weight(1f)
+                                    )
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Button(
+                                            onClick = {
+                                                try {
+                                                    val sel = StringSelection(activeUrl)
+                                                    Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
+                                                    isCopied = true
+                                                } catch (_: Exception) {}
+                                            },
+                                            shape = RoundedCornerShape(6.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (isCopied) Color(0xFF16A34A) else Color(0xFF2563EB),
+                                                contentColor = Color.White
+                                            ),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(28.dp)
+                                        ) {
+                                            Text(if (isCopied) "✓ Скопировано" else "Копировать", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                try {
+                                                    Desktop.getDesktop().browse(URI.create(activeUrl))
+                                                } catch (_: Exception) {}
+                                            },
+                                            shape = RoundedCornerShape(6.dp),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(28.dp)
+                                        ) {
+                                            Text("Открыть на ПК", fontSize = 10.sp)
+                                        }
+                                    }
+                                }
+
+                                Text(
+                                    text = "💡 Инструкция:\n1. Подключите телефон и компьютер к одной сети Wi-Fi.\n2. Откройте ссылку в браузере телефона и нажмите «Открыть на полный экран».\n3. Пишите стилусом или пальцем — штрихи мгновенно передаются на доску на ПК!",
+                                    fontSize = 10.sp,
+                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                    lineHeight = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 3. Быстрый профиль инструментов
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         text = "БЫСТРЫЙ ПРОФИЛЬ ДЛЯ ВАШИХ ЗАДАЧ:",
@@ -190,7 +358,7 @@ fun SettingsDialog(
                     }
                 }
 
-                // 3. Выборочная настройка видимости инструментов
+                // 4. Выборочная настройка видимости инструментов
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
                         text = "ВИДИМОСТЬ ИНСТРУМЕНТОВ НА ПАНЕЛИ:",

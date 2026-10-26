@@ -43,6 +43,19 @@ data class CollabActionRecord(
 )
 
 /**
+ * Геометрия видимой области экрана компьютера для точной синхронизации стилуса смартфона.
+ */
+@Serializable
+data class ViewportInfo(
+    val panX: Float = 0f,
+    val panY: Float = 0f,
+    val scale: Float = 1f,
+    val width: Float = 1366f,
+    val height: Float = 850f,
+    val backgroundColorHex: Long = 0xFFFFFFFFL
+)
+
+/**
  * Протокол сообщений совместной работы в реальном времени.
  */
 @Serializable

@@ -170,7 +170,11 @@ class BoardViewModel {
     val collabManager: CollabManager = CollabManager(
         snapshotProvider = { BoardSerializer.stateToDocument(_state.value) },
         onRemoteElementUpsert = { el ->
-            _state.update { it.withElement(el) }
+            if (el is BoardElement.DrawingPath && _state.value.elements[el.id] == null) {
+                addDrawingPath(el)
+            } else {
+                _state.update { it.withElement(el) }
+            }
         },
         onRemoteElementDelete = { ids ->
             _state.update { it.withoutElements(ids.toSet()) }
@@ -180,9 +184,33 @@ class BoardViewModel {
         },
         onRemoteToggleStickyTodo = { noteId, lineIndex ->
             toggleStickyTodo(noteId, lineIndex, broadcast = false)
+        },
+        viewportProvider = {
+            val transform = _state.value.transform
+            com.lkboard.app.collaboration.ViewportInfo(
+                panX = transform.pan.x,
+                panY = transform.pan.y,
+                scale = transform.scale,
+                width = 1366f,
+                height = 850f,
+                backgroundColorHex = _state.value.backgroundColorHex
+            )
         }
     )
     val collabState: StateFlow<CollabSessionState> = collabManager.state
+
+    private val _isTabletModeEnabled = MutableStateFlow(false)
+    val isTabletModeEnabled: StateFlow<Boolean> = _isTabletModeEnabled.asStateFlow()
+
+    fun toggleTabletMode(enabled: Boolean? = null) {
+        val target = enabled ?: !_isTabletModeEnabled.value
+        _isTabletModeEnabled.value = target
+        if (target) {
+            if (!collabState.value.isHosting) {
+                startHosting(userName = "ПК Хост")
+            }
+        }
+    }
 
     init {
         refreshBoardsList()
