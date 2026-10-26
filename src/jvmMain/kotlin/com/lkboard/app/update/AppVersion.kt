@@ -18,11 +18,11 @@ data class FeatureHighlight(
  * - x.x+1.0 (Minor) — среднее обновление (новые инструменты, шаблоны, функции)
  * - x+1.0.0 (Major) — крупный технологический прорыв
  *
- * Текущая версия: 1.8.0 (Сборка 180)
+ * Текущая версия: 1.8.1 (Сборка 181)
  */
 object AppVersion {
-    const val VERSION_NAME = "1.8.0"
-    const val VERSION_CODE = 180
+    const val VERSION_NAME = "1.8.1"
+    const val VERSION_CODE = 181
     const val RELEASE_DATE = "Октябрь 2026"
     const val UPDATE_URL = "http://164.37.224.219/api/version"
     const val WEBSITE_URL = "http://164.37.224.219"
