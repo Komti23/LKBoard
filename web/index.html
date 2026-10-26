@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LKBoard — Бесплатная онлайн-доска для уроков, репетиторов и созвонов</title>
-  <meta name="description" content="Быстрая и бесплатная открытая замена Miro. Никаких подписок, лимитов на доски и лагов на созвонах. Открыл в 1 клик и работаешь с учеником или коллегами.">
+  <title>LKBoard — Бесплатная онлайн-доска нового поколения с режимом графического планшета</title>
+  <meta name="description" content="Бесплатная интерактивная доска для уроков, заметок и схем. Превратите любой смартфон в графический планшет, пишите формулы LaTeX, стройте графики функций и собирайте физические схемы.">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   
-  <!-- Fonts -->
+  <!-- Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,31 +20,28 @@
       theme: {
         extend: {
           colors: {
-            bg: {
-              base: '#0D0F12',
-              surface: '#13161A',
-              elevated: '#181B20',
-              hover: '#1F2329'
-            },
-            line: {
-              subtle: '#1F242C',
-              DEFAULT: '#242830',
-              bright: '#363C48'
+            brand: {
+              black: '#050505',
+              grid: '#181a1f',
+              border: '#1f242c',
+              borderBright: '#2d333f',
+              surface: '#090a0d',
+              surfaceElevated: '#101216',
+              textPrimary: '#f4f4f5',
+              textSecondary: '#94a3b8',
+              textMuted: '#64748b'
             },
             accent: {
-              sky: '#38BDF8',
-              blue: '#3B82F6',
-              cobalt: '#0284C7'
-            },
-            content: {
-              primary: '#F4F4F5',
-              secondary: '#A1A1AA',
-              muted: '#71717A'
+              purple: '#9333ea',
+              purpleLight: '#c084fc',
+              blue: '#3b82f6',
+              cyan: '#38bdf8',
+              green: '#10b981'
             }
           },
           fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-            mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
           }
         }
       }
@@ -52,322 +49,1078 @@
   </script>
 
   <style>
-    .tech-grid {
-      background-size: 24px 24px;
-      background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    /* Technical Grid Lines & Crosshairs */
+    body {
+      background-color: #030303;
+      color: #f4f4f5;
+      font-family: 'Inter', -apple-system, sans-serif;
+      overflow-x: hidden;
     }
+
+    .tech-bg {
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Technical corner crosses */
+    .cross-tl { position: absolute; top: -7px; left: -5px; color: #475569; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1; pointer-events: none; user-select: none; }
+    .cross-tr { position: absolute; top: -7px; right: -5px; color: #475569; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1; pointer-events: none; user-select: none; }
+    .cross-bl { position: absolute; bottom: -7px; left: -5px; color: #475569; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1; pointer-events: none; user-select: none; }
+    .cross-br { position: absolute; bottom: -7px; right: -5px; color: #475569; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1; pointer-events: none; user-select: none; }
+    .cross-tc { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); color: #475569; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1; pointer-events: none; user-select: none; }
+    .cross-bc { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); color: #475569; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1; pointer-events: none; user-select: none; }
+
+    /* Custom scrollbars */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0D0F12; }
-    ::-webkit-scrollbar-thumb { background: #242830; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: #050505; }
+    ::-webkit-scrollbar-thumb { background: #22262e; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #333a46; }
+
+    /* Interactive Canvas */
+    #hero-canvas {
+      cursor: crosshair;
+      touch-action: none;
+    }
   </style>
 </head>
-<body class="bg-bg-base text-content-primary tech-grid min-h-screen flex flex-col antialiased selection:bg-accent-sky/20 selection:text-accent-sky">
+<body class="tech-bg min-h-screen flex flex-col selection:bg-accent-purple/30 selection:text-white">
 
   <!-- =========================================================================
-       1. Clean Minimal Navigation Bar
+       1. Top Technical Navbar (Matching Devault / ASCII layout)
        ========================================================================= -->
-  <header class="sticky top-0 z-50 bg-bg-base/90 backdrop-blur-md border-b border-line">
-    <div class="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
+  <header class="sticky top-0 z-50 bg-[#030303]/90 backdrop-blur-md border-b border-[#1b1f27]">
+    <div class="max-w-[1240px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       
-      <!-- Brand & Version Tag -->
+      <!-- Left: Logo & Free Pill -->
       <div class="flex items-center space-x-3">
         <a href="/" class="flex items-center space-x-2.5 group">
-          <div class="w-6 h-6 rounded bg-gradient-to-br from-accent-sky to-accent-blue flex items-center justify-center p-0.5 shadow-sm">
-            <svg class="w-4 h-4 text-bg-base" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <path d="M7 12h10"/>
-              <path d="M12 7v10"/>
-            </svg>
+          <div class="w-6 h-6 rounded bg-gradient-to-tr from-accent-purple to-accent-cyan p-[1px] flex items-center justify-center">
+            <div class="w-full h-full bg-[#090a0d] rounded-[3px] flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-accent-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M7 12h10"/>
+                <path d="M12 7v10"/>
+              </svg>
+            </div>
           </div>
-          <span class="font-bold text-sm tracking-tight text-content-primary group-hover:text-white transition-colors">LKBoard</span>
+          <span class="font-bold text-sm tracking-tight text-white group-hover:text-accent-cyan transition-colors">LKBoard</span>
+          <span class="text-xs text-brand-textMuted font-mono">/ WHITEBOARD</span>
         </a>
-        <div class="h-4 w-px bg-line"></div>
-        <span class="font-mono text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 font-semibold">
-          100% Free · Open Source
+        <span class="font-mono text-[10px] text-white/80 bg-white/10 px-2 py-0.5 rounded border border-white/15 uppercase font-medium">
+          FREE
         </span>
       </div>
 
-      <!-- Quick Nav Links -->
-      <nav class="flex items-center space-x-4 sm:space-x-6 text-xs font-medium">
-        <a href="#download" class="text-content-secondary hover:text-content-primary transition-colors">Скачать</a>
-        <a href="/details.html" class="text-accent-sky hover:text-sky-300 font-semibold flex items-center space-x-1 transition-colors">
-          <span>Подробнее</span>
-          <span>→</span>
+      <!-- Center Links (Desktop) -->
+      <nav class="hidden md:flex items-center space-x-6 text-xs font-mono text-brand-textSecondary">
+        <a href="#how-it-works" class="hover:text-white transition-colors">How it works</a>
+        <a href="#styles" class="hover:text-white transition-colors">Styles</a>
+        <a href="#features" class="hover:text-white transition-colors">Features</a>
+        <a href="#tablet" class="hover:text-white transition-colors flex items-center gap-1.5">
+          <span>Tablet Mode</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse"></span>
         </a>
-        <a href="/canvas" target="_blank" class="hidden sm:inline-flex items-center space-x-1.5 text-xs font-mono font-semibold text-bg-base bg-accent-sky hover:bg-sky-300 px-3 py-1.5 rounded transition-all">
-          <span>Открыть доску ↗</span>
-        </a>
+        <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
       </nav>
+
+      <!-- Right Action Buttons -->
+      <div class="flex items-center space-x-3 font-mono text-xs">
+        <a href="#download" class="hidden sm:inline-flex items-center space-x-1.5 bg-white text-black font-semibold hover:bg-neutral-200 px-3.5 py-1.5 rounded transition-all">
+          <span>Download v1.6.1</span>
+          <span>&gt;</span>
+        </a>
+        <a href="/canvas" target="_blank" class="inline-flex items-center space-x-1.5 text-brand-textSecondary hover:text-white px-3 py-1.5 rounded border border-[#242933] hover:border-white/30 transition-all">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          <span>Web Studio</span>
+        </a>
+      </div>
+
     </div>
   </header>
 
   <!-- =========================================================================
-       2. Hero Section: Focused & Clean
+       2. Hero Section: Split Bento Box with 1px border and crosshairs +
        ========================================================================= -->
-  <section class="py-16 sm:py-20 border-b border-line">
-    <div class="max-w-[1100px] mx-auto px-6 text-center">
-      
-      <!-- Top Pill -->
-      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded bg-bg-surface border border-line text-[11px] font-mono text-content-secondary mb-6">
-        <span class="text-emerald-400 font-semibold">[0₽ НАВСЕГДА]</span>
-        <span>·</span>
-        <span>БЕЗ ПОДПИСОК, БЕЗ ЛИМИТОВ, БЕЗ ТОРМОЗОВ НА СОЗВОНАХ</span>
-      </div>
+  <main class="flex-1 max-w-[1240px] w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
+    
+    <!-- Outer Hero Bento Box -->
+    <div class="relative border border-[#1f242c] bg-[#050608] rounded-sm">
+      <span class="cross-tl">+</span>
+      <span class="cross-tr">+</span>
+      <span class="cross-bl">+</span>
+      <span class="cross-br">+</span>
+      <span class="cross-tc hidden lg:block">+</span>
+      <span class="cross-bc hidden lg:block">+</span>
 
-      <!-- Main Title -->
-      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-content-primary max-w-3xl mx-auto leading-[1.1] mb-6">
-        Простая онлайн-доска для уроков и созвонов.
-      </h1>
-
-      <!-- Short Subtitle -->
-      <p class="text-sm sm:text-base text-content-secondary max-w-2xl mx-auto leading-relaxed mb-8">
-        Быстрая, бесплатная и открытая замена Miro для репетиторов, преподавателей и команд. Ученик входит за секунду по ссылке без регистрации. Никаких лимитов на 3 доски и никаких лагов при демонстрации экрана.
-      </p>
-
-      <!-- Primary Action Buttons -->
-      <div class="flex flex-wrap items-center justify-center gap-3 mb-8">
-        <a href="/canvas" target="_blank" class="flex items-center space-x-2 text-xs font-mono font-bold bg-accent-sky hover:bg-sky-300 text-bg-base px-6 py-3 rounded transition-all shadow-sm">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="m10 15 5-3-5-3v6Z"/>
-          </svg>
-          <span>Открыть в браузере (в 1 клик)</span>
-        </a>
-
-        <a href="/downloads/Lkboard-1.0.0.exe" class="flex items-center space-x-2 text-xs font-mono text-content-primary bg-bg-surface hover:bg-bg-elevated border border-line px-5 py-3 rounded transition-all">
-          <svg class="w-4 h-4 text-accent-sky" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span>Скачать для Windows (114 MB)</span>
-        </a>
-
-        <a href="/details.html" class="flex items-center space-x-1.5 text-xs font-mono text-content-secondary hover:text-white px-4 py-3 rounded border border-line/60 hover:border-line-bright transition-all">
-          <span>Подробнее о возможностях →</span>
-        </a>
-      </div>
-
-      <!-- Quick Trust Badges -->
-      <div class="flex flex-wrap items-center justify-center gap-5 text-xs font-mono text-content-muted">
-        <div class="flex items-center space-x-1.5">
-          <span class="text-emerald-400">✓</span>
-          <span>Без обязательной регистрации</span>
-        </div>
-        <div class="flex items-center space-x-1.5">
-          <span class="text-emerald-400">✓</span>
-          <span>Неограниченное число досок</span>
-        </div>
-        <div class="flex items-center space-x-1.5">
-          <span class="text-emerald-400">✓</span>
-          <span>100% офлайн-режим на ПК</span>
-        </div>
-        <div class="flex items-center space-x-1.5">
-          <span class="text-emerald-400">✓</span>
-          <span>120 FPS и 0.4 ms задержка пера</span>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- =========================================================================
-       3. 4 Core Highlights (Brief & Punchy)
-       ========================================================================= -->
-  <section class="py-16 border-b border-line">
-    <div class="max-w-[1100px] mx-auto px-6">
-      
-      <div class="text-center max-w-xl mx-auto mb-10">
-        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-content-primary mb-2">
-          Все самое нужное для работы. Без лишнего мусора.
-        </h2>
-        <p class="text-xs text-content-secondary">
-          Инструмент, созданный людьми, которые сами устали от сложных комбайнов.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
+      <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#1f242c]">
         
-        <!-- Card 1 -->
-        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- ================= LEFT HERO COLUMN ================= -->
+        <div class="p-6 sm:p-10 flex flex-col justify-between">
           <div>
-            <div class="text-accent-sky font-bold mb-2">01 / ВХОД В 1 КЛИК</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-1.5">Без регистрации</div>
-            <p class="text-content-secondary font-sans leading-relaxed">
-              Скинули ссылку ученику или коллеге — он сразу на доске и может писать. Никаких подтверждений почты и забытых паролей перед началом урока.
+            <!-- Monospace Micro Header -->
+            <div class="flex items-center space-x-2 font-mono text-[11px] text-brand-textMuted uppercase tracking-wider mb-8">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-accent-green"></span>
+              <span>FREE · UNLIMITED CANVAS PATTERNS · NO ACCOUNT</span>
+            </div>
+
+            <!-- Big Typographic Headline with Live Typewriter -->
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white leading-[1.1] mb-6">
+              You can create<br>
+              <span id="hero-typewriter" class="text-white">math formulas</span><span class="text-accent-purpleLight animate-pulse font-light">|</span>
+            </h1>
+
+            <!-- Subtitle Description -->
+            <p class="text-sm sm:text-base text-brand-textSecondary leading-relaxed mb-8 max-w-xl font-normal">
+              Бесплатная цифровая доска нового поколения. Пишите от руки со смартфона как на графическом планшете, стройте интерактивные графики функций, формулы LaTeX и электрические цепи. 100% локально, без ограничений и подписок.
             </p>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap items-center gap-3 mb-10 font-mono text-xs">
+              <a href="#download" class="flex items-center space-x-2 bg-white text-black font-bold hover:bg-neutral-200 px-5 py-3 rounded-sm transition-all shadow-sm">
+                <span>Скачать LKBoard 1.6.1</span>
+                <span>&gt;</span>
+              </a>
+              <a href="/canvas" target="_blank" class="flex items-center space-x-2 text-white bg-[#0e1015] hover:bg-[#161a22] border border-[#242933] hover:border-white/40 px-5 py-3 rounded-sm transition-all">
+                <span>Открыть Web-доску</span>
+                <span>↗</span>
+              </a>
+            </div>
           </div>
-          <div class="text-[11px] text-content-muted mt-4 pt-2 border-t border-line">
-            Подключение: мгновенно
+
+          <!-- Bottom Micro Bar -->
+          <div class="pt-6 border-t border-[#1f242c] flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] text-brand-textMuted uppercase">
+            <div class="flex items-center space-x-1.5">
+              <span class="w-1 h-1 rounded-full bg-accent-green"></span>
+              <span>100% FREE ACCOUNT</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <span class="w-1 h-1 rounded-full bg-accent-cyan"></span>
+              <span>NO WATERMARK</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <span class="w-1 h-1 rounded-full bg-accent-purple"></span>
+              <span>NOTHING UPLOADED / PRIVATE</span>
+            </div>
           </div>
         </div>
 
-        <!-- Card 2 -->
-        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
-          <div>
-            <div class="text-emerald-400 font-bold mb-2">02 / ЧЕСТНЫЙ OPEN SOURCE</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-1.5">0 ₽ навсегда</div>
-            <p class="text-content-secondary font-sans leading-relaxed">
-              Никаких ограничений на 3 доски и подписок по $16/мес с каждого участника. Исходный код полностью открыт на GitHub под лицензией MIT.
-            </p>
+        <!-- ================= RIGHT HERO COLUMN (Interactive Live Sandbox) ================= -->
+        <div class="flex flex-col justify-between bg-[#030406]" id="styles">
+          
+          <!-- Top Sandbox Bar -->
+          <div class="px-5 py-3 border-b border-[#1f242c] flex items-center justify-between font-mono text-[11px] text-brand-textMuted">
+            <span class="tracking-wider uppercase" id="canvas-preset-label">BRAILLE · 118×57 CELLS</span>
+            <div class="flex items-center space-x-2 text-accent-green font-semibold">
+              <span class="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse"></span>
+              <span>LIVE</span>
+            </div>
           </div>
-          <div class="text-[11px] text-content-muted mt-4 pt-2 border-t border-line">
-            Лицензия: MIT Open Source
-          </div>
-        </div>
 
-        <!-- Card 3 -->
-        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
-          <div>
-            <div class="text-amber-400 font-bold mb-2">03 / НУЛЕВАЯ ЗАДЕРЖКА</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-1.5">Перо как на бумаге</div>
-            <p class="text-content-secondary font-sans leading-relaxed">
-              Аппаратный движок Skia устраняет рывки. Стабильные 120 FPS и 0.4 ms задержка даже во время включенной демонстрации экрана в Zoom или Discord.
-            </p>
-          </div>
-          <div class="text-[11px] text-content-muted mt-4 pt-2 border-t border-line">
-            Ядро: Skia GPU / Direct3D
-          </div>
-        </div>
+          <!-- Center Canvas Sandbox -->
+          <div class="relative w-full h-[360px] sm:h-[420px] flex items-center justify-center p-2 bg-[#020304] overflow-hidden select-none">
+            <!-- Output Tag -->
+            <div class="absolute top-4 left-4 font-mono text-[10px] text-brand-textMuted border border-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider pointer-events-none">
+              OUTPUT
+            </div>
 
-        <!-- Card 4 -->
-        <div class="bg-bg-surface border border-line p-5 rounded-lg flex flex-col justify-between hover:border-line-bright transition-colors">
-          <div>
-            <div class="text-purple-400 font-bold mb-2">04 / ВСЕ ПОД РУКОЙ</div>
-            <div class="text-base font-bold text-content-primary font-sans mb-1.5">Формулы и стикеры</div>
-            <p class="text-content-secondary font-sans leading-relaxed">
-              Интерактивные графики Desmos (G), стикеры с галочками для домашки (S), вращение любых нод на 360° и тихий таймер с гонгом тибетской чаши.
-            </p>
+            <!-- Hint overlay -->
+            <div class="absolute top-4 right-4 font-mono text-[10px] text-white/30 pointer-events-none">
+              [Кликните и рисуйте на холсте]
+            </div>
+
+            <!-- The HTML5 Interactive Canvas -->
+            <canvas id="hero-canvas" width="560" height="400" class="w-full h-full object-contain"></canvas>
           </div>
-          <div class="text-[11px] text-content-muted mt-4 pt-2 border-t border-line">
-            Экспорт: PDF, SVG, 4K PNG
+
+          <!-- Bottom Preset Switcher Pills (Matching screenshot) -->
+          <div class="p-3 border-t border-[#1f242c] bg-[#050608] flex items-center gap-1.5 overflow-x-auto font-mono text-[11px]">
+            <button class="preset-pill px-3 py-1 rounded-sm text-brand-textSecondary hover:text-white transition-all whitespace-nowrap" data-preset="classic">Classic</button>
+            <button class="preset-pill px-3 py-1 rounded-sm text-brand-textSecondary hover:text-white transition-all whitespace-nowrap" data-preset="detailed">Detailed</button>
+            <button class="preset-pill active bg-white text-black font-bold px-3 py-1 rounded-sm transition-all whitespace-nowrap" data-preset="braille">Braille</button>
+            <button class="preset-pill px-3 py-1 rounded-sm text-brand-textSecondary hover:text-white transition-all whitespace-nowrap" data-preset="stylus">Stylus Pen</button>
+            <button class="preset-pill px-3 py-1 rounded-sm text-brand-textSecondary hover:text-white transition-all whitespace-nowrap" data-preset="latex">LaTeX Math</button>
+            <button class="preset-pill px-3 py-1 rounded-sm text-brand-textSecondary hover:text-white transition-all whitespace-nowrap" data-preset="physics">Circuit</button>
+            <button class="preset-pill px-3 py-1 rounded-sm text-brand-textSecondary hover:text-white transition-all whitespace-nowrap" data-preset="graphs">Graphing</button>
           </div>
+
         </div>
 
       </div>
-
     </div>
-  </section>
 
-  <!-- =========================================================================
-       4. "Want to know more?" Banner leading to /details.html
-       ========================================================================= -->
-  <section class="py-12 border-b border-line bg-bg-surface/30">
-    <div class="max-w-[1100px] mx-auto px-6">
-      
-      <div class="bg-bg-surface border border-line rounded-lg p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div>
-          <div class="text-[11px] font-mono text-accent-sky font-semibold uppercase tracking-wider mb-1">Хотите узнать подробнее?</div>
-          <h3 class="text-lg sm:text-xl font-bold text-content-primary mb-1">
-            Интерактивная песочница, сравнение с Miro и история проекта
-          </h3>
-          <p class="text-xs text-content-secondary max-w-xl leading-relaxed">
-            Мы собрали на отдельной странице подробное сравнение тарифов, живую песочницу со звуком тибетской чаши, хоткеи и технические детали.
+    <!-- =========================================================================
+         3. Section 01: HOW IT WORKS (3 Bento Columns with 01, 02, 03)
+         ========================================================================= -->
+    <section class="mt-14 relative border border-[#1f242c] bg-[#050608] rounded-sm" id="how-it-works">
+      <span class="cross-tl">+</span>
+      <span class="cross-tr">+</span>
+      <span class="cross-bl">+</span>
+      <span class="cross-br">+</span>
+
+      <!-- Section Header Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#1f242c] border-b border-[#1f242c]">
+        
+        <!-- Left Header -->
+        <div class="p-6 sm:p-8">
+          <div class="font-mono text-xs text-accent-purple uppercase tracking-wider mb-3">01 HOW IT WORKS</div>
+          <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+            Three steps from<br>thought to whiteboard.
+          </h2>
+        </div>
+
+        <!-- Right Header Text -->
+        <div class="p-6 sm:p-8 flex items-center">
+          <p class="text-sm sm:text-base text-brand-textSecondary leading-relaxed font-normal">
+            Превратите смартфон в графический планшет, создавайте схемы и пишите формулы без задержек. Всё работает в браузере или в виде десктопного приложения — результат готов в момент первого касания.
           </p>
         </div>
 
-        <a href="/details.html" class="whitespace-nowrap flex items-center space-x-2 text-xs font-mono font-bold bg-bg-elevated hover:bg-bg-hover text-accent-sky border border-accent-sky/40 hover:border-accent-sky px-5 py-3 rounded transition-all">
-          <span>Читать подробнее о проекте →</span>
-        </a>
       </div>
 
-    </div>
-  </section>
+      <!-- 3 Bento Columns -->
+      <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#1f242c]">
+        
+        <!-- Step 1 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div class="inline-block px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-xs text-brand-textMuted mb-4">
+              01
+            </div>
+            <h3 class="text-base sm:text-lg font-bold text-white mb-2">Создайте доску в 1 клик</h3>
+            <p class="text-xs sm:text-sm text-brand-textSecondary leading-relaxed">
+              Запуск без обязательной регистрации и смс. Выбирайте сетку: клетка для математики, линейка для конспектов, изометрия для 3D или бесконечный холст без лимитов.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-[#1f242c] font-mono text-[11px] text-brand-textMuted">
+            Шаблоны: чистый, сетка, канбан
+          </div>
+        </div>
 
-  <!-- =========================================================================
-       5. Download & Get Started Section
-       ========================================================================= -->
-  <section class="py-16 border-b border-line" id="download">
-    <div class="max-w-[1100px] mx-auto px-6">
-      
-      <div class="text-center max-w-xl mx-auto mb-10">
-        <h2 class="text-2xl font-extrabold tracking-tight text-content-primary mb-2">
+        <!-- Step 2 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between" id="tablet">
+          <div>
+            <div class="inline-block px-2 py-0.5 rounded bg-accent-cyan/10 border border-accent-cyan/20 font-mono text-xs text-accent-cyan mb-4">
+              02 NEW v1.6.1
+            </div>
+            <h3 class="text-base sm:text-lg font-bold text-white mb-2">Подключите смартфон как стилус</h3>
+            <p class="text-xs sm:text-sm text-brand-textSecondary leading-relaxed">
+              Включите режим графического планшета в настройках. Откройте ссылку на смартфоне, разверните во весь экран и пишите стилусом или пальцем — штрихи мгновенно передаются на монитор компьютера.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-[#1f242c] font-mono text-[11px] text-brand-textMuted">
+            Задержка: &lt; 8 ms по локальной сети Wi-Fi
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div class="inline-block px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-xs text-brand-textMuted mb-4">
+              03
+            </div>
+            <h3 class="text-base sm:text-lg font-bold text-white mb-2">Экспортируйте и делитесь</h3>
+            <p class="text-xs sm:text-sm text-brand-textSecondary leading-relaxed">
+              Сохраняйте в векторный SVG без потери резкости, сверхчёткий PNG 4K или PDF. Делитесь доской в локальной сети или используйте при демонстрации экрана в Zoom, Telegram и Discord.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-[#1f242c] font-mono text-[11px] text-brand-textMuted">
+            Форматы: .lkboard, 4K PNG, SVG, PDF
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- =========================================================================
+         4. Section 02: FEATURES (Technical Bento Grid)
+         ========================================================================= -->
+    <section class="mt-14 relative border border-[#1f242c] bg-[#050608] rounded-sm" id="features">
+      <span class="cross-tl">+</span>
+      <span class="cross-tr">+</span>
+      <span class="cross-bl">+</span>
+      <span class="cross-br">+</span>
+
+      <!-- Section Title -->
+      <div class="p-6 sm:p-8 border-b border-[#1f242c] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="font-mono text-xs text-accent-purple uppercase tracking-wider mb-2">02 FEATURES</div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            Всё для преподавания, науки и проектов
+          </h2>
+        </div>
+        <div class="font-mono text-xs text-brand-textMuted">
+          ● АППАРАТНОЕ УСКОРЕНИЕ SKIA GPU · 120 FPS
+        </div>
+      </div>
+
+      <!-- Bento Grid 6 Boxes -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 divide-[#1f242c] md:[&>*]:border-b md:[&>*]:border-r md:[&>*]:border-[#1f242c]">
+        
+        <!-- Feature 1 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">📱</div>
+            <div class="font-mono text-xs text-accent-cyan font-semibold uppercase mb-1">PHONE STYLUS DIGITIZER</div>
+            <h3 class="text-base font-bold text-white mb-2">Смартфон как графический планшет</h3>
+            <p class="text-xs text-brand-textSecondary leading-relaxed">
+              Забудьте о покупке дорогого планшета. Подключите любой Android или iPhone по Wi-Fi. Поддержка стилусов S-Pen, Apple Pencil, давления пера, Palm Rejection и полноэкранный режим.
+            </p>
+          </div>
+          <div class="mt-6 font-mono text-[11px] text-accent-cyan">Новая функция v1.6.1 →</div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">📐</div>
+            <div class="font-mono text-xs text-accent-purple font-semibold uppercase mb-1">LATEX MATH ENGINE</div>
+            <h3 class="text-base font-bold text-white mb-2">Формулы LaTeX на лету</h3>
+            <p class="text-xs text-brand-textSecondary leading-relaxed">
+              Интегралы, дроби, матрицы, корни и греческие буквы. Быстрый диалог добавления формул с автодополнением и динамическим масштабированием без размытия.
+            </p>
+          </div>
+          <div class="mt-6 font-mono text-[11px] text-brand-textMuted">Горячая клавиша: F →</div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">⚡</div>
+            <div class="font-mono text-xs text-emerald-400 font-semibold uppercase mb-1">PHYSICS & SCHEMATICS</div>
+            <h3 class="text-base font-bold text-white mb-2">Физические трафареты и схемы</h3>
+            <p class="text-xs text-brand-textSecondary leading-relaxed">
+              Готовые радиодетали и физические элементы: резисторы, конденсаторы, источники тока, линзы, маятники, блоки и стрелки векторов сил в один клик.
+            </p>
+          </div>
+          <div class="mt-6 font-mono text-[11px] text-brand-textMuted">Библиотека трафаретов →</div>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">📈</div>
+            <div class="font-mono text-xs text-amber-400 font-semibold uppercase mb-1">DESMOS FUNCTION PLOTTER</div>
+            <h3 class="text-base font-bold text-white mb-2">Интерактивные графики</h3>
+            <p class="text-xs text-brand-textSecondary leading-relaxed">
+              Построение математических графиков $y = f(x)$, тригонометрических волн, парабол и систем координат с интерактивным масштабированием осей.
+            </p>
+          </div>
+          <div class="mt-6 font-mono text-[11px] text-brand-textMuted">Горячая клавиша: G →</div>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">📋</div>
+            <div class="font-mono text-xs text-sky-400 font-semibold uppercase mb-1">KANBAN & STICKY NOTES</div>
+            <h3 class="text-base font-bold text-white mb-2">Канбан-доски и стикеры</h3>
+            <p class="text-xs text-brand-textSecondary leading-relaxed">
+              Колонки «К выполнению», «В процессе», «Готово», карточки с чек-листами для домашней работы и цветные стикеры прямо на бесконечном полотне.
+            </p>
+          </div>
+          <div class="mt-6 font-mono text-[11px] text-brand-textMuted">Горячая клавиша: S →</div>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div class="text-2xl mb-3">🔒</div>
+            <div class="font-mono text-xs text-emerald-400 font-semibold uppercase mb-1">100% PRIVATE & OFFLINE</div>
+            <h3 class="text-base font-bold text-white mb-2">Локально и независимо</h3>
+            <p class="text-xs text-brand-textSecondary leading-relaxed">
+              Никаких ограничений на 3 доски, внезапных блокировок аккаунтов или утечек данных в облако. Все файлы сохраняются на вашем диске в открытом формате.
+            </p>
+          </div>
+          <div class="mt-6 font-mono text-[11px] text-brand-textMuted">Open Source MIT →</div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- =========================================================================
+         5. Section 03: DOWNLOAD & GET STARTED
+         ========================================================================= -->
+    <section class="mt-14 relative border border-[#1f242c] bg-[#050608] rounded-sm" id="download">
+      <span class="cross-tl">+</span>
+      <span class="cross-tr">+</span>
+      <span class="cross-bl">+</span>
+      <span class="cross-br">+</span>
+
+      <div class="p-6 sm:p-8 border-b border-[#1f242c]">
+        <div class="font-mono text-xs text-accent-purple uppercase tracking-wider mb-2">03 DOWNLOAD</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
           Начните работу прямо сейчас
         </h2>
-        <p class="text-xs font-mono text-content-secondary">
-          Доска доступна в браузере без установки или в виде приложения для ПК.
+        <p class="text-xs sm:text-sm text-brand-textSecondary font-mono">
+          Десктопное приложение для максимальной производительности или онлайн-версия в браузере.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#1f242c]">
         
-        <!-- Web Card -->
-        <div class="bg-bg-surface border-2 border-accent-sky/60 rounded-lg p-5 flex flex-col justify-between relative shadow-lg">
-          <div class="absolute -top-2.5 right-4 bg-accent-sky text-bg-base text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase">
-            В 1 клик
-          </div>
+        <!-- Windows Installer -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between bg-white/[0.02]">
           <div>
-            <div class="text-sm font-bold text-content-primary font-sans mb-1">Веб-доска онлайн</div>
-            <div class="text-xs font-mono text-accent-sky mb-3">Любой браузер · 0 сек до старта</div>
-            <ul class="text-xs font-mono text-content-secondary space-y-1.5 mb-5">
-              <li>✓ Вход без регистрации</li>
-              <li>✓ Ссылка для учеников</li>
-              <li>✓ Планшеты, Mac, Windows, Android</li>
+            <div class="font-mono text-[11px] text-accent-cyan font-bold uppercase mb-1">WINDOWS APPLICATION</div>
+            <h3 class="text-lg font-bold text-white mb-1">LKBoard для Windows</h3>
+            <div class="font-mono text-xs text-brand-textMuted mb-4">Версия 1.6.1 · 114 MB · 64-bit</div>
+            <ul class="text-xs font-mono text-brand-textSecondary space-y-2 mb-6">
+              <li>✓ Встроенный режим планшета с телефона</li>
+              <li>✓ 100% работа без интернета (офлайн)</li>
+              <li>✓ Skia Direct3D GPU ускорение</li>
+              <li>✓ Встроенный Runtime JDK 21</li>
             </ul>
           </div>
-          <a href="/canvas" target="_blank" class="w-full text-center text-xs font-mono font-bold bg-accent-sky hover:bg-sky-300 text-bg-base py-2.5 rounded transition-all">
-            Открыть доску ↗
+          <a href="/downloads/Lkboard-1.0.0.exe" class="w-full text-center font-mono text-xs font-bold bg-white text-black hover:bg-neutral-200 py-3 rounded-sm transition-all shadow-sm">
+            Скачать для Windows (.exe) &gt;
           </a>
         </div>
 
-        <!-- Windows .exe -->
-        <div class="bg-bg-surface border border-line rounded-lg p-5 flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- Web Studio -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
           <div>
-            <div class="text-sm font-bold text-content-primary font-sans mb-1">Windows (.exe)</div>
-            <div class="text-xs font-mono text-content-muted mb-3">Lkboard-1.0.0.exe (114 MB)</div>
-            <ul class="text-xs font-mono text-content-secondary space-y-1.5 mb-5">
-              <li>✓ 100% офлайн без интернета</li>
-              <li>✓ Встроенный JVM Runtime 21</li>
-              <li>✓ Автообновления в фоне</li>
+            <div class="font-mono text-[11px] text-emerald-400 font-bold uppercase mb-1">ONLINE IN BROWSER</div>
+            <h3 class="text-lg font-bold text-white mb-1">Веб-версия LKBoard</h3>
+            <div class="font-mono text-xs text-brand-textMuted mb-4">Chrome, Safari, Firefox, Edge</div>
+            <ul class="text-xs font-mono text-brand-textSecondary space-y-2 mb-6">
+              <li>✓ Мгновенный запуск в 1 клик</li>
+              <li>✓ Без установки и прав администратора</li>
+              <li>✓ Работает на macOS, Linux, iPad, Android</li>
+              <li>✓ Быстрые ссылки для совместной работы</li>
             </ul>
           </div>
-          <a href="/downloads/Lkboard-1.0.0.exe" class="w-full text-center text-xs font-mono font-semibold bg-bg-elevated hover:bg-bg-hover text-content-primary border border-line py-2.5 rounded transition-all">
-            Скачать .exe
+          <a href="/canvas" target="_blank" class="w-full text-center font-mono text-xs font-semibold bg-[#111318] hover:bg-[#1a1e26] text-white border border-[#242933] hover:border-white/40 py-3 rounded-sm transition-all">
+            Открыть Web-доску ↗
           </a>
         </div>
 
-        <!-- GitHub -->
-        <div class="bg-bg-surface border border-line rounded-lg p-5 flex flex-col justify-between hover:border-line-bright transition-colors">
+        <!-- Phone Tablet Client -->
+        <div class="p-6 sm:p-8 flex flex-col justify-between">
           <div>
-            <div class="text-sm font-bold text-content-primary font-sans mb-1">GitHub Репозиторий</div>
-            <div class="text-xs font-mono text-content-muted mb-3">MIT License · Kotlin Multiplatform</div>
-            <ul class="text-xs font-mono text-content-secondary space-y-1.5 mb-5">
-              <li>✓ Полностью открытый код</li>
-              <li>✓ Развертывание на своем сервере</li>
-              <li>✓ Никаких скрытых трекеров</li>
+            <div class="font-mono text-[11px] text-accent-purple font-bold uppercase mb-1">PHONE TABLET CLIENT</div>
+            <h3 class="text-lg font-bold text-white mb-1">Режим графического планшета</h3>
+            <div class="font-mono text-xs text-brand-textMuted mb-4">Локальное подключение /tablet</div>
+            <ul class="text-xs font-mono text-brand-textSecondary space-y-2 mb-6">
+              <li>✓ Включается в настройках приложения ПК</li>
+              <li>✓ Открывается на смартфоне по QR-коду</li>
+              <li>✓ Полноэкранный режим без адресной строки</li>
+              <li>✓ Защита от касаний ладони (Palm Rejection)</li>
             </ul>
           </div>
-          <a href="https://github.com/Komti23/LKBoard" target="_blank" class="w-full text-center text-xs font-mono font-semibold bg-bg-elevated hover:bg-bg-hover text-content-primary border border-line py-2.5 rounded transition-all">
-            Репозиторий ↗
+          <a href="/details.html" class="w-full text-center font-mono text-xs font-semibold bg-[#111318] hover:bg-[#1a1e26] text-brand-textSecondary hover:text-white border border-[#242933] py-3 rounded-sm transition-all">
+            Инструкция подключения →
           </a>
         </div>
 
       </div>
 
-    </div>
-  </section>
+    </section>
+
+    <!-- =========================================================================
+         6. Section 04: FREQUENTLY ASKED QUESTIONS (Accordion)
+         ========================================================================= -->
+    <section class="mt-14 mb-16 relative border border-[#1f242c] bg-[#050608] rounded-sm" id="faq">
+      <span class="cross-tl">+</span>
+      <span class="cross-tr">+</span>
+      <span class="cross-bl">+</span>
+      <span class="cross-br">+</span>
+
+      <div class="p-6 sm:p-8 border-b border-[#1f242c]">
+        <div class="font-mono text-xs text-accent-purple uppercase tracking-wider mb-2">04 FAQ</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          Часто задаваемые вопросы
+        </h2>
+      </div>
+
+      <div class="divide-y divide-[#1f242c] font-mono text-xs">
+        
+        <!-- FAQ 1 -->
+        <div class="faq-item p-6 sm:p-8 cursor-pointer hover:bg-white/[0.01] transition-colors" onclick="toggleFaq(this)">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-white font-sans">Нужен ли графический планшет (Wacom, Huion) для LKBoard?</span>
+            <span class="faq-icon text-brand-textMuted text-base font-mono">+</span>
+          </div>
+          <div class="faq-answer hidden mt-4 pt-4 border-t border-[#1f242c] font-sans text-brand-textSecondary leading-relaxed text-xs sm:text-sm">
+            Нет! Начиная с версии 1.6.1 вы можете использовать любой обычный смартфон (Android или iPhone) в качестве беспроводного графического планшета. Просто откройте ссылку в мобильном браузере и пишите недорогим стилусом или пальцем — всё отображается на ПК в реальном времени.
+          </div>
+        </div>
+
+        <!-- FAQ 2 -->
+        <div class="faq-item p-6 sm:p-8 cursor-pointer hover:bg-white/[0.01] transition-colors" onclick="toggleFaq(this)">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-white font-sans">LKBoard действительно полностью бесплатный?</span>
+            <span class="faq-icon text-brand-textMuted text-base font-mono">+</span>
+          </div>
+          <div class="faq-answer hidden mt-4 pt-4 border-t border-[#1f242c] font-sans text-brand-textSecondary leading-relaxed text-xs sm:text-sm">
+            Да, на 100%. В приложении нет никаких лимитов на количество досок, никаких платных подписок и водяных знаков. Исходный код открыт под лицензией MIT.
+          </div>
+        </div>
+
+        <!-- FAQ 3 -->
+        <div class="faq-item p-6 sm:p-8 cursor-pointer hover:bg-white/[0.01] transition-colors" onclick="toggleFaq(this)">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-white font-sans">Можно ли работать без подключения к интернету?</span>
+            <span class="faq-icon text-brand-textMuted text-base font-mono">+</span>
+          </div>
+          <div class="faq-answer hidden mt-4 pt-4 border-t border-[#1f242c] font-sans text-brand-textSecondary leading-relaxed text-xs sm:text-sm">
+            Да. Десктопная версия LKBoard работает полностью автономно. Все ваши доски, формулы и рисунки сохраняются локально на жестком диске. Режим планшета со смартфона работает через локальную сеть Wi-Fi без выхода во внешний интернет.
+          </div>
+        </div>
+
+        <!-- FAQ 4 -->
+        <div class="faq-item p-6 sm:p-8 cursor-pointer hover:bg-white/[0.01] transition-colors" onclick="toggleFaq(this)">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-white font-sans">Поддерживается ли экспорт в высоком разрешении?</span>
+            <span class="faq-icon text-brand-textMuted text-base font-mono">+</span>
+          </div>
+          <div class="faq-answer hidden mt-4 pt-4 border-t border-[#1f242c] font-sans text-brand-textSecondary leading-relaxed text-xs sm:text-sm">
+            Да! Поддерживается экспорт в масштабируемый векторный SVG (идеально для печати и презентаций), растровый PNG в разрешении до 4K, а также сохранение в PDF.
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
 
   <!-- =========================================================================
-       6. Minimal Clean Footer
+       7. Technical Footer
        ========================================================================= -->
-  <footer class="mt-auto border-t border-line bg-bg-base py-6 font-mono text-xs text-content-muted">
-    <div class="max-w-[1100px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+  <footer class="border-t border-[#1f242c] bg-[#030303] py-8 font-mono text-xs text-brand-textMuted">
+    <div class="max-w-[1240px] mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="flex items-center space-x-2">
-        <span class="text-content-primary font-bold">LKBoard</span>
+        <span class="text-white font-bold">LKBoard</span>
+        <span>/ v1.6.1 (Build 161)</span>
         <span>·</span>
-        <span>Бесплатная открытая онлайн-доска. Лицензия MIT.</span>
+        <span>MIT Open Source</span>
       </div>
 
-      <div class="flex items-center space-x-5">
-        <a href="/canvas" class="hover:text-content-primary">Веб-доска</a>
-        <a href="/details.html" class="hover:text-content-primary text-accent-sky">Подробнее</a>
-        <a href="/api/version" class="hover:text-content-primary">Версия API</a>
-        <a href="https://github.com/Komti23/LKBoard" target="_blank" class="hover:text-content-primary">GitHub</a>
+      <div class="flex flex-wrap items-center gap-6">
+        <a href="/canvas" class="hover:text-white transition-colors">Веб-доска</a>
+        <a href="/details.html" class="hover:text-white transition-colors">Сравнение & Возможности</a>
+        <a href="/api/version" class="hover:text-white transition-colors">API v1.6.1</a>
+        <a href="https://github.com/Komti23/LKBoard" target="_blank" class="hover:text-white transition-colors flex items-center gap-1">
+          <span>GitHub</span>
+          <span>↗</span>
+        </a>
       </div>
     </div>
   </footer>
+
+  <!-- =========================================================================
+       Interactive Scripts: Typewriter + Live Canvas Sandbox Demo
+       ========================================================================= -->
+  <script>
+    // 1. Typewriter Animation for Hero Headline
+    (function initTypewriter() {
+      const phrases = [
+        "math formulas",
+        "physics circuits",
+        "phone tablet notes",
+        "interactive graphs",
+        "vector schematics",
+        "clean whiteboards"
+      ];
+      const el = document.getElementById('hero-typewriter');
+      if (!el) return;
+
+      let phraseIdx = 0;
+      let charIdx = phrases[0].length;
+      let isDeleting = true;
+      let typingSpeed = 100;
+
+      function tick() {
+        const currentPhrase = phrases[phraseIdx];
+        
+        if (isDeleting) {
+          el.textContent = currentPhrase.substring(0, charIdx - 1);
+          charIdx--;
+          typingSpeed = 40;
+        } else {
+          el.textContent = currentPhrase.substring(0, charIdx + 1);
+          charIdx++;
+          typingSpeed = 90;
+        }
+
+        if (!isDeleting && charIdx === currentPhrase.length) {
+          isDeleting = true;
+          typingSpeed = 2200; // Pause at end of phrase
+        } else if (isDeleting && charIdx === 0) {
+          isDeleting = false;
+          phraseIdx = (phraseIdx + 1) % phrases.length;
+          typingSpeed = 300;
+        }
+
+        setTimeout(tick, typingSpeed);
+      }
+
+      setTimeout(tick, 2000);
+    })();
+
+    // 2. Interactive Live Canvas Sandbox
+    (function initCanvasSandbox() {
+      const canvas = document.getElementById('hero-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const label = document.getElementById('canvas-preset-label');
+      const pills = document.querySelectorAll('.preset-pill');
+
+      let currentPreset = 'braille';
+      let animFrameId = null;
+      let time = 0;
+      let userStrokes = [];
+      let isDrawing = false;
+      let currentStroke = [];
+
+      // Handle Resize
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * (window.devicePixelRatio || 1);
+        canvas.height = rect.height * (window.devicePixelRatio || 1);
+        ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // Mouse / Touch drawing on the canvas
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      }
+
+      canvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        const p = getPos(e);
+        currentStroke = [p];
+      });
+
+      canvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const p = getPos(e);
+        currentStroke.push(p);
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isDrawing && currentStroke.length > 1) {
+          userStrokes.push([...currentStroke]);
+        }
+        isDrawing = false;
+        currentStroke = [];
+      });
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+        const p = getPos(e);
+        currentStroke = [p];
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const p = getPos(e);
+        currentStroke.push(p);
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', () => {
+        if (isDrawing && currentStroke.length > 1) {
+          userStrokes.push([...currentStroke]);
+        }
+        isDrawing = false;
+        currentStroke = [];
+      });
+
+      // Renders the Rocket (Braille & Dot Matrix as in reference screenshot!)
+      function drawRocket(mode) {
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        const cx = w / 2;
+        const cy = h / 2 - 10;
+
+        ctx.fillStyle = '#020304';
+        ctx.fillRect(0, 0, w, h);
+
+        // Rocket geometry dots
+        const rows = 46;
+        const cols = 28;
+        const spacingX = 6.5;
+        const spacingY = 7.5;
+        const startX = cx - (cols * spacingX) / 2;
+        const startY = cy - (rows * spacingY) / 2 + 10;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const normY = r / rows; // 0 (top) to 1 (bottom)
+            const normX = (c - cols / 2) / (cols / 2); // -1 (left) to 1 (right)
+
+            // Rocket shape condition
+            let inBody = false;
+            let inWings = false;
+            let inPorthole = false;
+            let inFlame = false;
+
+            // Nose cone & fuselage
+            if (normY >= 0.05 && normY <= 0.65) {
+              const bodyRadius = Math.sin(normY * Math.PI * 0.8) * 0.42;
+              if (Math.abs(normX) <= bodyRadius) {
+                inBody = true;
+              }
+            }
+
+            // Porthole cutout
+            const pDist = Math.hypot(normX - 0.05, normY - 0.24);
+            if (pDist < 0.12) {
+              inBody = false;
+              if (pDist > 0.09) inPorthole = true;
+            }
+
+            // Fins / wings
+            if (normY >= 0.45 && normY <= 0.65) {
+              const wingSpan = 0.35 + (normY - 0.45) * 2.8;
+              if (Math.abs(normX) <= wingSpan && Math.abs(normX) >= 0.25) {
+                inWings = true;
+              }
+            }
+
+            // Thruster flame
+            if (normY > 0.68 && normY < 0.98) {
+              const flameWidth = 0.25 * (1 - (normY - 0.68) / 0.3);
+              const flameJitter = Math.sin(r * 0.8 + time * 12) * 0.04;
+              if (Math.abs(normX) <= flameWidth + flameJitter) {
+                inFlame = true;
+              }
+            }
+
+            if (inBody || inWings || inPorthole || inFlame) {
+              const px = startX + c * spacingX;
+              const py = startY + r * spacingY;
+
+              if (mode === 'braille') {
+                // Braille dots look (like screenshot!)
+                const dotBrightness = (normY > 0.65) ? (0.6 + Math.sin(r + time * 10) * 0.4) : (0.7 + (c % 2) * 0.3);
+                ctx.fillStyle = inFlame 
+                  ? `rgba(56, 189, 248, ${dotBrightness})` 
+                  : (inWings ? `rgba(147, 51, 234, ${dotBrightness})` : `rgba(200, 225, 255, ${dotBrightness})`);
+                ctx.beginPath();
+                ctx.arc(px, py, 1.3, 0, Math.PI * 2);
+                ctx.fill();
+              } else if (mode === 'detailed') {
+                // High density glowing particles
+                ctx.fillStyle = inFlame ? '#38bdf8' : '#ffffff';
+                ctx.fillRect(px, py, 1.8, 1.8);
+              } else { // Classic ASCII style
+                ctx.fillStyle = inFlame ? '#38bdf8' : '#94a3b8';
+                ctx.font = '7px monospace';
+                ctx.fillText(':', px - 2, py + 3);
+              }
+            }
+          }
+        }
+      }
+
+      // LaTeX math preset render
+      function drawLatexFormula() {
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+
+        ctx.fillStyle = '#020304';
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+        for (let x = 0; x < w; x += 24) ctx.fillRect(x, 0, 1, h);
+        for (let y = 0; y < h; y += 24) ctx.fillRect(0, y, w, 1);
+
+        const cx = w / 2;
+        const cy = h / 2;
+
+        ctx.font = '22px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('∫ [ -∞ to +∞ ] e^(-x²) dx = √π', cx, cy - 40);
+
+        ctx.font = '16px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('E = mc²  ·  ∇ × B = μ₀J + μ₀ε₀(∂E/∂t)', cx, cy + 15);
+
+        ctx.font = '13px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#c084fc';
+        ctx.fillText('∑ [k=1..n] k² = n(n+1)(2n+1) / 6', cx, cy + 60);
+      }
+
+      // Physics circuit preset render
+      function drawPhysicsCircuit() {
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+
+        ctx.fillStyle = '#020304';
+        ctx.fillRect(0, 0, w, h);
+
+        const cx = w / 2;
+        const cy = h / 2;
+        const bw = Math.min(w * 0.7, 360);
+        const bh = 160;
+        const left = cx - bw / 2;
+        const right = cx + bw / 2;
+        const top = cy - bh / 2;
+        const bottom = cy + bh / 2;
+
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Wire rectangle
+        ctx.moveTo(left, top);
+        ctx.lineTo(right, top);
+        ctx.lineTo(right, bottom);
+        ctx.lineTo(left, bottom);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Battery symbol on left
+        ctx.fillStyle = '#020304';
+        ctx.fillRect(left - 10, cy - 25, 20, 50);
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(left - 16, cy - 12);
+        ctx.lineTo(left + 16, cy - 12);
+        ctx.moveTo(left - 8, cy + 12);
+        ctx.lineTo(left + 8, cy + 12);
+        ctx.stroke();
+
+        // Resistor zigzag on top
+        ctx.fillRect(cx - 35, top - 15, 70, 30);
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - 30, top);
+        ctx.lineTo(cx - 20, top - 10);
+        ctx.lineTo(cx - 10, top + 10);
+        ctx.lineTo(cx, top - 10);
+        ctx.lineTo(cx + 10, top + 10);
+        ctx.lineTo(cx + 20, top - 10);
+        ctx.lineTo(cx + 30, top);
+        ctx.stroke();
+
+        // Animated pulsing electrons
+        const electronT = (time * 120) % (2 * (bw + bh));
+        let ex = left, ey = top;
+        if (electronT < bw) { ex = left + electronT; ey = top; }
+        else if (electronT < bw + bh) { ex = right; ey = top + (electronT - bw); }
+        else if (electronT < 2 * bw + bh) { ex = right - (electronT - (bw + bh)); ey = bottom; }
+        else { ex = left; ey = bottom - (electronT - (2 * bw + bh)); }
+
+        ctx.fillStyle = '#facc15';
+        ctx.shadowColor = '#facc15';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(ex, ey, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.font = '11px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText('R = 470 Ω', cx, top - 18);
+        ctx.fillText('U = 12 V', left - 32, cy);
+      }
+
+      // Graphing preset render
+      function drawGraphing() {
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+
+        ctx.fillStyle = '#020304';
+        ctx.fillRect(0, 0, w, h);
+
+        const cx = w / 2;
+        const cy = h / 2;
+
+        // Grid
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w; x += 30) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 30) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+        ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
+        ctx.stroke();
+
+        // Sine wave function
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let x = 0; x < w; x++) {
+          const normX = (x - cx) / 40;
+          const normY = Math.sin(normX - time * 2) * Math.cos(normX * 0.4);
+          const y = cy - normY * 60;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.font = '12px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('f(x) = sin(x - 2t) · cos(0.4x)', 20, 30);
+      }
+
+      // Stylus handwriting simulation
+      function drawStylus() {
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+
+        ctx.fillStyle = '#020304';
+        ctx.fillRect(0, 0, w, h);
+
+        // Dot matrix grid
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+        for (let x = 20; x < w; x += 24) {
+          for (let y = 20; y < h; y += 24) {
+            ctx.fillRect(x, y, 1.5, 1.5);
+          }
+        }
+
+        const cx = w / 2;
+        const cy = h / 2;
+
+        // Simulated calligraphy stroke
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 4 + Math.sin(time * 3) * 2;
+
+        ctx.beginPath();
+        for (let i = 0; i < 80; i++) {
+          const t = i / 80;
+          const px = cx - 140 + t * 280;
+          const py = cy + Math.sin(t * Math.PI * 3 + time * 2) * 45;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        ctx.font = '12px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText('Stylus Pressure: ' + (0.5 + Math.sin(time * 3) * 0.35).toFixed(2) + ' · 120 Hz Digitizer', cx, cy + 90);
+      }
+
+      // Main render loop
+      function render() {
+        time += 0.016;
+
+        if (currentPreset === 'braille' || currentPreset === 'classic' || currentPreset === 'detailed') {
+          drawRocket(currentPreset);
+        } else if (currentPreset === 'latex') {
+          drawLatexFormula();
+        } else if (currentPreset === 'physics') {
+          drawPhysicsCircuit();
+        } else if (currentPreset === 'graphs') {
+          drawGraphing();
+        } else if (currentPreset === 'stylus') {
+          drawStylus();
+        }
+
+        // Draw user drawn strokes on top
+        if (userStrokes.length > 0 || isDrawing) {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          for (const stroke of userStrokes) {
+            if (stroke.length < 2) continue;
+            ctx.beginPath();
+            ctx.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+              ctx.lineTo(stroke[i].x, stroke[i].y);
+            }
+            ctx.stroke();
+          }
+
+          if (currentStroke.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(currentStroke[0].x, currentStroke[0].y);
+            for (let i = 1; i < currentStroke.length; i++) {
+              ctx.lineTo(currentStroke[i].x, currentStroke[i].y);
+            }
+            ctx.stroke();
+          }
+        }
+
+        animFrameId = requestAnimationFrame(render);
+      }
+
+      render();
+
+      // Preset pills switching
+      pills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          pills.forEach(p => {
+            p.classList.remove('active', 'bg-white', 'text-black', 'font-bold');
+            p.classList.add('text-brand-textSecondary');
+          });
+          pill.classList.remove('text-brand-textSecondary');
+          pill.classList.add('active', 'bg-white', 'text-black', 'font-bold');
+
+          currentPreset = pill.getAttribute('data-preset');
+          userStrokes = [];
+
+          if (currentPreset === 'braille') label.textContent = 'BRAILLE · 118×57 CELLS';
+          else if (currentPreset === 'detailed') label.textContent = 'DETAILED · 236×114 MATRIX';
+          else if (currentPreset === 'classic') label.textContent = 'CLASSIC · ASCII GLYPHS';
+          else if (currentPreset === 'latex') label.textContent = 'LATEX · VECTOR MATH CORE';
+          else if (currentPreset === 'physics') label.textContent = 'CIRCUIT · SCHEMATIC SIM';
+          else if (currentPreset === 'graphs') label.textContent = 'GRAPHING · 2D CARTESIAN';
+          else if (currentPreset === 'stylus') label.textContent = 'STYLUS · DIGITIZER SIM';
+        });
+      });
+
+    })();
+
+    // 3. FAQ Accordion Toggle
+    function toggleFaq(element) {
+      const answer = element.querySelector('.faq-answer');
+      const icon = element.querySelector('.faq-icon');
+      if (!answer) return;
+
+      const isHidden = answer.classList.contains('hidden');
+      if (isHidden) {
+        answer.classList.remove('hidden');
+        icon.textContent = '−';
+      } else {
+        answer.classList.add('hidden');
+        icon.textContent = '+';
+      }
+    }
+  </script>
 
 </body>
 </html>

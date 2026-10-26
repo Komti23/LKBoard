@@ -75,29 +75,51 @@ object TabletClientHtml {
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            padding: 24px;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            padding: 20px;
+            touch-action: auto !important;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
         }
 
         .fs-overlay.hidden {
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
+            display: none !important;
         }
 
         .fs-card {
             background: #181b20;
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 24px;
-            padding: 28px 24px;
+            padding: 28px 22px;
             max-width: 420px;
             width: 100%;
             text-align: center;
             box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+            touch-action: auto !important;
+            position: relative;
+        }
+
+        .fs-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #94a3b8;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: auto !important;
         }
 
         .fs-icon {
-            font-size: 52px;
+            font-size: 48px;
             margin-bottom: 12px;
             filter: drop-shadow(0 4px 12px rgba(37, 99, 235, 0.4));
         }
@@ -114,14 +136,14 @@ object TabletClientHtml {
             font-size: 13px;
             color: var(--text-muted);
             line-height: 1.5;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .btn-fullscreen {
             background: linear-gradient(135deg, #2563eb, #1d4ed8);
             color: #ffffff;
             border: none;
-            padding: 16px 24px;
+            padding: 16px 20px;
             border-radius: 14px;
             font-size: 15px;
             font-weight: 700;
@@ -132,6 +154,8 @@ object TabletClientHtml {
             align-items: center;
             justify-content: center;
             gap: 10px;
+            touch-action: auto !important;
+            -webkit-tap-highlight-color: transparent;
             transition: transform 0.1s ease, background 0.2s ease;
         }
 
@@ -139,10 +163,32 @@ object TabletClientHtml {
             transform: scale(0.97);
         }
 
+        .btn-fullscreen-skip {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+            touch-action: auto !important;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.15s ease;
+        }
+
+        .btn-fullscreen-skip:active {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
         .fs-tip {
             margin-top: 14px;
             font-size: 11px;
             color: #64748b;
+            line-height: 1.4;
         }
 
         /* Плавающая панель инструментов */
@@ -288,17 +334,24 @@ object TabletClientHtml {
 
     <!-- Окно приглашения перейти в полный экран -->
     <div class="fs-overlay" id="fs-overlay">
-        <div class="fs-card">
+        <div class="fs-card" id="fs-card">
+            <button class="fs-close-btn" id="btn-fs-close" title="Закрыть">✕</button>
             <div class="fs-icon">📱✍️</div>
             <h1 class="fs-title">Режим графического планшета</h1>
             <p class="fs-desc">
-                Ваш телефон подключен к компьютеру.<br>
-                Разверните экран на максимум, чтобы комфортно писать стилусом или пальцем без панелей браузера.
+                Телефон подключен к LKBoard на компьютере.<br>
+                Разверните холст на весь экран, чтобы панели браузера не мешали писать стилусом или пальцем.
             </p>
-            <button class="btn-fullscreen" id="btn-fs-start">
+            <button class="btn-fullscreen" id="btn-fs-start" type="button">
                 <span>⛶ Открыть на полный экран</span>
             </button>
-            <div class="fs-tip">Совет: поверните телефон горизонтально для максимальной площади письма</div>
+            <button class="btn-fullscreen-skip" id="btn-fs-skip" type="button">
+                <span>Начать писать без полного экрана →</span>
+            </button>
+            <div class="fs-tip">
+                Совет: поверните телефон горизонтально.<br>
+                На iPhone: «Поделиться» → «На экран «Домой»» для режима без адресной строки.
+            </div>
         </div>
     </div>
 
@@ -355,31 +408,103 @@ object TabletClientHtml {
             // Вьюпорт ПК
             let pcViewport = { panX: 0, panY: 0, scale: 1, width: 1366, height: 850 };
 
-            // Полноэкранный режим
-            function requestFullscreen() {
-                const el = document.documentElement;
-                if (el.requestFullscreen) {
-                    el.requestFullscreen().catch(() => {});
-                } else if (el.webkitRequestFullscreen) {
-                    el.webkitRequestFullscreen();
-                } else if (el.msRequestFullscreen) {
-                    el.msRequestFullscreen();
-                }
+            // Закрытие оверлея
+            function dismissOverlay() {
                 overlay.classList.add('hidden');
+                overlay.style.display = 'none';
+                resizeCanvas();
             }
 
-            btnFsStart.addEventListener('click', requestFullscreen);
-            btnReFs.addEventListener('click', requestFullscreen);
+            // Полноэкранный режим с поддержкой iOS Safari, Android Chrome и Touch
+            function enterFullscreen() {
+                dismissOverlay();
 
-            document.addEventListener('fullscreenchange', () => {
-                if (document.fullscreenElement) {
-                    overlay.classList.add('hidden');
+                const el = document.documentElement;
+                const rfs = el.requestFullscreen ||
+                            el.webkitRequestFullscreen ||
+                            el.webkitRequestFullScreen ||
+                            el.mozRequestFullScreen ||
+                            el.msRequestFullscreen;
+
+                if (typeof rfs === 'function') {
+                    try {
+                        const promise = rfs.call(el);
+                        if (promise && typeof promise.catch === 'function') {
+                            promise.catch(function(err) {
+                                console.warn('Fullscreen rejected:', err);
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Fullscreen call error:', e);
+                    }
+                }
+
+                // Скрытие адресной строки мобильного браузера
+                try {
+                    window.scrollTo(0, 1);
+                } catch (_) {}
+
+                // Попытка заблокировать альбомный режим
+                try {
+                    if (screen.orientation && screen.orientation.lock) {
+                        screen.orientation.lock('landscape').catch(function() {});
+                    }
+                } catch (_) {}
+
+                setTimeout(resizeCanvas, 150);
+            }
+
+            // Быстрый обработчик без 300мс мобильной задержки и блокировки touch-action
+            function addFastClickListener(element, handler) {
+                if (!element) return;
+                let touched = false;
+
+                element.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    touched = true;
+                    handler();
+                    setTimeout(function() { touched = false; }, 400);
+                }, { passive: false });
+
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!touched) {
+                        handler();
+                    }
+                });
+            }
+
+            const btnFsClose = document.getElementById('btn-fs-close');
+            const btnFsSkip = document.getElementById('btn-fs-skip');
+
+            addFastClickListener(btnFsStart, enterFullscreen);
+            addFastClickListener(btnFsSkip, dismissOverlay);
+            addFastClickListener(btnFsClose, dismissOverlay);
+            addFastClickListener(btnReFs, enterFullscreen);
+
+            // Закрытие при клике по фону
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    dismissOverlay();
+                }
+            });
+
+            function onFsChange() {
+                const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement);
+                if (isFs) {
+                    dismissOverlay();
                     btnReFs.style.display = 'none';
                 } else {
                     btnReFs.style.display = 'flex';
                 }
                 resizeCanvas();
-            });
+            }
+
+            document.addEventListener('fullscreenchange', onFsChange);
+            document.addEventListener('webkitfullscreenchange', onFsChange);
+            document.addEventListener('mozfullscreenchange', onFsChange);
 
             // Настройка Canvas под ретину и экран
             function resizeCanvas() {
