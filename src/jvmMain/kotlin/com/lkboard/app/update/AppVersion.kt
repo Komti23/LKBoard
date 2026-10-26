@@ -18,20 +18,26 @@ data class FeatureHighlight(
  * - x.x+1.0 (Minor) — среднее обновление (новые инструменты, шаблоны, функции)
  * - x+1.0.0 (Major) — крупный технологический прорыв
  *
- * Текущая версия: 1.6.1 (Сборка 161)
+ * Текущая версия: 1.6.2 (Сборка 162)
  */
 object AppVersion {
-    const val VERSION_NAME = "1.6.1"
-    const val VERSION_CODE = 161
+    const val VERSION_NAME = "1.6.2"
+    const val VERSION_CODE = 162
     const val RELEASE_DATE = "Октябрь 2026"
     const val UPDATE_URL = "http://164.37.224.219/api/version"
     const val WEBSITE_URL = "http://164.37.224.219"
     const val DOWNLOAD_PAGE_URL = "http://164.37.224.219/#download"
 
     /**
-     * Список новых функций и улучшений текущего релиза v1.6.1.
+     * Список новых функций и улучшений текущего релиза v1.6.2.
      */
     val WHAT_IS_NEW = listOf(
+        FeatureHighlight(
+            title = "Полный фикс работы всех кнопок режима планшета",
+            description = "Устранена синтаксическая ошибка в скрипте мобильного планшета (0xFF2563EB). Все кнопки полноэкранного режима, тулбара, цветов и отмены теперь работают мгновенно на любых телефонах.",
+            tag = "Мобильные",
+            icon = "📱"
+        ),
         FeatureHighlight(
             title = "Исправление полноэкранного режима планшета на смартфонах",
             description = "Кнопка «Открыть на полный экран» теперь срабатывает мгновенно без задержек на iOS Safari и Android Chrome, добавлена кнопка прямого перехода и поддержка жестов.",

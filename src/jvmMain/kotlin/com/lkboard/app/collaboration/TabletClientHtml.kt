@@ -330,22 +330,22 @@ object TabletClientHtml {
     </div>
 
     <!-- Кнопка повторного входа в полный экран -->
-    <button class="btn-re-fs" id="btn-re-fs" title="Развернуть во весь экран">⛶ Полный экран</button>
+    <button class="btn-re-fs" id="btn-re-fs" title="Развернуть во весь экран" type="button" onclick="window.enterFullscreenTablet()" ontouchend="window.enterFullscreenTablet()">⛶ Полный экран</button>
 
     <!-- Окно приглашения перейти в полный экран -->
-    <div class="fs-overlay" id="fs-overlay">
+    <div class="fs-overlay" id="fs-overlay" onclick="if(event.target===this) window.dismissTabletOverlay()">
         <div class="fs-card" id="fs-card">
-            <button class="fs-close-btn" id="btn-fs-close" title="Закрыть">✕</button>
+            <button class="fs-close-btn" id="btn-fs-close" title="Закрыть" type="button" onclick="window.dismissTabletOverlay()" ontouchend="window.dismissTabletOverlay()">✕</button>
             <div class="fs-icon">📱✍️</div>
             <h1 class="fs-title">Режим графического планшета</h1>
             <p class="fs-desc">
                 Телефон подключен к LKBoard на компьютере.<br>
                 Разверните холст на весь экран, чтобы панели браузера не мешали писать стилусом или пальцем.
             </p>
-            <button class="btn-fullscreen" id="btn-fs-start" type="button">
+            <button class="btn-fullscreen" id="btn-fs-start" type="button" onclick="window.enterFullscreenTablet()" ontouchend="window.enterFullscreenTablet()">
                 <span>⛶ Открыть на полный экран</span>
             </button>
-            <button class="btn-fullscreen-skip" id="btn-fs-skip" type="button">
+            <button class="btn-fullscreen-skip" id="btn-fs-skip" type="button" onclick="window.dismissTabletOverlay()" ontouchend="window.dismissTabletOverlay()">
                 <span>Начать писать без полного экрана →</span>
             </button>
             <div class="fs-tip">
@@ -357,9 +357,9 @@ object TabletClientHtml {
 
     <!-- Нижняя плавающая панель инструментов -->
     <div class="toolbar-pill">
-        <button class="tool-btn active" id="tool-pen" title="Стилус / Ручка">🖊️</button>
-        <button class="tool-btn" id="tool-highlighter" title="Маркер">🖍️</button>
-        <button class="tool-btn" id="tool-eraser" title="Ластик">🧹</button>
+        <button class="tool-btn active" id="tool-pen" title="Стилус / Ручка" type="button">🖊️</button>
+        <button class="tool-btn" id="tool-highlighter" title="Маркер" type="button">🖍️</button>
+        <button class="tool-btn" id="tool-eraser" title="Ластик" type="button">🧹</button>
 
         <div class="divider"></div>
 
@@ -373,13 +373,53 @@ object TabletClientHtml {
         <div class="divider"></div>
 
         <!-- Толщина -->
-        <button class="tool-btn" id="btn-width" title="Толщина пера" style="font-size: 13px; font-weight: bold;">4px</button>
-        <button class="tool-btn" id="btn-undo" title="Отменить последний штрих">↩️</button>
-        <button class="tool-btn" id="btn-clear" title="Очистить холст">🗑️</button>
-        <button class="tool-btn" id="btn-palm" title="Palm Rejection (защита ладони)">🖐️</button>
+        <button class="tool-btn" id="btn-width" title="Толщина пера" type="button" style="font-size: 13px; font-weight: bold;">4px</button>
+        <button class="tool-btn" id="btn-undo" title="Отменить последний штрих" type="button">↩️</button>
+        <button class="tool-btn" id="btn-clear" title="Очистить холст" type="button">🗑️</button>
+        <button class="tool-btn" id="btn-palm" title="Palm Rejection (защита ладони)" type="button">🖐️</button>
     </div>
 
     <script>
+        // Глобальные функции управления экраном (гарантированная работа при нажатии в любой точке)
+        window.dismissTabletOverlay = function() {
+            var o = document.getElementById('fs-overlay');
+            if (o) {
+                o.classList.add('hidden');
+                o.style.display = 'none';
+            }
+            if (typeof window.triggerResize === 'function') window.triggerResize();
+        };
+
+        window.enterFullscreenTablet = function() {
+            window.dismissTabletOverlay();
+            var el = document.documentElement;
+            var rfs = el.requestFullscreen ||
+                      el.webkitRequestFullscreen ||
+                      el.webkitRequestFullScreen ||
+                      el.mozRequestFullScreen ||
+                      el.msRequestFullscreen;
+
+            if (rfs) {
+                try {
+                    var p = rfs.call(el);
+                    if (p && typeof p.catch === 'function') {
+                        p.catch(function(){});
+                    }
+                } catch (_) {}
+            }
+
+            try { window.scrollTo(0, 1); } catch (_) {}
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(function() {});
+                }
+            } catch (_) {}
+
+            setTimeout(function() {
+                if (typeof window.triggerResize === 'function') window.triggerResize();
+            }, 150);
+        };
+
         (function() {
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
@@ -390,9 +430,12 @@ object TabletClientHtml {
             const btnUndo = document.getElementById('btn-undo');
             const btnClear = document.getElementById('btn-clear');
             const btnPalm = document.getElementById('btn-palm');
+            const btnFsClose = document.getElementById('btn-fs-close');
+            const btnFsSkip = document.getElementById('btn-fs-skip');
+            const toolbar = document.querySelector('.toolbar-pill');
 
             let currentTool = 'pen'; // 'pen', 'highlighter', 'eraser'
-            let currentColorHex = 0xFF2563EBL; // default blue
+            let currentColorHex = 0xFF2563EB; // default blue (валидное число в JS, без суффикса L)
             let currentCssColor = '#2563eb';
             let currentWidth = 4;
             const widths = [2, 4, 8, 14];
@@ -408,81 +451,50 @@ object TabletClientHtml {
             // Вьюпорт ПК
             let pcViewport = { panX: 0, panY: 0, scale: 1, width: 1366, height: 850 };
 
-            // Закрытие оверлея
-            function dismissOverlay() {
-                overlay.classList.add('hidden');
-                overlay.style.display = 'none';
-                resizeCanvas();
+            // Предотвращение захвата касаний холстом при кликах по тулбару или оверлею
+            if (toolbar) {
+                toolbar.addEventListener('pointerdown', (e) => e.stopPropagation());
+                toolbar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+            }
+            if (overlay) {
+                overlay.addEventListener('pointerdown', (e) => e.stopPropagation());
+                overlay.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
             }
 
-            // Полноэкранный режим с поддержкой iOS Safari, Android Chrome и Touch
-            function enterFullscreen() {
-                dismissOverlay();
-
-                const el = document.documentElement;
-                const rfs = el.requestFullscreen ||
-                            el.webkitRequestFullscreen ||
-                            el.webkitRequestFullScreen ||
-                            el.mozRequestFullScreen ||
-                            el.msRequestFullscreen;
-
-                if (typeof rfs === 'function') {
-                    try {
-                        const promise = rfs.call(el);
-                        if (promise && typeof promise.catch === 'function') {
-                            promise.catch(function(err) {
-                                console.warn('Fullscreen rejected:', err);
-                            });
-                        }
-                    } catch (e) {
-                        console.warn('Fullscreen call error:', e);
-                    }
-                }
-
-                // Скрытие адресной строки мобильного браузера
-                try {
-                    window.scrollTo(0, 1);
-                } catch (_) {}
-
-                // Попытка заблокировать альбомный режим
-                try {
-                    if (screen.orientation && screen.orientation.lock) {
-                        screen.orientation.lock('landscape').catch(function() {});
-                    }
-                } catch (_) {}
-
-                setTimeout(resizeCanvas, 150);
-            }
-
-            // Быстрый обработчик без 300мс мобильной задержки и блокировки touch-action
+            // Быстрый обработчик нажатия без 300мс мобильной задержки
             function addFastClickListener(element, handler) {
                 if (!element) return;
                 let touched = false;
+
+                element.addEventListener('pointerdown', function(e) {
+                    e.stopPropagation();
+                });
+
+                element.addEventListener('touchstart', function(e) {
+                    e.stopPropagation();
+                }, { passive: true });
 
                 element.addEventListener('touchend', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     touched = true;
-                    handler();
-                    setTimeout(function() { touched = false; }, 400);
+                    handler(e);
+                    setTimeout(function() { touched = false; }, 350);
                 }, { passive: false });
 
                 element.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     if (!touched) {
-                        handler();
+                        handler(e);
                     }
                 });
             }
 
-            const btnFsClose = document.getElementById('btn-fs-close');
-            const btnFsSkip = document.getElementById('btn-fs-skip');
-
-            addFastClickListener(btnFsStart, enterFullscreen);
-            addFastClickListener(btnFsSkip, dismissOverlay);
-            addFastClickListener(btnFsClose, dismissOverlay);
-            addFastClickListener(btnReFs, enterFullscreen);
+            addFastClickListener(btnFsStart, window.enterFullscreenTablet);
+            addFastClickListener(btnFsSkip, window.dismissTabletOverlay);
+            addFastClickListener(btnFsClose, window.dismissTabletOverlay);
+            addFastClickListener(btnReFs, window.enterFullscreenTablet);
 
             // Закрытие при клике по фону
             overlay.addEventListener('click', function(e) {
@@ -514,6 +526,7 @@ object TabletClientHtml {
                 ctx.scale(dpr, dpr);
                 redrawLocalCanvas();
             }
+            window.triggerResize = resizeCanvas;
 
             window.addEventListener('resize', resizeCanvas);
             window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
@@ -683,20 +696,20 @@ object TabletClientHtml {
             canvas.addEventListener('pointerup', finishStroke);
             canvas.addEventListener('pointercancel', finishStroke);
 
-            // Переключение инструментов
-            document.getElementById('tool-pen').addEventListener('click', () => {
+            // Переключение инструментов с мгновенным откликом
+            addFastClickListener(document.getElementById('tool-pen'), () => {
                 currentTool = 'pen';
                 document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
                 document.getElementById('tool-pen').classList.add('active');
             });
 
-            document.getElementById('tool-highlighter').addEventListener('click', () => {
+            addFastClickListener(document.getElementById('tool-highlighter'), () => {
                 currentTool = 'highlighter';
                 document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
                 document.getElementById('tool-highlighter').classList.add('active');
             });
 
-            document.getElementById('tool-eraser').addEventListener('click', () => {
+            addFastClickListener(document.getElementById('tool-eraser'), () => {
                 currentTool = 'eraser';
                 document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
                 document.getElementById('tool-eraser').classList.add('active');
@@ -704,23 +717,23 @@ object TabletClientHtml {
 
             // Выбор цвета
             document.querySelectorAll('.color-dot').forEach(dot => {
-                dot.addEventListener('click', () => {
+                addFastClickListener(dot, () => {
                     document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
                     dot.classList.add('active');
-                    currentColorHex = parseInt(dot.getAttribute('data-color'));
+                    currentColorHex = Number(dot.getAttribute('data-color')) || 0xFF2563EB;
                     currentCssColor = dot.style.background;
                 });
             });
 
             // Толщина пера
-            btnWidth.addEventListener('click', () => {
+            addFastClickListener(btnWidth, () => {
                 widthIndex = (widthIndex + 1) % widths.length;
                 currentWidth = widths[widthIndex];
                 btnWidth.innerText = currentWidth + 'px';
             });
 
             // Отмена штриха
-            btnUndo.addEventListener('click', async () => {
+            addFastClickListener(btnUndo, async () => {
                 if (strokesHistory.length === 0) return;
                 const lastId = strokesHistory.pop();
                 await sendAction({
@@ -732,12 +745,12 @@ object TabletClientHtml {
             });
 
             // Очистка экрана планшета
-            btnClear.addEventListener('click', () => {
+            addFastClickListener(btnClear, () => {
                 resizeCanvas();
             });
 
             // Palm Rejection
-            btnPalm.addEventListener('click', () => {
+            addFastClickListener(btnPalm, () => {
                 palmRejection = !palmRejection;
                 btnPalm.style.opacity = palmRejection ? '1.0' : '0.4';
             });
@@ -746,13 +759,13 @@ object TabletClientHtml {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
 
-            // Уведомление ПК о подключении планшета
+            // Уведомление ПК о подключении планшета (число 0xFF2563EB без L)
             sendAction({
                 type: 'peer_joined',
                 peer: {
                     id: 'phone-tablet-stylus',
                     name: 'Стилус (Телефон)',
-                    colorHex: 0xFF2563EBL,
+                    colorHex: 0xFF2563EB,
                     isHost: false,
                     clientType: 'Tablet'
                 }
