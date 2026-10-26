@@ -82,9 +82,9 @@ fun LatexEditDialog(
             modifier = Modifier.width(520.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF13161A)
+                containerColor = Color.White
             ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF242830))
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -100,13 +100,13 @@ fun LatexEditDialog(
                         text = "Формула LaTeX «на лету»",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFF4F4F5)
+                        color = Color(0xFF0F172A)
                     )
                     Text(
                         text = "∑ Math Engine",
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF38BDF8)
+                        color = Color(0xFF2563EB)
                     )
                 }
 
@@ -115,8 +115,8 @@ fun LatexEditDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFF0D0F12))
-                        .border(1.dp, Color(0xFF242830), RoundedCornerShape(8.dp))
+                        .background(Color(0xFFF8FAFC))
+                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
                         .padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -124,7 +124,7 @@ fun LatexEditDialog(
                         text = "ПРЕДПРОСМОТР:",
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF71717A)
+                        color = Color(0xFF64748B)
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
@@ -133,7 +133,7 @@ fun LatexEditDialog(
                         fontFamily = FontFamily.Serif,
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF38BDF8)
+                        color = Color(0xFF1D4ED8)
                     )
                 }
 
@@ -141,16 +141,17 @@ fun LatexEditDialog(
                 OutlinedTextField(
                     value = formula,
                     onValueChange = { formula = it },
-                    label = { Text("LaTeX выражение", color = Color(0xFFA1A1AA)) },
+                    label = { Text("LaTeX выражение") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFFF4F4F5),
-                        unfocusedTextColor = Color(0xFFF4F4F5),
-                        focusedBorderColor = Color(0xFF38BDF8),
-                        unfocusedBorderColor = Color(0xFF242830),
-                        focusedContainerColor = Color(0xFF181B20),
-                        unfocusedContainerColor = Color(0xFF181B20)
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF0F172A),
+                        focusedBorderColor = Color(0xFF2563EB),
+                        unfocusedBorderColor = Color(0xFFCBD5E1),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        cursorColor = Color(0xFF2563EB)
                     ),
                     textStyle = androidx.compose.ui.text.TextStyle(
                         fontFamily = FontFamily.Monospace,
@@ -163,7 +164,7 @@ fun LatexEditDialog(
                     text = "БЫСТРЫЕ ВСТАВКИ:",
                     fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = Color(0xFFA1A1AA)
+                    color = Color(0xFF64748B)
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -173,8 +174,8 @@ fun LatexEditDialog(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFF181B20))
-                                .border(1.dp, Color(0xFF242830), RoundedCornerShape(6.dp))
+                                .background(Color(0xFFF1F5F9))
+                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
                                 .clickable { formula = if (formula.isBlank()) code else "$formula $code" }
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
@@ -182,7 +183,7 @@ fun LatexEditDialog(
                                 text = label,
                                 fontSize = 11.sp,
                                 fontFamily = FontFamily.Monospace,
-                                color = Color(0xFFF4F4F5)
+                                color = Color(0xFF1E293B)
                             )
                         }
                     }
@@ -193,7 +194,7 @@ fun LatexEditDialog(
                     text = "ГОТОВЫЕ ФОРМУЛЫ:",
                     fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = Color(0xFFA1A1AA)
+                    color = Color(0xFF64748B)
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -203,15 +204,15 @@ fun LatexEditDialog(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFF1F2329))
-                                .border(1.dp, Color(0xFF363C48), RoundedCornerShape(6.dp))
+                                .background(Color(0xFFEFF6FF))
+                                .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
                                 .clickable { formula = code }
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = title,
                                 fontSize = 11.sp,
-                                color = Color(0xFF38BDF8)
+                                color = Color(0xFF1D4ED8)
                             )
                         }
                     }
@@ -227,9 +228,9 @@ fun LatexEditDialog(
                         onClick = onDismiss,
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFA1A1AA)
+                            contentColor = Color(0xFF64748B)
                         ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF242830))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1))
                     ) {
                         Text("Отмена", fontSize = 12.sp)
                     }
@@ -244,11 +245,11 @@ fun LatexEditDialog(
                         },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF38BDF8),
-                            contentColor = Color(0xFF0D0F12)
+                            containerColor = Color(0xFF2563EB),
+                            contentColor = Color.White
                         )
                     ) {
-                        Text("Добавить на доску", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("✓ Добавить на доску", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

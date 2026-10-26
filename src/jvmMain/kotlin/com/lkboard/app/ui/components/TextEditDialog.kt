@@ -17,11 +17,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -109,6 +112,18 @@ fun TextEditDialog(
         }
     }
 
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color(0xFF0F172A),
+        unfocusedTextColor = Color(0xFF0F172A),
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White,
+        cursorColor = Color(0xFF2563EB),
+        focusedBorderColor = Color(0xFF2563EB),
+        unfocusedBorderColor = Color(0xFFCBD5E1),
+        focusedPlaceholderColor = Color(0xFF94A3B8),
+        unfocusedPlaceholderColor = Color(0xFF94A3B8)
+    )
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(18.dp),
@@ -116,10 +131,11 @@ fun TextEditDialog(
             shadowElevation = 16.dp,
             modifier = Modifier.width(460.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(22.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
+            CompositionLocalProvider(LocalContentColor provides Color(0xFF0F172A)) {
+                Column(
+                    modifier = Modifier.padding(22.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
                 Text(
                     text = if (element is BoardElement.StickyNote) "📝 Редактирование стикера" else "✏️ Редактирование текста",
                     fontSize = 18.sp,
@@ -222,6 +238,7 @@ fun TextEditDialog(
                 OutlinedTextField(
                     value = textFieldValue,
                     onValueChange = { textFieldValue = it },
+                    colors = fieldColors,
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
@@ -265,4 +282,5 @@ fun TextEditDialog(
             }
         }
     }
+}
 }

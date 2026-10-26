@@ -49,8 +49,8 @@ fun FirstRunOnboardingDialog(
         Card(
             modifier = Modifier.width(580.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF13161A)),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF242830))
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Column(
                 modifier = Modifier.padding(26.dp),
@@ -62,13 +62,13 @@ fun FirstRunOnboardingDialog(
                         text = "Добро пожаловать в LKBoard!",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFFF4F4F5)
+                        color = Color(0xFF0F172A)
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = "Выберите, для чего вы будете использовать доску. Мы оставим только нужные инструменты, чтобы не перегружать экран лишним мусором:",
                         fontSize = 12.sp,
-                        color = Color(0xFFA1A1AA),
+                        color = Color(0xFF64748B),
                         lineHeight = 17.sp
                     )
                 }
@@ -81,8 +81,12 @@ fun FirstRunOnboardingDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) Color(0x2438BDF8) else Color(0xFF181B20))
-                                .border(1.5.dp, if (isSelected) Color(0xFF38BDF8) else Color(0xFF242830), RoundedCornerShape(12.dp))
+                                .background(if (isSelected) Color(0xFFEFF6FF) else Color(0xFFF8FAFC))
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) Color(0xFF2563EB) else Color(0xFFE2E8F0),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
                                 .clickable { selectedRole = role }
                                 .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -97,20 +101,20 @@ fun FirstRunOnboardingDialog(
                                     text = role.title,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color(0xFF38BDF8) else Color(0xFFF4F4F5)
+                                    color = if (isSelected) Color(0xFF1D4ED8) else Color(0xFF0F172A)
                                 )
                                 Spacer(Modifier.height(2.dp))
                                 Text(
                                     text = role.subtitle,
                                     fontSize = 11.sp,
-                                    color = Color(0xFFA1A1AA)
+                                    color = if (isSelected) Color(0xFF475569) else Color(0xFF64748B)
                                 )
                             }
                             if (isSelected) {
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(Color(0xFF38BDF8))
+                                        .background(Color(0xFF2563EB))
                                         .padding(horizontal = 8.dp, vertical = 3.dp)
                                 ) {
                                     Text(
@@ -118,7 +122,7 @@ fun FirstRunOnboardingDialog(
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
                                         fontFamily = FontFamily.Monospace,
-                                        color = Color(0xFF0D0F12)
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -129,7 +133,7 @@ fun FirstRunOnboardingDialog(
                 Text(
                     text = "💡 Вы в любой момент сможете включить любые инструменты или сменить тему в Настройках.",
                     fontSize = 11.sp,
-                    color = Color(0xFF71717A)
+                    color = Color(0xFF64748B)
                 )
 
                 // Кнопка перехода к работе
@@ -138,8 +142,8 @@ fun FirstRunOnboardingDialog(
                     modifier = Modifier.fillMaxWidth().height(44.dp),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF38BDF8),
-                        contentColor = Color(0xFF0D0F12)
+                        containerColor = Color(0xFF2563EB),
+                        contentColor = Color.White
                     )
                 ) {
                     Text(

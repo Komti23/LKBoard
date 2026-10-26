@@ -313,7 +313,8 @@ fun main() = application {
                         },
                         updateState = updateState,
                         onCheckUpdates = { viewModel.checkForUpdates(isManual = true) },
-                        onOpenUpdateDialog = viewModel::openUpdateDialog
+                        onOpenUpdateDialog = viewModel::openUpdateDialog,
+                        onOpenSettings = viewModel::openSettingsDialog
                     )
                 }
 

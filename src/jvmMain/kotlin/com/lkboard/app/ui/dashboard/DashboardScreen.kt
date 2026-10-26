@@ -32,14 +32,17 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
@@ -89,6 +92,7 @@ fun DashboardScreen(
     updateState: UpdateCheckState = UpdateCheckState(),
     onCheckUpdates: () -> Unit = {},
     onOpenUpdateDialog: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -123,7 +127,8 @@ fun DashboardScreen(
                 },
                 updateState = updateState,
                 onCheckUpdates = onCheckUpdates,
-                onOpenUpdateDialog = onOpenUpdateDialog
+                onOpenUpdateDialog = onOpenUpdateDialog,
+                onOpenSettings = onOpenSettings
             )
 
             Spacer(modifier = Modifier.height(28.dp))
@@ -257,7 +262,8 @@ private fun DashboardHeader(
     onCreateClick: () -> Unit,
     updateState: UpdateCheckState,
     onCheckUpdates: () -> Unit,
-    onOpenUpdateDialog: () -> Unit
+    onOpenUpdateDialog: () -> Unit,
+    onOpenSettings: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -428,13 +434,40 @@ private fun DashboardHeader(
                     Icon(
                         imageVector = Icons.Default.FolderOpen,
                         contentDescription = "Импорт",
-                        modifier = Modifier.size(17.dp)
+                        modifier = Modifier.size(17.dp),
+                        tint = Color(0xFF475569)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Импорт",
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF334155)
+                    )
+                }
+
+                // Кнопка настроек
+                Button(
+                    onClick = onOpenSettings,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF1F5F9),
+                        contentColor = Color(0xFF334155)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Настройки",
+                        modifier = Modifier.size(17.dp),
+                        tint = Color(0xFF475569)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Настройки",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF334155)
                     )
                 }
 
@@ -700,9 +733,9 @@ private fun BoardCard(
                                 .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(12.dp))
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Открыть", fontSize = 13.sp) },
+                                text = { Text("Открыть", fontSize = 13.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                 leadingIcon = {
-                                    Icon(Icons.AutoMirrored.Filled.OpenInNew, null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.AutoMirrored.Filled.OpenInNew, null, tint = Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
                                 onClick = {
                                     menuOpen = false
@@ -710,9 +743,9 @@ private fun BoardCard(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Переименовать", fontSize = 13.sp) },
+                                text = { Text("Переименовать", fontSize = 13.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Edit, null, tint = Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
                                 onClick = {
                                     menuOpen = false
@@ -720,9 +753,9 @@ private fun BoardCard(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Дублировать", fontSize = 13.sp) },
+                                text = { Text("Дублировать", fontSize = 13.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                 leadingIcon = {
-                                    Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.ContentCopy, null, tint = Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
                                 onClick = {
                                     menuOpen = false
@@ -730,7 +763,7 @@ private fun BoardCard(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Удалить", fontSize = 13.sp, color = Color(0xFFDC2626)) },
+                                text = { Text("Удалить", fontSize = 13.sp, color = Color(0xFFDC2626), fontWeight = FontWeight.Medium) },
                                 leadingIcon = {
                                     Icon(Icons.Default.DeleteOutline, null, tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
                                 },
@@ -841,7 +874,10 @@ private fun CreateBoardDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Создать новую доску", fontWeight = FontWeight.Bold) },
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF0F172A),
+        textContentColor = Color(0xFF334155),
+        title = { Text("Создать новую доску", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 OutlinedTextField(
@@ -850,6 +886,15 @@ private fun CreateBoardDialog(
                     label = { Text("Название доски") },
                     placeholder = { Text("Например: Дорожная карта Q4") },
                     singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF0F172A),
+                        cursorColor = Color(0xFF2563EB),
+                        focusedBorderColor = Color(0xFF2563EB),
+                        unfocusedBorderColor = Color(0xFFCBD5E1),
+                        focusedLabelColor = Color(0xFF2563EB),
+                        unfocusedLabelColor = Color(0xFF64748B)
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -913,13 +958,25 @@ private fun RenameBoardDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Переименовать доску", fontWeight = FontWeight.Bold) },
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF0F172A),
+        textContentColor = Color(0xFF334155),
+        title = { Text("Переименовать доску", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A)) },
         text = {
             OutlinedTextField(
                 value = newTitle,
                 onValueChange = { newTitle = it },
                 label = { Text("Новое название") },
                 singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color(0xFF0F172A),
+                    unfocusedTextColor = Color(0xFF0F172A),
+                    cursorColor = Color(0xFF2563EB),
+                    focusedBorderColor = Color(0xFF2563EB),
+                    unfocusedBorderColor = Color(0xFFCBD5E1),
+                    focusedLabelColor = Color(0xFF2563EB),
+                    unfocusedLabelColor = Color(0xFF64748B)
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
         },
@@ -954,9 +1011,12 @@ private fun DeleteConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Удалить доску?", fontWeight = FontWeight.Bold) },
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF0F172A),
+        textContentColor = Color(0xFF334155),
+        title = { Text("Удалить доску?", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A)) },
         text = {
-            Text("Вы уверены, что хотите безвозвратно удалить доску «$boardTitle»? Это действие нельзя отменить.")
+            Text("Вы уверены, что хотите безвозвратно удалить доску «$boardTitle»? Это действие нельзя отменить.", color = Color(0xFF334155))
         },
         confirmButton = {
             Button(

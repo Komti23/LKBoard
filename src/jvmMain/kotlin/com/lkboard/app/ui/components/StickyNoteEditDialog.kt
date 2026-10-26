@@ -181,6 +181,9 @@ fun StickyNoteEditDialog(
                             .height(160.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color(0xFF0F172A),
+                            unfocusedTextColor = Color(0xFF0F172A),
+                            cursorColor = Color(0xFF007AFF),
                             focusedBorderColor = Color(0xFF007AFF),
                             unfocusedBorderColor = Color(0xFFCBD5E1),
                             focusedContainerColor = Color.White,

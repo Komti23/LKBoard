@@ -477,6 +477,11 @@ fun ShareBoardDialog(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color(0xFF0F172A),
+                                unfocusedTextColor = Color(0xFF0F172A),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                cursorColor = Color(0xFF0284C7),
                                 focusedBorderColor = Color(0xFF0284C7),
                                 unfocusedBorderColor = Color(0xFFCBD5E1)
                             )
@@ -490,6 +495,11 @@ fun ShareBoardDialog(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color(0xFF0F172A),
+                                unfocusedTextColor = Color(0xFF0F172A),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                cursorColor = Color(0xFF0284C7),
                                 focusedBorderColor = Color(0xFF0284C7),
                                 unfocusedBorderColor = Color(0xFFCBD5E1)
                             )

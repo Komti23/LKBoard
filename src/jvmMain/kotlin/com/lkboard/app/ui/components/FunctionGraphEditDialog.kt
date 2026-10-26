@@ -24,11 +24,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -119,6 +122,20 @@ fun FunctionGraphEditDialog(
     val parsedYMin = yMinText.toFloatOrNull() ?: -5f
     val parsedYMax = yMaxText.toFloatOrNull() ?: 5f
 
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color(0xFF0F172A),
+        unfocusedTextColor = Color(0xFF0F172A),
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White,
+        cursorColor = Color(0xFF2563EB),
+        focusedBorderColor = Color(0xFF2563EB),
+        unfocusedBorderColor = Color(0xFFCBD5E1),
+        focusedLabelColor = Color(0xFF2563EB),
+        unfocusedLabelColor = Color(0xFF64748B),
+        focusedPlaceholderColor = Color(0xFF94A3B8),
+        unfocusedPlaceholderColor = Color(0xFF94A3B8)
+    )
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -132,11 +149,12 @@ fun FunctionGraphEditDialog(
                 .height(680.dp)
                 .padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp)
-            ) {
+            CompositionLocalProvider(LocalContentColor provides Color(0xFF0F172A)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp)
+                ) {
                 // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -220,6 +238,7 @@ fun FunctionGraphEditDialog(
                             onValueChange = { title = it },
                             label = { Text("Заголовок графика") },
                             singleLine = true,
+                            colors = fieldColors,
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -267,6 +286,7 @@ fun FunctionGraphEditDialog(
                                         onValueChange = { expressions[idx] = it },
                                         placeholder = { Text("например: sin(x) или x^2 - 4") },
                                         singleLine = true,
+                                        colors = fieldColors,
                                         modifier = Modifier
                                             .weight(1f)
                                             .clickable { activeExpressionIndex = idx }
@@ -387,6 +407,7 @@ fun FunctionGraphEditDialog(
                                 onValueChange = { xMinText = it },
                                 label = { Text("X min") },
                                 singleLine = true,
+                                colors = fieldColors,
                                 modifier = Modifier.weight(1f)
                             )
                             OutlinedTextField(
@@ -394,6 +415,7 @@ fun FunctionGraphEditDialog(
                                 onValueChange = { xMaxText = it },
                                 label = { Text("X max") },
                                 singleLine = true,
+                                colors = fieldColors,
                                 modifier = Modifier.weight(1f)
                             )
                             OutlinedTextField(
@@ -401,6 +423,7 @@ fun FunctionGraphEditDialog(
                                 onValueChange = { yMinText = it },
                                 label = { Text("Y min") },
                                 singleLine = true,
+                                colors = fieldColors,
                                 modifier = Modifier.weight(1f)
                             )
                             OutlinedTextField(
@@ -408,6 +431,7 @@ fun FunctionGraphEditDialog(
                                 onValueChange = { yMaxText = it },
                                 label = { Text("Y max") },
                                 singleLine = true,
+                                colors = fieldColors,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -612,6 +636,7 @@ fun FunctionGraphEditDialog(
             }
         }
     }
+}
 }
 
 @Composable

@@ -48,7 +48,7 @@ private val NotebookColorScheme = lightColorScheme(
 
 @Composable
 fun LkboardTheme(
-    appTheme: AppTheme = AppTheme.DARK,
+    appTheme: AppTheme = AppTheme.LIGHT,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (appTheme) {

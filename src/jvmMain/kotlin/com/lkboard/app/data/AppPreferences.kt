@@ -211,10 +211,10 @@ object AppPreferences {
 
     fun loadAppTheme(): AppTheme {
         return try {
-            val name = prefs.get(KEY_APP_THEME, AppTheme.DARK.name)
+            val name = prefs.get(KEY_APP_THEME, AppTheme.LIGHT.name)
             AppTheme.valueOf(name)
         } catch (_: Exception) {
-            AppTheme.DARK
+            AppTheme.LIGHT
         }
     }
 

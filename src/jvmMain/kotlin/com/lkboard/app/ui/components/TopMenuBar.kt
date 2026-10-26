@@ -324,6 +324,16 @@ fun TopMenuBar(
                     )
                     MenuDivider()
                     StyledMenuItem(
+                        text = "Настройки...",
+                        shortcut = "Ctrl+,",
+                        icon = Icons.Default.Settings,
+                        onClick = {
+                            isFileMenuOpen = false
+                            onOpenSettings()
+                        }
+                    )
+                    MenuDivider()
+                    StyledMenuItem(
                         text = "Выход",
                         icon = Icons.AutoMirrored.Filled.ExitToApp,
                         isDestructive = true,
@@ -688,18 +698,25 @@ fun TopMenuBar(
             )
 
             // Кнопка «Настройки приложения»
-            Box(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .clickable { onOpenSettings() }
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Настройки",
-                    tint = Color(0xFF64748B),
+                    tint = Color(0xFF475569),
                     modifier = Modifier.size(15.dp)
+                )
+                Text(
+                    text = "Настройки",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF334155)
                 )
             }
         }

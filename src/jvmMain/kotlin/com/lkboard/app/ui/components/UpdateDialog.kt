@@ -205,6 +205,8 @@ fun UpdateDialog(
             }
         },
         shape = RoundedCornerShape(16.dp),
-        containerColor = Color.White
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF0F172A),
+        textContentColor = Color(0xFF334155)
     )
 }
