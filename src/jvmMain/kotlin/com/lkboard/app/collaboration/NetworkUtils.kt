@@ -35,7 +35,8 @@ object NetworkUtils {
         id: String? = null,
         name: String? = null,
         colorHex: Long? = null,
-        roomCode: String? = null
+        roomCode: String? = null,
+        pressureCurve: String? = null
     ): String {
         val base = "http://$localIp:$port/tablet"
         val params = mutableListOf<String>()
@@ -50,6 +51,9 @@ object NetworkUtils {
         }
         if (!roomCode.isNullOrBlank()) {
             params.add("room=" + java.net.URLEncoder.encode(roomCode, java.nio.charset.StandardCharsets.UTF_8))
+        }
+        if (!pressureCurve.isNullOrBlank()) {
+            params.add("pressure=" + java.net.URLEncoder.encode(pressureCurve, java.nio.charset.StandardCharsets.UTF_8))
         }
         return "$base?${params.joinToString("&")}"
     }

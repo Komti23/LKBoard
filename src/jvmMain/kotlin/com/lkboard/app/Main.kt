@@ -649,7 +649,13 @@ fun main() = application {
                     tabletWebLink = collabState.tabletWebLink,
                     connectedTabletClientsCount = collabState.connectedPeers.count { it.clientType == "Tablet" || it.id.contains("tablet") },
                     recentTabletActions = collabState.recentTabletActions,
+                    isFocusLocked = collabState.isFocusLocked,
+                    stylusPressureCurve = collabState.stylusPressureCurve,
+                    isConnectChimeEnabled = collabState.isConnectChimeEnabled,
                     onToggleTabletMode = viewModel::toggleTabletMode,
+                    onToggleFocusLock = viewModel::toggleFocusLock,
+                    onChangeStylusPressureCurve = viewModel::setStylusPressureCurve,
+                    onToggleConnectChime = viewModel::setConnectChimeEnabled,
                     onDismiss = viewModel::closeSettingsDialog,
                     onSaveSettings = viewModel::applySettings
                 )

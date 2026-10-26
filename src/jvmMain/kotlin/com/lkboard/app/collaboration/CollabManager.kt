@@ -32,7 +32,10 @@ data class CollabSessionState(
     val connectedPeers: List<CollabPeer> = emptyList(),
     val remotePointers: Map<String, RemotePointer> = emptyMap(),
     val recentTabletActions: List<TabletActionRecord> = emptyList(),
-    val userName: String = "Хост"
+    val userName: String = "Хост",
+    val isFocusLocked: Boolean = false,
+    val isConnectChimeEnabled: Boolean = true,
+    val stylusPressureCurve: com.lkboard.app.data.StylusPressureCurve = com.lkboard.app.data.StylusPressureCurve.NORMAL
 ) {
     val isActive: Boolean
         get() = isHosting || isConnectedAsClient
@@ -97,7 +100,14 @@ class CollabManager(
         val s = CollabServer(
             snapshotProvider = snapshotProvider,
             onActionReceived = ::handleRemoteAction,
-            viewportProvider = viewportProvider,
+            viewportProvider = {
+                val baseVp = viewportProvider()
+                baseVp.copy(
+                    pressureCurve = _state.value.stylusPressureCurve.id,
+                    isFocusLocked = _state.value.isFocusLocked,
+                    teacherName = _state.value.userName.ifEmpty { "Преподаватель" }
+                )
+            },
             recentActionsProvider = { _state.value.recentTabletActions }
         )
 
@@ -266,6 +276,9 @@ class CollabManager(
                 }
                 if (action.peer.clientType == "Tablet" || action.peer.id.startsWith("tablet") || action.peer.id.startsWith("phone")) {
                     recordTabletAction(action.peer.id, action.peer.name, "Подключение к доске", "📱", "в сети")
+                    if (_state.value.isConnectChimeEnabled) {
+                        com.lkboard.app.timer.AudioChimePlayer.playConnectChime()
+                    }
                 }
             }
             is CollabAction.PeerLeft -> {
@@ -282,7 +295,43 @@ class CollabManager(
                 val name = peer?.name ?: action.senderId.ifEmpty { "Планшет" }
                 recordTabletAction(action.senderId, name, "Сдвиг холста", "🖐️", "2 пальца")
             }
+            is CollabAction.FocusLock -> {
+                _state.update { it.copy(isFocusLocked = action.isLocked) }
+                recordTabletAction(
+                    peerId = "host",
+                    peerName = action.teacherName,
+                    title = if (action.isLocked) "Режим внимания ВКЛ" else "Режим внимания СНЯТ",
+                    icon = "🔒",
+                    detail = if (action.isLocked) "блок учеников" else "разблокировано"
+                )
+            }
         }
+    }
+
+    fun toggleFocusLock(locked: Boolean? = null) {
+        val target = locked ?: !_state.value.isFocusLocked
+        _state.update { it.copy(isFocusLocked = target) }
+        val action = CollabAction.FocusLock(
+            isLocked = target,
+            teacherName = _state.value.userName.ifEmpty { "Преподаватель" },
+            message = if (target) "Учитель объясняет материал: режим внимания" else "Свободное рисование разрешено"
+        )
+        sendActionToAll(action)
+        recordTabletAction(
+            peerId = myClientId,
+            peerName = _state.value.userName,
+            title = if (target) "Режим внимания ВКЛ" else "Режим внимания СНЯТ",
+            icon = "🔒",
+            detail = if (target) "блок учеников" else "разблокировано"
+        )
+    }
+
+    fun setStylusPressureCurve(curve: com.lkboard.app.data.StylusPressureCurve) {
+        _state.update { it.copy(stylusPressureCurve = curve) }
+    }
+
+    fun setConnectChimeEnabled(enabled: Boolean) {
+        _state.update { it.copy(isConnectChimeEnabled = enabled) }
     }
 
     // --- Исходящее вещание локальных действий ---

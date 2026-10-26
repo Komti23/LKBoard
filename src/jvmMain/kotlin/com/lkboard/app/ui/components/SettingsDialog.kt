@@ -53,8 +53,10 @@ import androidx.compose.ui.window.Dialog
 import com.lkboard.app.collaboration.NetworkUtils
 import com.lkboard.app.collaboration.TabletActionRecord
 import com.lkboard.app.data.AppTheme
+import com.lkboard.app.data.StylusPressureCurve
 import com.lkboard.app.data.UserRole
 import com.lkboard.app.model.CanvasTool
+import com.lkboard.app.timer.AudioChimePlayer
 import com.lkboard.app.ui.animation.bouncyClickable
 import com.lkboard.app.update.AppVersion
 import com.lkboard.app.util.QrCodeGenerator
@@ -80,7 +82,13 @@ fun SettingsDialog(
     tabletWebLink: String = "",
     connectedTabletClientsCount: Int = 0,
     recentTabletActions: List<TabletActionRecord> = emptyList(),
+    isFocusLocked: Boolean = false,
+    stylusPressureCurve: StylusPressureCurve = StylusPressureCurve.NORMAL,
+    isConnectChimeEnabled: Boolean = true,
     onToggleTabletMode: (Boolean) -> Unit = {},
+    onToggleFocusLock: (Boolean?) -> Unit = {},
+    onChangeStylusPressureCurve: (StylusPressureCurve) -> Unit = {},
+    onToggleConnectChime: (Boolean) -> Unit = {},
     onDismiss: () -> Unit,
     onSaveSettings: (newTheme: AppTheme, newRole: UserRole, newEnabledTools: Set<CanvasTool>) -> Unit
 ) {
@@ -88,6 +96,9 @@ fun SettingsDialog(
     var role by remember { mutableStateOf(currentRole) }
     var tools by remember { mutableStateOf(enabledTools) }
     var isTabletActive by remember(isTabletModeActive) { mutableStateOf(isTabletModeActive) }
+    var activeFocusLocked by remember(isFocusLocked) { mutableStateOf(isFocusLocked) }
+    var activePressureCurve by remember(stylusPressureCurve) { mutableStateOf(stylusPressureCurve) }
+    var chimeEnabled by remember(isConnectChimeEnabled) { mutableStateOf(isConnectChimeEnabled) }
     var studentNameInput by remember { mutableStateOf("Преподаватель") }
     var selectedStudentColorHex by remember { mutableStateOf(0xFF2563EBL) }
     var isLinkCopied by remember { mutableStateOf(false) }
@@ -226,7 +237,8 @@ fun SettingsDialog(
                             port = NetworkUtils.DEFAULT_PORT,
                             id = cleanId,
                             name = studentNameInput.trim().ifEmpty { "Планшет" },
-                            colorHex = selectedStudentColorHex
+                            colorHex = selectedStudentColorHex,
+                            pressureCurve = activePressureCurve.id
                         )
 
                         Box(
@@ -432,6 +444,179 @@ fun SettingsDialog(
                                         ) {
                                             Text("↗", fontSize = 11.sp)
                                         }
+                                    }
+                                }
+
+                                // 1. РЕЖИМ ФИКСАЦИИ ВНИМАНИЯ УЧИТЕЛЯ (TEACHER FOCUS LOCK)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(
+                                            if (activeFocusLocked) (if (isDark) Color(0xFF3B1219) else Color(0xFFFEF2F2))
+                                            else (if (isDark) Color(0xFF0F141E) else Color(0xFFF1F5F9))
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (activeFocusLocked) (if (isDark) Color(0xFFEF4444) else Color(0xFFFCA5A5))
+                                            else (if (isDark) Color(0xFF222F46) else Color(0xFFCBD5E1)),
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(9.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = if (activeFocusLocked) "🔒 РЕЖИМ ВНИМАНИЯ АКТИВЕН (УЧЕНИКИ ЗАБЛОКИРОВАНЫ)" else "🔒 РЕЖИМ ВНИМАНИЯ («СМОТРЕТЬ СЮДА»):",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = if (activeFocusLocked) Color(0xFFEF4444) else (if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8))
+                                        )
+                                        Text(
+                                            text = if (activeFocusLocked)
+                                                "Рисование на телефонах учеников заблокировано. Они следят за вашей демонстрацией."
+                                            else
+                                                "Блокирует рисование на телефонах всех учеников во время объяснения материала.",
+                                            fontSize = 10.sp,
+                                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                        )
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            val next = !activeFocusLocked
+                                            activeFocusLocked = next
+                                            onToggleFocusLock(next)
+                                        },
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (activeFocusLocked) Color(0xFFDC2626) else Color(0xFF2563EB),
+                                            contentColor = Color.White
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                        modifier = Modifier.height(28.dp)
+                                    ) {
+                                        Text(
+                                            text = if (activeFocusLocked) "🔓 Снять блок" else "🔒 Включить",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                // 2. КАЛИБРОВКА КРИВОЙ НАЖИМА СТИЛУСА (STYLUS PRESSURE CURVE)
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isDark) Color(0xFF0F141E) else Color(0xFFF1F5F9))
+                                        .border(1.dp, if (isDark) Color(0xFF222F46) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
+                                        .padding(9.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = "🎚️ КАЛИБРОВКА КРИВОЙ НАЖИМА СТИЛУСА (PRESSURE CURVE):",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                    ) {
+                                        StylusPressureCurve.entries.forEach { curve ->
+                                            val isSelected = activePressureCurve == curve
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(
+                                                        if (isSelected) (if (isDark) Color(0xFF1E3A8A) else Color(0xFFDBEAFE))
+                                                        else (if (isDark) Color(0xFF181F2C) else Color.White)
+                                                    )
+                                                    .border(
+                                                        1.2.dp,
+                                                        if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
+                                                        else (if (isDark) Color(0xFF2D3748) else Color(0xFFE2E8F0)),
+                                                        RoundedCornerShape(6.dp)
+                                                    )
+                                                    .bouncyClickable {
+                                                        activePressureCurve = curve
+                                                        onChangeStylusPressureCurve(curve)
+                                                    }
+                                                    .padding(vertical = 5.dp, horizontal = 4.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = "${curve.icon} ${curve.title}",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFE2E8F0) else Color(0xFF334155))
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Text(
+                                        text = activePressureCurve.subtitle,
+                                        fontSize = 9.sp,
+                                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                    )
+                                }
+
+                                // 3. ЗВУКОВОЙ ОТКЛИК ПОДКЛЮЧЕНИЯ УЧЕНИКОВ (CHIME)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isDark) Color(0xFF0F141E) else Color(0xFFF1F5F9))
+                                        .border(1.dp, if (isDark) Color(0xFF222F46) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 9.dp, vertical = 5.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Checkbox(
+                                            checked = chimeEnabled,
+                                            onCheckedChange = {
+                                                chimeEnabled = it
+                                                onToggleConnectChime(it)
+                                            },
+                                            colors = CheckboxDefaults.colors(
+                                                checkedColor = Color(0xFF10B981),
+                                                checkmarkColor = Color.White
+                                            )
+                                        )
+                                        Column {
+                                            Text(
+                                                text = "🔊 Звуковой отклик при входе ученика",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
+                                            )
+                                            Text(
+                                                text = "Мягкий сигнал на ПК при сканировании QR или переходе по ссылке",
+                                                fontSize = 9.sp,
+                                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                            )
+                                        }
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = { AudioChimePlayer.playConnectChime() },
+                                        shape = RoundedCornerShape(6.dp),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                        modifier = Modifier.height(26.dp)
+                                    ) {
+                                        Text("▶ Прослушать", fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
 

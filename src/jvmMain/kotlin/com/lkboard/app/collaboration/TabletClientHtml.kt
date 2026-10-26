@@ -250,6 +250,107 @@ object TabletClientHtml {
             background: rgba(56, 189, 248, 0.3);
         }
 
+        /* Режим внимания учителя (Focus Lock Overlay) */
+        .focus-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 7, 10, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .focus-card {
+            background: rgba(18, 22, 30, 0.96);
+            border: 1.5px solid rgba(239, 68, 68, 0.5);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(239, 68, 68, 0.25);
+            max-width: 360px;
+            width: 100%;
+            padding: 26px 20px;
+            text-align: center;
+            animation: lockGlow 2.5s infinite ease-in-out;
+        }
+
+        @keyframes lockGlow {
+            0%, 100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.45); }
+            50% { box-shadow: 0 0 50px rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 0.9); }
+        }
+
+        .focus-lock-anim {
+            font-size: 44px;
+            margin-bottom: 10px;
+        }
+
+        .focus-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #f87171;
+            margin-bottom: 6px;
+        }
+
+        .focus-subtitle {
+            font-size: 13px;
+            color: #e2e8f0;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .focus-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.16);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .focus-hint {
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+
+        .teacher-lock-pill {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: rgba(220, 38, 38, 0.25);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            border-radius: 10px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            pointer-events: auto;
+            box-shadow: 0 2px 10px rgba(220, 38, 38, 0.3);
+        }
+
+        .phone-unlock-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .phone-unlock-btn:active {
+            transform: scale(0.95);
+            background: #b91c1c;
+        }
+
         /* Подсказка поворота в портретном режиме */
         .rotate-hint {
             position: fixed;
@@ -595,10 +696,27 @@ object TabletClientHtml {
             <span id="aspect-label" style="color: #38bdf8;">1:1 монитор</span>
         </div>
 
+        <div class="teacher-lock-pill" id="teacher-lock-pill">
+            <span>🔒 Внимание активно</span>
+            <button class="phone-unlock-btn" id="btn-phone-unlock" type="button">Снять блок</button>
+        </div>
+
         <div class="top-actions">
+            <button class="top-btn" id="btn-pressure-mode" type="button" title="Кривая нажима пера">⚖️ Нажим: 1:1</button>
             <button class="top-btn" id="btn-toggle-aspect" type="button" title="Переключить режим пропорций">📐 1:1</button>
             <button class="top-btn" id="btn-re-fs" type="button" title="На весь экран">⛶ Экран</button>
             <button class="top-btn" id="btn-collapse-tb" type="button" title="Свернуть панель инструментов">▼ Меню</button>
+        </div>
+    </div>
+
+    <!-- Оверлей режима внимания преподавателя (Teacher Focus Lock) -->
+    <div class="focus-overlay" id="focus-lock-overlay">
+        <div class="focus-card">
+            <div class="focus-lock-anim">🔒</div>
+            <div class="focus-title">Режим внимания учителя</div>
+            <div class="focus-subtitle" id="focus-teacher-label">Преподаватель объясняет материал</div>
+            <div class="focus-badge">✍️ Рисование временно приостановлено</div>
+            <div class="focus-hint">Следите за демонстрацией на экране компьютера.<br>При снятии блокировки вы сможете продолжить писать.</div>
         </div>
     </div>
 
@@ -729,6 +847,31 @@ object TabletClientHtml {
             const btnThumbUndo = document.getElementById('btn-thumb-undo');
             const btnThumbClear = document.getElementById('btn-thumb-clear');
             const btnThumbToggleTool = document.getElementById('btn-thumb-toggle-tool');
+
+            // Режим внимания учителя (Focus Lock) и калибровка нажима
+            const focusOverlay = document.getElementById('focus-lock-overlay');
+            const focusTeacherLabel = document.getElementById('focus-teacher-label');
+            const teacherLockPill = document.getElementById('teacher-lock-pill');
+            const btnPhoneUnlock = document.getElementById('btn-phone-unlock');
+            const btnPressureMode = document.getElementById('btn-pressure-mode');
+
+            let pressureMode = urlParams.get('pressure') || localStorage.getItem('lkboard_pressure_mode') || 'normal';
+            let isFocusLocked = false;
+            let userManuallyChangedPressure = false;
+
+            const pressurePresets = [
+                { id: 'normal', label: '⚖️ 1:1 Сбаланс.', toast: '⚖️ Сбалансированный отклик 1:1' },
+                { id: 'soft', label: '🪶 Мягкий', toast: '🪶 Мягкий нажим (Apple Pencil / эскизы)' },
+                { id: 'hard', label: '🖋️ Жесткий', toast: '🖋️ Жесткий нажим (контроль и точность)' },
+                { id: 'capacitive', label: '⚡ Емкостный', toast: '⚡ Емкостный стилус (динамика от скорости)' }
+            ];
+
+            function updatePressureButton() {
+                if (!btnPressureMode) return;
+                const p = pressurePresets.find(x => x.id === pressureMode) || pressurePresets[0];
+                btnPressureMode.innerText = p.label;
+            }
+            updatePressureButton();
 
             // Виджет 3 последних действий
             const actionsHeader = document.getElementById('actions-header');
@@ -1062,7 +1205,58 @@ object TabletClientHtml {
             document.addEventListener('fullscreenchange', onFsChange);
             document.addEventListener('webkitfullscreenchange', onFsChange);
 
-            // Получение геометрии монитора ПК
+            // Переключение кривой нажима стилуса
+            function cyclePressureMode() {
+                userManuallyChangedPressure = true;
+                const idx = pressurePresets.findIndex(x => x.id === pressureMode);
+                const next = pressurePresets[(idx + 1) % pressurePresets.length];
+                pressureMode = next.id;
+                localStorage.setItem('lkboard_pressure_mode', pressureMode);
+                updatePressureButton();
+                haptic(15);
+                showToast(next.toast);
+            }
+            if (btnPressureMode) addFastClickListener(btnPressureMode, cyclePressureMode);
+
+            // Управление режимом внимания (Focus Lock)
+            function setFocusLockState(locked, teacherName) {
+                if (isFocusLocked === locked) return;
+                isFocusLocked = locked;
+                const isTeacher = (studentId === 'teacher_tablet' || studentName.includes('Преподаватель'));
+                if (isTeacher) {
+                    if (teacherLockPill) teacherLockPill.style.display = locked ? 'flex' : 'none';
+                    if (focusOverlay) focusOverlay.style.display = 'none';
+                } else {
+                    if (focusOverlay) {
+                        focusOverlay.style.display = locked ? 'flex' : 'none';
+                        if (focusTeacherLabel && teacherName) {
+                            focusTeacherLabel.innerText = teacherName + ' объясняет материал';
+                        }
+                    }
+                    if (locked) {
+                        if (isDrawing) finishStroke();
+                        haptic(45);
+                        showToast('🔒 Режим внимания: рисование приостановлено');
+                    } else {
+                        haptic([25, 40, 25]);
+                        showToast('🔓 Доска разблокирована — можете писать');
+                    }
+                }
+            }
+
+            if (btnPhoneUnlock) {
+                addFastClickListener(btnPhoneUnlock, () => {
+                    sendAction({
+                        type: 'focus_lock',
+                        isLocked: false,
+                        teacherName: studentName
+                    });
+                    setFocusLockState(false, studentName);
+                    showToast('🔓 Блокировка учеников снята');
+                });
+            }
+
+            // Получение геометрии монитора ПК и настроек сессии
             async function fetchViewport() {
                 try {
                     const res = await fetch('/api/viewport');
@@ -1072,11 +1266,38 @@ object TabletClientHtml {
                             pcViewport = vp;
                             updateDigitizerFrame();
                         }
+                        if (vp.pressureCurve && !userManuallyChangedPressure && vp.pressureCurve !== pressureMode) {
+                            pressureMode = vp.pressureCurve;
+                            updatePressureButton();
+                        }
+                        if (typeof vp.isFocusLocked === 'boolean') {
+                            setFocusLockState(vp.isFocusLocked, vp.teacherName);
+                        }
                     }
                 } catch (_) {}
             }
             fetchViewport();
             setInterval(fetchViewport, 1000);
+
+            // Поток Server-Sent Events для мгновенного отклика (< 5мс)
+            function initSSE() {
+                try {
+                    const evtSource = new EventSource('/api/events');
+                    evtSource.onmessage = function(e) {
+                        try {
+                            const data = JSON.parse(e.data);
+                            if (data.type === 'focus_lock') {
+                                setFocusLockState(data.isLocked, data.teacherName);
+                            }
+                        } catch (_) {}
+                    };
+                    evtSource.onerror = function() {
+                        evtSource.close();
+                        setTimeout(initSSE, 3500);
+                    };
+                } catch (_) {}
+            }
+            initSSE();
 
             // Пересчет экранных координат планшета в координаты доски ПК с сохранением 1:1 пропорций
             function phoneToWorld(px, py) {
@@ -1229,9 +1450,29 @@ object TabletClientHtml {
 
             // ОБРАБОТКА ВВОДА СТИЛУСА / ПАЛЬЦА
             let lineStartPx = { x: 0, y: 0 };
+            let lastPointTime = performance.now();
+            let lastPointX = 0, lastPointY = 0;
+
+            function applyPressureCurve(rawP, speed) {
+                if (pressureMode === 'capacitive') {
+                    const s = Math.min(2.5, Math.max(0.25, speed || 1.0));
+                    return Math.max(0.25, Math.min(1.2, 1.1 / s));
+                }
+                let p = (rawP > 0) ? rawP : 0.5;
+                let gamma = 1.0;
+                if (pressureMode === 'soft') gamma = 0.55;
+                else if (pressureMode === 'hard') gamma = 1.8;
+                return Math.pow(p, gamma);
+            }
 
             canvas.addEventListener('pointerdown', (e) => {
                 if (isTwoFingerPan || activePointerId !== null) return;
+
+                if (isFocusLocked && studentId !== 'teacher_tablet' && !studentName.includes('Преподаватель')) {
+                    haptic(35);
+                    showToast('🔒 Режим внимания: рисование заблокировано');
+                    return;
+                }
 
                 // Защита от касания ладонью (Palm Rejection)
                 if (palmRejection && e.pointerType === 'touch' && window.hasUsedPen) {
@@ -1250,16 +1491,21 @@ object TabletClientHtml {
                 const py = e.clientY - rect.top;
                 const pressure = e.pressure > 0 ? e.pressure : 0.5;
 
+                lastPointTime = performance.now();
+                lastPointX = px;
+                lastPointY = py;
+
                 lineStartPx = { x: px, y: py };
                 activeStrokeId = studentId + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
                 const world = phoneToWorld(px, py);
                 currentStrokePoints = [{ x: world.x, y: world.y }];
 
+                const curvedP = applyPressureCurve(pressure, 1.0);
                 ctx.beginPath();
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 ctx.strokeStyle = currentTool === 'highlighter' ? currentCssColor + '70' : currentCssColor;
-                ctx.lineWidth = currentWidth * (0.5 + pressure * 0.8);
+                ctx.lineWidth = currentWidth * (0.35 + curvedP * 0.95);
                 ctx.moveTo(px, py);
 
                 if (currentTool === 'laser') {
@@ -1287,6 +1533,14 @@ object TabletClientHtml {
                     const pressure = ev.pressure > 0 ? ev.pressure : 0.5;
                     const world = phoneToWorld(px, py);
 
+                    const nowTime = performance.now();
+                    const dt = Math.max(8, nowTime - lastPointTime);
+                    const dist = Math.hypot(px - lastPointX, py - lastPointY);
+                    const speed = dist / dt;
+                    lastPointTime = nowTime;
+                    lastPointX = px;
+                    lastPointY = py;
+
                     if (currentTool === 'laser') {
                         streamPointerMove(world, true);
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1311,7 +1565,8 @@ object TabletClientHtml {
                     }
 
                     currentStrokePoints.push({ x: world.x, y: world.y });
-                    ctx.lineWidth = currentWidth * (0.5 + pressure * 0.8);
+                    const curvedP = applyPressureCurve(pressure, speed);
+                    ctx.lineWidth = currentWidth * (0.35 + curvedP * 0.95);
                     ctx.lineTo(px, py);
                     ctx.stroke();
 

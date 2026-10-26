@@ -1484,6 +1484,18 @@ class BoardViewModel {
         collabManager.disconnectClient()
     }
 
+    fun toggleFocusLock(locked: Boolean? = null) {
+        collabManager.toggleFocusLock(locked)
+    }
+
+    fun setStylusPressureCurve(curve: com.lkboard.app.data.StylusPressureCurve) {
+        collabManager.setStylusPressureCurve(curve)
+    }
+
+    fun setConnectChimeEnabled(enabled: Boolean) {
+        collabManager.setConnectChimeEnabled(enabled)
+    }
+
     fun pruneLaserTrail() {
         if (_laserTrail.value.isNotEmpty()) {
             _laserTrail.value = LaserPointerManager.pruneTrail(_laserTrail.value)

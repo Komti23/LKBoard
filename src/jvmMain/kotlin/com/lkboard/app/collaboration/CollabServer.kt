@@ -125,6 +125,36 @@ class CollabServer(
             }
         }
 
+        // 1.8. Режим фиксации внимания учителя (Teacher Focus Lock)
+        s.createContext("/api/focus-lock") { exchange ->
+            handleCors(exchange)
+            if (exchange.requestMethod.equals("OPTIONS", ignoreCase = true)) {
+                exchange.sendResponseHeaders(204, -1)
+                return@createContext
+            }
+            try {
+                if (exchange.requestMethod.equals("POST", ignoreCase = true)) {
+                    val body = exchange.requestBody.reader(Charsets.UTF_8).readText()
+                    val action = BoardSerializer.jsonFormat.decodeFromString<CollabAction.FocusLock>(body)
+                    recordAction(action)
+                    onActionReceived(action)
+                    broadcastAction(action)
+                    val resp = """{"status":"ok","isLocked":${action.isLocked}}""".toByteArray()
+                    exchange.responseHeaders.set("Content-Type", "application/json")
+                    exchange.sendResponseHeaders(200, resp.size.toLong())
+                    exchange.responseBody.use { it.write(resp) }
+                } else {
+                    val vp = viewportProvider()
+                    val resp = """{"isLocked":${vp.isFocusLocked},"teacherName":"${vp.teacherName}"}""".toByteArray()
+                    exchange.responseHeaders.set("Content-Type", "application/json")
+                    exchange.sendResponseHeaders(200, resp.size.toLong())
+                    exchange.responseBody.use { it.write(resp) }
+                }
+            } catch (_: Exception) {
+                sendInternalError(exchange)
+            }
+        }
+
         // 2. Снимок доски в формате JSON
         s.createContext("/api/snapshot") { exchange ->
             handleCors(exchange)

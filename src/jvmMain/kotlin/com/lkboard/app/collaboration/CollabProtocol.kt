@@ -66,7 +66,10 @@ data class ViewportInfo(
     val scale: Float = 1f,
     val width: Float = 1366f,
     val height: Float = 850f,
-    val backgroundColorHex: Long = 0xFFFFFFFFL
+    val backgroundColorHex: Long = 0xFFFFFFFFL,
+    val pressureCurve: String = "normal",
+    val isFocusLocked: Boolean = false,
+    val teacherName: String = "Преподаватель"
 )
 
 /**
@@ -168,5 +171,17 @@ sealed class CollabAction {
         val dx: Float,
         val dy: Float,
         val senderId: String
+    ) : CollabAction()
+
+    /**
+     * Режим фиксации внимания (Teacher Focus Lock):
+     * Учитель блокирует ввод на устройствах учеников и фокусирует их внимание («Смотреть сюда»).
+     */
+    @Serializable
+    @SerialName("focus_lock")
+    data class FocusLock(
+        val isLocked: Boolean,
+        val teacherName: String = "Преподаватель",
+        val message: String = "Учитель объясняет материал: режим внимания"
     ) : CollabAction()
 }

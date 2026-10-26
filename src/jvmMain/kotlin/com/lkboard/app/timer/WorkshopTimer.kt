@@ -75,4 +75,62 @@ object AudioChimePlayer {
             start()
         }
     }
+
+    /**
+     * Мягкий гармоничный двухтональный перезвон (F#5 739.99 Гц -> B5 987.77 Гц)
+     * при подключении ученика/планшета по QR-коду или индивидуальной ссылке.
+     * Ненавязчивый, кристально чистый звук.
+     */
+    fun playConnectChime() {
+        Thread {
+            try {
+                val sampleRate = 44100f
+                val durationSec = 0.50f
+                val numSamples = (durationSec * sampleRate).toInt()
+                val buffer = ByteArray(numSamples * 2)
+
+                val note1 = 739.99 // F#5
+                val note2 = 987.77 // B5
+
+                for (i in 0 until numSamples) {
+                    val time = i / sampleRate
+                    var sample = 0.0
+
+                    // Первая нота: F#5 (0.00s - 0.35s)
+                    if (time >= 0.0) {
+                        val decay1 = exp(-time * 11.0)
+                        sample += (sin(2.0 * PI * note1 * time) + 0.22 * sin(2.0 * PI * note1 * 2.0 * time)) * decay1 * 0.32
+                    }
+
+                    // Вторая нота: B5 (0.09s - 0.50s)
+                    if (time >= 0.09) {
+                        val t2 = time - 0.09
+                        val decay2 = exp(-t2 * 8.5)
+                        sample += (sin(2.0 * PI * note2 * t2) + 0.18 * sin(2.0 * PI * note2 * 2.0 * t2)) * decay2 * 0.38
+                    }
+
+                    val clamped = (sample * 0.28).coerceIn(-1.0, 1.0)
+                    val pcm = (clamped * 32767).toInt().toShort()
+                    buffer[2 * i] = (pcm.toInt() and 0xFF).toByte()
+                    buffer[2 * i + 1] = ((pcm.toInt() shr 8) and 0xFF).toByte()
+                }
+
+                val format = AudioFormat(sampleRate, 16, 1, true, false)
+                val line = AudioSystem.getSourceDataLine(format)
+                line.open(format)
+                line.start()
+                line.write(buffer, 0, buffer.size)
+                line.drain()
+                line.close()
+            } catch (_: Exception) {
+                try {
+                    Toolkit.getDefaultToolkit().beep()
+                } catch (_: Exception) {}
+            }
+        }.apply {
+            isDaemon = true
+            name = "StudentConnectChimeThread"
+            start()
+        }
+    }
 }
