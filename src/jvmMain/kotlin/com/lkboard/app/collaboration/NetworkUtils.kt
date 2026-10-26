@@ -26,10 +26,28 @@ object NetworkUtils {
     }
 
     /**
-     * Создает локальную ссылку для режима графического планшета на смартфоне.
+     * Создает локальную ссылку для режима графического планшета на смартфоне
+     * с поддержкой индивидуальных идентификаторов, имен и цветов учеников/планшетов.
      */
-    fun buildTabletWebLink(localIp: String, port: Int): String {
-        return "http://$localIp:$port/tablet"
+    fun buildTabletWebLink(
+        localIp: String,
+        port: Int,
+        id: String? = null,
+        name: String? = null,
+        colorHex: Long? = null
+    ): String {
+        val base = "http://$localIp:$port/tablet"
+        val params = mutableListOf<String>()
+        if (!id.isNullOrBlank()) {
+            params.add("id=" + java.net.URLEncoder.encode(id, java.nio.charset.StandardCharsets.UTF_8))
+        }
+        if (!name.isNullOrBlank()) {
+            params.add("name=" + java.net.URLEncoder.encode(name, java.nio.charset.StandardCharsets.UTF_8))
+        }
+        if (colorHex != null) {
+            params.add("color=$colorHex")
+        }
+        return if (params.isEmpty()) base else "$base?${params.joinToString("&")}"
     }
 
     /**

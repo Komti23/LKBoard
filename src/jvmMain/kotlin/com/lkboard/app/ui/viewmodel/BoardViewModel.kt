@@ -195,6 +195,9 @@ class BoardViewModel {
                 height = currentCanvasHeight,
                 backgroundColorHex = _state.value.backgroundColorHex
             )
+        },
+        onRemotePan = { dx, dy ->
+            panBy(Offset(dx, dy))
         }
     )
     val collabState: StateFlow<CollabSessionState> = collabManager.state

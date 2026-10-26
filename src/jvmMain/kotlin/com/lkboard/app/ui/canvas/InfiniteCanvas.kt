@@ -33,6 +33,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -599,7 +600,11 @@ fun InfiniteCanvas(
 
                     val pColor = Color(pointer.colorHex)
                     val pCenter = Offset(pointer.x, pointer.y)
-                    val isStylus = pointer.peerId == "phone-tablet-stylus"
+                    val isStylus = pointer.peerId.startsWith("phone") ||
+                            pointer.peerId.startsWith("tablet") ||
+                            pointer.peerName.contains("Планшет", ignoreCase = true) ||
+                            pointer.peerName.contains("Стилус", ignoreCase = true) ||
+                            pointer.peerName.contains("Ученик", ignoreCase = true)
 
                     if (isStylus) {
                         // Точный дигитайзер-прицел пера графического планшета
@@ -648,6 +653,43 @@ fun InfiniteCanvas(
                             radius = 1.6f / state.transform.scale,
                             center = pCenter
                         )
+
+                        // Индивидуальный бейдж с именем ученика / планшета
+                        if (pointer.peerName.isNotBlank()) {
+                            val badgeText = "✏️ ${pointer.peerName}"
+                            val textLayout = textMeasurer.measure(
+                                text = badgeText,
+                                style = androidx.compose.ui.text.TextStyle(
+                                    fontSize = (11f / state.transform.scale).sp,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            )
+                            val padX = 6f / state.transform.scale
+                            val padY = 3f / state.transform.scale
+                            val badgeW = textLayout.size.width + padX * 2f
+                            val badgeH = textLayout.size.height + padY * 2f
+                            val badgeLeft = pCenter.x + crosshair + 4f / state.transform.scale
+                            val badgeTop = pCenter.y - badgeH / 2f
+
+                            drawRoundRect(
+                                color = pColor.copy(alpha = 0.90f),
+                                topLeft = Offset(badgeLeft, badgeTop),
+                                size = androidx.compose.ui.geometry.Size(badgeW, badgeH),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f / state.transform.scale)
+                            )
+                            drawRoundRect(
+                                color = Color.White.copy(alpha = 0.35f),
+                                topLeft = Offset(badgeLeft, badgeTop),
+                                size = androidx.compose.ui.geometry.Size(badgeW, badgeH),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f / state.transform.scale),
+                                style = Stroke(width = 1f / state.transform.scale)
+                            )
+                            drawText(
+                                textLayoutResult = textLayout,
+                                topLeft = Offset(badgeLeft + padX, badgeTop + padY)
+                            )
+                        }
                     } else {
                         val pRadius = if (pointer.isLaser) 7f / state.transform.scale else 4.5f / state.transform.scale
                         drawCircle(

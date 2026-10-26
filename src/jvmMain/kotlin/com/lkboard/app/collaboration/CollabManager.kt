@@ -46,7 +46,8 @@ class CollabManager(
     private val onRemoteElementDelete: (List<String>) -> Unit,
     private val onRemoteSnapshotReceived: (BoardDocument) -> Unit,
     private val onRemoteToggleStickyTodo: (noteId: String, lineIndex: Int) -> Unit,
-    private val viewportProvider: () -> ViewportInfo = { ViewportInfo() }
+    private val viewportProvider: () -> ViewportInfo = { ViewportInfo() },
+    private val onRemotePan: ((Float, Float) -> Unit)? = null
 ) {
 
     private val scope = CoroutineScope(Dispatchers.Default + Job())
@@ -247,6 +248,9 @@ class CollabManager(
                 }
             }
             is CollabAction.ClearBoard -> {}
+            is CollabAction.PanViewport -> {
+                onRemotePan?.invoke(action.dx, action.dy)
+            }
         }
     }
 
@@ -342,6 +346,7 @@ class CollabManager(
                                 is CollabAction.ToggleStickyTodo -> act.senderId == myClientId
                                 is CollabAction.Snapshot -> act.senderId == myClientId
                                 is CollabAction.ClearBoard -> act.senderId == myClientId
+                                is CollabAction.PanViewport -> act.senderId == myClientId
                                 else -> false
                             }
                             if (!isSelf) {

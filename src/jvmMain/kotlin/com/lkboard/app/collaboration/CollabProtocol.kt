@@ -144,4 +144,15 @@ sealed class CollabAction {
     data class ClearBoard(
         val senderId: String
     ) : CollabAction()
+
+    /**
+     * Панорамирование / перемещение холста ПК со смартфона (жест 2 пальцами).
+     */
+    @Serializable
+    @SerialName("pan_viewport")
+    data class PanViewport(
+        val dx: Float,
+        val dy: Float,
+        val senderId: String
+    ) : CollabAction()
 }
