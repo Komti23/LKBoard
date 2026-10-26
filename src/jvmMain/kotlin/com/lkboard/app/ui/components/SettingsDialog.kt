@@ -1,5 +1,6 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -37,20 +39,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.lkboard.app.collaboration.NetworkUtils
+import com.lkboard.app.collaboration.TabletActionRecord
 import com.lkboard.app.data.AppTheme
 import com.lkboard.app.data.UserRole
 import com.lkboard.app.model.CanvasTool
 import com.lkboard.app.ui.animation.bouncyClickable
 import com.lkboard.app.update.AppVersion
+import com.lkboard.app.util.QrCodeGenerator
 import java.awt.Desktop
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
@@ -72,6 +79,7 @@ fun SettingsDialog(
     isTabletModeActive: Boolean = false,
     tabletWebLink: String = "",
     connectedTabletClientsCount: Int = 0,
+    recentTabletActions: List<TabletActionRecord> = emptyList(),
     onToggleTabletMode: (Boolean) -> Unit = {},
     onDismiss: () -> Unit,
     onSaveSettings: (newTheme: AppTheme, newRole: UserRole, newEnabledTools: Set<CanvasTool>) -> Unit
@@ -80,10 +88,10 @@ fun SettingsDialog(
     var role by remember { mutableStateOf(currentRole) }
     var tools by remember { mutableStateOf(enabledTools) }
     var isTabletActive by remember(isTabletModeActive) { mutableStateOf(isTabletModeActive) }
-    var isCopied by remember { mutableStateOf(false) }
-    var studentNameInput by remember { mutableStateOf("Ученик 1") }
-    var selectedStudentColorHex by remember { mutableStateOf(0xFF16A34AL) }
-    var isStudentCopied by remember { mutableStateOf(false) }
+    var studentNameInput by remember { mutableStateOf("Преподаватель") }
+    var selectedStudentColorHex by remember { mutableStateOf(0xFF2563EBL) }
+    var isLinkCopied by remember { mutableStateOf(false) }
+    var showQrModal by remember { mutableStateOf(false) }
     val isDark = theme.isDark
 
     Dialog(onDismissRequest = onDismiss) {
@@ -210,18 +218,14 @@ fun SettingsDialog(
 
                     if (isTabletActive) {
                         val ip = NetworkUtils.getPrimaryLocalIp()
-                        val activeUrl = tabletWebLink.ifEmpty {
-                            NetworkUtils.buildTabletWebLink(ip, NetworkUtils.DEFAULT_PORT)
-                        }
-
-                        val studentId = studentNameInput.trim().lowercase()
+                        val cleanId = studentNameInput.trim().lowercase()
                             .replace(Regex("[^a-zA-Z0-9а-яА-Я_]+"), "_")
-                            .ifEmpty { "student_1" }
-                        val studentIndividualLink = NetworkUtils.buildTabletWebLink(
+                            .ifEmpty { "tablet" }
+                        val fullLongLink = NetworkUtils.buildTabletWebLink(
                             localIp = ip,
                             port = NetworkUtils.DEFAULT_PORT,
-                            id = studentId,
-                            name = studentNameInput.trim().ifEmpty { "Ученик" },
+                            id = cleanId,
+                            name = studentNameInput.trim().ifEmpty { "Планшет" },
                             colorHex = selectedStudentColorHex
                         )
 
@@ -233,95 +237,213 @@ fun SettingsDialog(
                                 .border(1.dp, if (isDark) Color(0xFF1E3A8A) else Color(0xFFBFDBFE), RoundedCornerShape(12.dp))
                                 .padding(12.dp)
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                // 1. Статус и Основная ссылка хоста/учителя
-                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                // Заголовок статуса подключения
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "🟢 СЕРВЕР ПЛАНШЕТА АКТИВЕН (ТОЛЬКО ДЛИННАЯ ССЫЛКА):",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)
+                                    )
+                                    if (connectedTabletClientsCount > 0) {
                                         Text(
-                                            text = "🟢 ОСНОВНАЯ ССЫЛКА (ВАШ ПЛАНШЕТ / СТИЛУС):",
+                                            text = "📱 В сети: $connectedTabletClientsCount",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)
+                                            color = Color(0xFF16A34A)
                                         )
-                                        if (connectedTabletClientsCount > 0) {
-                                            Text(
-                                                text = "📱 В сети: $connectedTabletClientsCount",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF16A34A)
-                                            )
-                                        }
                                     }
+                                }
 
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(if (isDark) Color(0xFF0D1117) else Color.White)
-                                            .border(1.dp, if (isDark) Color(0xFF283244) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
-                                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = activeUrl,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
-                                            modifier = Modifier.weight(1f)
-                                        )
-
-                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                            Button(
-                                                onClick = {
-                                                    try {
-                                                        val sel = StringSelection(activeUrl)
-                                                        Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
-                                                        isCopied = true
-                                                    } catch (_: Exception) {}
-                                                },
-                                                shape = RoundedCornerShape(6.dp),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = if (isCopied) Color(0xFF16A34A) else Color(0xFF2563EB),
-                                                    contentColor = Color.White
-                                                ),
-                                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                                modifier = Modifier.height(28.dp)
-                                            ) {
-                                                Text(if (isCopied) "✓ Скопировано" else "Копировать", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                            }
-
-                                            OutlinedButton(
-                                                onClick = {
-                                                    try {
-                                                        Desktop.getDesktop().browse(URI.create(activeUrl))
-                                                    } catch (_: Exception) {}
-                                                },
-                                                shape = RoundedCornerShape(6.dp),
-                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                                modifier = Modifier.height(28.dp)
-                                            ) {
-                                                Text("Открыть на ПК", fontSize = 10.sp)
-                                            }
+                                // Пресеты участников (Преподаватель, Ученик 1, Ученик 2...)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    listOf(
+                                        Triple("Преподаватель", 0xFF2563EBL, "👨‍🏫"),
+                                        Triple("Ученик 1", 0xFF16A34AL, "🟢"),
+                                        Triple("Ученик 2", 0xFFDC2626L, "🔴"),
+                                        Triple("Ученик 3", 0xFF9333EAL, "🟣"),
+                                        Triple("Планшет 2", 0xFFEA580CL, "🟠")
+                                    ).forEach { (presetName, presetColor, presetEmoji) ->
+                                        val isSelected = studentNameInput == presetName
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(
+                                                    if (isSelected) (if (isDark) Color(0xFF223554) else Color(0xFFDBEAFE))
+                                                    else (if (isDark) Color(0xFF0F141E) else Color.White)
+                                                )
+                                                .border(
+                                                    1.dp,
+                                                    if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
+                                                    else (if (isDark) Color(0xFF2D3748) else Color(0xFFE2E8F0)),
+                                                    RoundedCornerShape(6.dp)
+                                                )
+                                                .bouncyClickable {
+                                                    studentNameInput = presetName
+                                                    selectedStudentColorHex = presetColor
+                                                    isLinkCopied = false
+                                                }
+                                                .padding(horizontal = 7.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = "$presetEmoji $presetName",
+                                                fontSize = 10.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155))
+                                            )
                                         }
                                     }
                                 }
 
-                                // 2. Генератор индивидуальных ссылок для каждого ученика / планшета
+                                // Поле ввода имени и персональная палитра
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (isDark) Color(0xFF0D1117) else Color.White)
+                                            .border(1.dp, if (isDark) Color(0xFF283244) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Устройство: ",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                        )
+                                        BasicTextField(
+                                            value = studentNameInput,
+                                            onValueChange = {
+                                                studentNameInput = it
+                                                isLinkCopied = false
+                                            },
+                                            singleLine = true,
+                                            textStyle = TextStyle(
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
+                                            ),
+                                            cursorBrush = SolidColor(if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+
+                                    // Палитра цвета пера
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        listOf(
+                                            0xFF2563EBL, // Синий
+                                            0xFF16A34AL, // Зеленый
+                                            0xFFDC2626L, // Красный
+                                            0xFF9333EAL, // Фиолетовый
+                                            0xFFEA580CL  // Оранжевый
+                                        ).forEach { colorVal ->
+                                            val isColorSelected = selectedStudentColorHex == colorVal
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(22.dp)
+                                                    .clip(RoundedCornerShape(50))
+                                                    .background(Color(colorVal))
+                                                    .border(
+                                                        width = if (isColorSelected) 2.5.dp else 1.dp,
+                                                        color = if (isColorSelected) Color.White else Color.Transparent,
+                                                        shape = RoundedCornerShape(50)
+                                                    )
+                                                    .clickable {
+                                                        selectedStudentColorHex = colorVal
+                                                        isLinkCopied = false
+                                                    }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Длинная персональная ссылка с кнопками копирования и QR-кода
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isDark) Color(0xFF0D1117) else Color.White)
+                                        .border(1.dp, if (isDark) Color(0xFF283244) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = fullLongLink,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = Color(selectedStudentColorHex),
+                                        modifier = Modifier.weight(1f)
+                                    )
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Button(
+                                            onClick = {
+                                                try {
+                                                    val sel = StringSelection(fullLongLink)
+                                                    Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
+                                                    isLinkCopied = true
+                                                } catch (_: Exception) {}
+                                            },
+                                            shape = RoundedCornerShape(6.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (isLinkCopied) Color(0xFF16A34A) else Color(selectedStudentColorHex),
+                                                contentColor = Color.White
+                                            ),
+                                            contentPadding = PaddingValues(horizontal = 9.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(28.dp)
+                                        ) {
+                                            Text(if (isLinkCopied) "✓ Скопировано" else "Копировать", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = { showQrModal = true },
+                                            shape = RoundedCornerShape(6.dp),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(28.dp)
+                                        ) {
+                                            Text("📷 QR-код", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = {
+                                                try {
+                                                    Desktop.getDesktop().browse(URI.create(fullLongLink))
+                                                } catch (_: Exception) {}
+                                            },
+                                            shape = RoundedCornerShape(6.dp),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(28.dp)
+                                        ) {
+                                            Text("↗", fontSize = 11.sp)
+                                        }
+                                    }
+                                }
+
+                                // 3 ПОСЛЕДНИХ ДЕЙСТВИЯ НА ПЛАНШЕТАХ
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (isDark) Color(0xFF181E2C) else Color(0xFFE2E8F0).copy(alpha = 0.45f))
-                                        .border(1.dp, if (isDark) Color(0xFF2A374F) else Color(0xFFCBD5E1), RoundedCornerShape(10.dp))
-                                        .padding(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isDark) Color(0xFF0F141E) else Color(0xFFF1F5F9))
+                                        .border(1.dp, if (isDark) Color(0xFF222F46) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
+                                        .padding(9.dp),
+                                    verticalArrangement = Arrangement.spacedBy(5.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -329,178 +451,149 @@ fun SettingsDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "🎓 ИНДИВИДУАЛЬНАЯ ССЫЛКА ДЛЯ УЧЕНИКА / ПЛАНШЕТА:",
+                                            text = "📋 3 ПОСЛЕДНИХ ДЕЙСТВИЯ С ПЛАНШЕТА:",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             fontFamily = FontFamily.Monospace,
-                                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                            color = if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)
                                         )
-                                    }
-
-                                    // Быстрые пресеты учеников
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        listOf(
-                                            Triple("Ученик 1", 0xFF16A34AL, "🟢"),
-                                            Triple("Ученик 2", 0xFFDC2626L, "🔴"),
-                                            Triple("Ученик 3", 0xFF9333EAL, "🟣"),
-                                            Triple("Планшет 2", 0xFFEA580CL, "🟠")
-                                        ).forEach { (presetName, presetColor, presetEmoji) ->
-                                            val isSelected = studentNameInput == presetName
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(6.dp))
-                                                    .background(
-                                                        if (isSelected) (if (isDark) Color(0xFF223554) else Color(0xFFDBEAFE))
-                                                        else (if (isDark) Color(0xFF0F141E) else Color.White)
-                                                    )
-                                                    .border(
-                                                        1.dp,
-                                                        if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
-                                                        else (if (isDark) Color(0xFF2D3748) else Color(0xFFE2E8F0)),
-                                                        RoundedCornerShape(6.dp)
-                                                    )
-                                                    .bouncyClickable {
-                                                        studentNameInput = presetName
-                                                        selectedStudentColorHex = presetColor
-                                                        isStudentCopied = false
-                                                    }
-                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                                            ) {
-                                                Text(
-                                                    text = "$presetEmoji $presetName",
-                                                    fontSize = 10.sp,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                    color = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155))
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    // Поле имени и палитра цветов
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        // Поле ввода имени
-                                        Row(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(if (isDark) Color(0xFF0D1117) else Color.White)
-                                                .border(1.dp, if (isDark) Color(0xFF283244) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
-                                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
+                                        if (recentTabletActions.isNotEmpty()) {
                                             Text(
-                                                text = "Имя: ",
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                                text = "● Живой поток",
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF10B981)
                                             )
-                                            BasicTextField(
-                                                value = studentNameInput,
-                                                onValueChange = {
-                                                    studentNameInput = it
-                                                    isStudentCopied = false
-                                                },
-                                                singleLine = true,
-                                                textStyle = TextStyle(
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
-                                                ),
-                                                cursorBrush = SolidColor(if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)),
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                        }
-
-                                        // Выбор персонального цвета пера
-                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                            listOf(
-                                                0xFF2563EBL, // Синий
-                                                0xFF16A34AL, // Зеленый
-                                                0xFFDC2626L, // Красный
-                                                0xFF9333EAL, // Фиолетовый
-                                                0xFFEA580CL  // Оранжевый
-                                            ).forEach { colorVal ->
-                                                val isColorSelected = selectedStudentColorHex == colorVal
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(22.dp)
-                                                        .clip(RoundedCornerShape(50))
-                                                        .background(Color(colorVal))
-                                                        .border(
-                                                            width = if (isColorSelected) 2.5.dp else 1.dp,
-                                                            color = if (isColorSelected) Color.White else Color.Transparent,
-                                                            shape = RoundedCornerShape(50)
-                                                        )
-                                                        .clickable {
-                                                            selectedStudentColorHex = colorVal
-                                                            isStudentCopied = false
-                                                        }
-                                                )
-                                            }
                                         }
                                     }
 
-                                    // Поле ссылки для ученика и кнопка копирования
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(if (isDark) Color(0xFF0D1117) else Color.White)
-                                            .border(1.dp, if (isDark) Color(0xFF283244) else Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
-                                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
+                                    if (recentTabletActions.isEmpty()) {
                                         Text(
-                                            text = studentIndividualLink,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = Color(selectedStudentColorHex),
-                                            modifier = Modifier.weight(1f)
+                                            text = "Ожидание действий: нарисуйте штрих или переместите холст на телефоне, чтобы увидеть запись здесь в реальном времени.",
+                                            fontSize = 10.sp,
+                                            color = if (isDark) Color(0xFF64748B) else Color(0xFF94A3B8)
                                         )
-
-                                        Button(
-                                            onClick = {
-                                                try {
-                                                    val sel = StringSelection(studentIndividualLink)
-                                                    Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
-                                                    isStudentCopied = true
-                                                } catch (_: Exception) {}
-                                            },
-                                            shape = RoundedCornerShape(6.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = if (isStudentCopied) Color(0xFF16A34A) else Color(selectedStudentColorHex),
-                                                contentColor = Color.White
-                                            ),
-                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                            modifier = Modifier.height(28.dp)
-                                        ) {
-                                            Text(
-                                                if (isStudentCopied) "✓ Ссылка скопирована!" else "Скопировать для ${studentNameInput.take(12)}",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
+                                    } else {
+                                        recentTabletActions.take(3).forEach { act ->
+                                            val ageSec = maxOf(0L, (System.currentTimeMillis() - act.timestamp) / 1000L)
+                                            val timeStr = if (ageSec < 4) "только что" else "$ageSec сек назад"
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                    Text(text = act.icon, fontSize = 12.sp)
+                                                    Text(
+                                                        text = "${act.peerName}: ${act.actionTitle} ${if (act.detail.isNotBlank()) "(${act.detail})" else ""}",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
+                                                    )
+                                                }
+                                                Text(
+                                                    text = timeStr,
+                                                    fontSize = 9.sp,
+                                                    fontFamily = FontFamily.Monospace,
+                                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                                )
+                                            }
                                         }
                                     }
                                 }
 
                                 Text(
-                                    text = "💡 Удобство использования (Эргономика планшета):\n" +
-                                            "• 1:1 Пропорции монитора: штрихи и окружности рисуются без искажения формы.\n" +
+                                    text = "💡 Советы:\n" +
+                                            "• Используйте кнопку «📷 QR-код», чтобы не вводить длинный адрес на телефоне вручную.\n" +
+                                            "• 1:1 Пропорции монитора: штрихи и окружности рисуются без искажения геометрии.\n" +
                                             "• Двухпальцевое перемещение: проведите 2 пальцами по экрану телефона, чтобы скроллить холст на ПК.\n" +
-                                            "• Сворачиваемый тулбар: нажмите на кнопку панели, чтобы она свернулась в угол и не задевалась рукой.",
+                                            "• Сворачиваемый тулбар: панель инструментов сворачивается в угол от случайных задеваний рукой.",
                                     fontSize = 10.sp,
                                     color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
                                     lineHeight = 14.sp
                                 )
+                            }
+                        }
+
+                        // Диалог с QR-кодом для мгновенного сканирования камерой телефона
+                        if (showQrModal) {
+                            Dialog(onDismissRequest = { showQrModal = false }) {
+                                Card(
+                                    modifier = Modifier.width(360.dp),
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF181B20) else Color.White),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFCBD5E1))
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(22.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                                    ) {
+                                        Text(
+                                            text = "📷 Сканируйте QR-код",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
+                                        )
+                                        Text(
+                                            text = "Наведите камеру смартфона, чтобы сразу открыть планшет без ввода длинной ссылки:",
+                                            fontSize = 11.sp,
+                                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                            textAlign = TextAlign.Center
+                                        )
+
+                                        val qrMatrix = remember(fullLongLink) {
+                                            try {
+                                                QrCodeGenerator.generateQrMatrix(fullLongLink)
+                                            } catch (_: Exception) {
+                                                emptyArray()
+                                            }
+                                        }
+
+                                        if (qrMatrix.isNotEmpty()) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(220.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(Color.White)
+                                                    .padding(10.dp)
+                                            ) {
+                                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                                    val cellW = size.width / qrMatrix[0].size
+                                                    val cellH = size.height / qrMatrix.size
+                                                    for (y in qrMatrix.indices) {
+                                                        for (x in qrMatrix[y].indices) {
+                                                            if (qrMatrix[y][x]) {
+                                                                drawRect(
+                                                                    color = Color.Black,
+                                                                    topLeft = Offset(x * cellW, y * cellH),
+                                                                    size = Size(cellW, cellH)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Text(
+                                            text = fullLongLink,
+                                            fontSize = 9.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8),
+                                            maxLines = 2,
+                                            textAlign = TextAlign.Center
+                                        )
+
+                                        Button(
+                                            onClick = { showQrModal = false },
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Готово", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

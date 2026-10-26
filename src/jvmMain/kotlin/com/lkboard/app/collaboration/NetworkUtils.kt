@@ -26,28 +26,32 @@ object NetworkUtils {
     }
 
     /**
-     * Создает локальную ссылку для режима графического планшета на смартфоне
-     * с поддержкой индивидуальных идентификаторов, имен и цветов учеников/планшетов.
+     * Создает полноценную длинную ссылку для режима графического планшета на смартфоне
+     * с индивидуальным ID, именем, цветом пера и кодом комнаты.
      */
     fun buildTabletWebLink(
         localIp: String,
         port: Int,
         id: String? = null,
         name: String? = null,
-        colorHex: Long? = null
+        colorHex: Long? = null,
+        roomCode: String? = null
     ): String {
         val base = "http://$localIp:$port/tablet"
         val params = mutableListOf<String>()
-        if (!id.isNullOrBlank()) {
-            params.add("id=" + java.net.URLEncoder.encode(id, java.nio.charset.StandardCharsets.UTF_8))
-        }
-        if (!name.isNullOrBlank()) {
-            params.add("name=" + java.net.URLEncoder.encode(name, java.nio.charset.StandardCharsets.UTF_8))
-        }
+        val finalId = if (!id.isNullOrBlank()) id else "teacher_tablet"
+        params.add("id=" + java.net.URLEncoder.encode(finalId, java.nio.charset.StandardCharsets.UTF_8))
+        val finalName = if (!name.isNullOrBlank()) name else "Преподаватель"
+        params.add("name=" + java.net.URLEncoder.encode(finalName, java.nio.charset.StandardCharsets.UTF_8))
         if (colorHex != null) {
             params.add("color=$colorHex")
+        } else {
+            params.add("color=0xFF2563EB")
         }
-        return if (params.isEmpty()) base else "$base?${params.joinToString("&")}"
+        if (!roomCode.isNullOrBlank()) {
+            params.add("room=" + java.net.URLEncoder.encode(roomCode, java.nio.charset.StandardCharsets.UTF_8))
+        }
+        return "$base?${params.joinToString("&")}"
     }
 
     /**

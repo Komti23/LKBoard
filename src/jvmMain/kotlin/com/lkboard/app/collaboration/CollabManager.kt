@@ -31,6 +31,7 @@ data class CollabSessionState(
     val statusMessage: String = "Совместная работа выключена",
     val connectedPeers: List<CollabPeer> = emptyList(),
     val remotePointers: Map<String, RemotePointer> = emptyMap(),
+    val recentTabletActions: List<TabletActionRecord> = emptyList(),
     val userName: String = "Хост"
 ) {
     val isActive: Boolean
@@ -96,7 +97,8 @@ class CollabManager(
         val s = CollabServer(
             snapshotProvider = snapshotProvider,
             onActionReceived = ::handleRemoteAction,
-            viewportProvider = viewportProvider
+            viewportProvider = viewportProvider,
+            recentActionsProvider = { _state.value.recentTabletActions }
         )
 
         val actualPort = s.start(port = port, boardTitle = boardTitle, hostName = userName)
@@ -205,6 +207,20 @@ class CollabManager(
 
     // --- Обработка входящих удаленных действий ---
 
+    fun recordTabletAction(peerId: String, peerName: String, title: String, icon: String, detail: String) {
+        val rec = TabletActionRecord(
+            peerId = peerId,
+            peerName = peerName,
+            actionTitle = title,
+            icon = icon,
+            detail = detail
+        )
+        _state.update { curr ->
+            val updated = (listOf(rec) + curr.recentTabletActions).take(3)
+            curr.copy(recentTabletActions = updated)
+        }
+    }
+
     private fun handleRemoteAction(action: CollabAction) {
         when (action) {
             is CollabAction.Snapshot -> {
@@ -212,9 +228,18 @@ class CollabManager(
             }
             is CollabAction.UpsertElement -> {
                 onRemoteElementUpsert(action.element)
+                val isTablet = action.senderId.startsWith("tablet") || action.senderId.startsWith("phone") ||
+                        action.senderName.contains("Планшет") || action.senderName.contains("Ученик") || action.senderName.contains("Преподаватель")
+                if (isTablet) {
+                    val detail = if (action.element is BoardElement.DrawingPath) "${action.element.strokeWidth.toInt()}px" else ""
+                    recordTabletAction(action.senderId, action.senderName.ifEmpty { "Планшет" }, "Штрих пером", "✏️", detail)
+                }
             }
             is CollabAction.DeleteElements -> {
                 onRemoteElementDelete(action.elementIds)
+                val peer = _state.value.connectedPeers.find { it.id == action.senderId }
+                val name = peer?.name ?: action.senderId.ifEmpty { "Планшет" }
+                recordTabletAction(action.senderId, name, "Отмена штриха", "↩️", "${action.elementIds.size} шт.")
             }
             is CollabAction.ToggleStickyTodo -> {
                 onRemoteToggleStickyTodo(action.noteId, action.lineIndex)
@@ -239,6 +264,9 @@ class CollabManager(
                     val existing = curr.connectedPeers.filter { it.id != action.peer.id }
                     curr.copy(connectedPeers = existing + action.peer)
                 }
+                if (action.peer.clientType == "Tablet" || action.peer.id.startsWith("tablet") || action.peer.id.startsWith("phone")) {
+                    recordTabletAction(action.peer.id, action.peer.name, "Подключение к доске", "📱", "в сети")
+                }
             }
             is CollabAction.PeerLeft -> {
                 _state.update { curr ->
@@ -250,6 +278,9 @@ class CollabManager(
             is CollabAction.ClearBoard -> {}
             is CollabAction.PanViewport -> {
                 onRemotePan?.invoke(action.dx, action.dy)
+                val peer = _state.value.connectedPeers.find { it.id == action.senderId }
+                val name = peer?.name ?: action.senderId.ifEmpty { "Планшет" }
+                recordTabletAction(action.senderId, name, "Сдвиг холста", "🖐️", "2 пальца")
             }
         }
     }

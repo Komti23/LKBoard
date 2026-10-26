@@ -648,6 +648,7 @@ fun main() = application {
                     isTabletModeActive = isTabletModeActive,
                     tabletWebLink = collabState.tabletWebLink,
                     connectedTabletClientsCount = collabState.connectedPeers.count { it.clientType == "Tablet" || it.id.contains("tablet") },
+                    recentTabletActions = collabState.recentTabletActions,
                     onToggleTabletMode = viewModel::toggleTabletMode,
                     onDismiss = viewModel::closeSettingsDialog,
                     onSaveSettings = viewModel::applySettings

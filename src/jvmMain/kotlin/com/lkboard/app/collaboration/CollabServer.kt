@@ -21,7 +21,8 @@ import java.util.concurrent.atomic.AtomicLong
 class CollabServer(
     private var snapshotProvider: () -> BoardDocument,
     private val onActionReceived: (CollabAction) -> Unit,
-    private val viewportProvider: () -> ViewportInfo = { ViewportInfo() }
+    private val viewportProvider: () -> ViewportInfo = { ViewportInfo() },
+    private val recentActionsProvider: () -> List<TabletActionRecord> = { emptyList() }
 ) {
 
     private var server: HttpServer? = null
@@ -96,6 +97,25 @@ class CollabServer(
             try {
                 val vp = viewportProvider()
                 val json = kotlinx.serialization.json.Json.encodeToString(vp)
+                val bytes = json.toByteArray(Charsets.UTF_8)
+                exchange.responseHeaders.set("Content-Type", "application/json; charset=UTF-8")
+                exchange.sendResponseHeaders(200, bytes.size.toLong())
+                exchange.responseBody.use { it.write(bytes) }
+            } catch (_: Exception) {
+                sendInternalError(exchange)
+            }
+        }
+
+        // 1.7. Последние 3 действия на планшетах в реальном времени
+        s.createContext("/api/recent-actions") { exchange ->
+            handleCors(exchange)
+            if (exchange.requestMethod.equals("OPTIONS", ignoreCase = true)) {
+                exchange.sendResponseHeaders(204, -1)
+                return@createContext
+            }
+            try {
+                val actions = recentActionsProvider()
+                val json = kotlinx.serialization.json.Json.encodeToString(actions)
                 val bytes = json.toByteArray(Charsets.UTF_8)
                 exchange.responseHeaders.set("Content-Type", "application/json; charset=UTF-8")
                 exchange.sendResponseHeaders(200, bytes.size.toLong())

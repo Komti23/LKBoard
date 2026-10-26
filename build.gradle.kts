@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.lkboard"
-version = "1.7.0"
+version = "1.7.1"
 
 kotlin {
     jvmToolchain(21)
@@ -23,6 +23,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.1")
                 implementation("org.apache.pdfbox:pdfbox:3.0.2")
                 implementation("org.apache.poi:poi-ooxml:5.2.5")
+                implementation("com.google.zxing:core:3.5.3")
             }
         }
         val jvmTest by getting {
@@ -43,7 +44,7 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi
             )
             packageName = "Lkboard"
-            packageVersion = "1.7.0"
+            packageVersion = "1.7.1"
             description = "Lkboard - Infinite Canvas Collaborative Workspace"
             copyright = "© 2026 Lkboard Team"
             vendor = "Lkboard"

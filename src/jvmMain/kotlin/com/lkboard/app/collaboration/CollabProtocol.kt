@@ -43,6 +43,20 @@ data class CollabActionRecord(
 )
 
 /**
+ * Запись о действии с планшета для ленты последних 3 действий.
+ */
+@Serializable
+data class TabletActionRecord(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val peerId: String = "",
+    val peerName: String = "",
+    val actionTitle: String = "",
+    val icon: String = "✏️",
+    val detail: String = "",
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+/**
  * Геометрия видимой области экрана компьютера для точной синхронизации стилуса смартфона.
  */
 @Serializable

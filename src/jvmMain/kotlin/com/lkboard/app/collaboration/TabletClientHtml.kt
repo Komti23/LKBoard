@@ -3,13 +3,14 @@ package com.lkboard.app.collaboration
 /**
  * Генератор мобильного веб-приложения для режима графического планшета (Phone Stylus Digitizer).
  * Превращает любой смартфон или планшет в персональный беспроводной графический планшет:
- * - Индивидуальные ссылки и имена для каждого ученика / планшета (?id=...&name=...&color=...)
- * - 1:1 Пропорции монитора ПК (Active Digitizer Frame) — окружности и рукописный текст без искажений!
- * - Двухпальцевое перемещение (2-Finger Pan) — свободный скроллинг холста ПК со смартфона
- * - Сворачиваемая панель инструментов (защита от случайных задеваний ладонью)
- * - Быстрые кнопки под большой палец (Undo ↩️, Clear 🗑️, Pen/Eraser toggle)
- * - Поддержка силы нажатия стилуса и Palm Rejection (защита ладони)
- * - Тактильный виброотклик (Haptic Feedback)
+ * - Исключительно длинные персональные ссылки с токенами (?id=...&name=...&color=...)
+ * - Виджет 3 последних действий с возможностью мгновенной отмены прямо с экрана телефона
+ * - Режим «Лазерная указка» (🔴) со смартфона для презентаций и объяснений
+ * - Режим «Линейка / Прямая линия» (📏) для чертежей
+ * - Тактильный Haptic Bumper при приближении к границам монитора
+ * - 1:1 Пропорции монитора ПК (Active Digitizer Frame) — окружности без сплющивания
+ * - Двухпальцевое перемещение (2-Finger Pan) холста ПК с телефона
+ * - Сворачиваемая панель инструментов и плавающие кнопки под большой палец
  */
 object TabletClientHtml {
 
@@ -27,7 +28,7 @@ object TabletClientHtml {
     <style>
         :root {
             --bg-color: #0b0d11;
-            --surface-color: rgba(22, 26, 33, 0.92);
+            --surface-color: rgba(20, 24, 32, 0.92);
             --border-color: rgba(255, 255, 255, 0.12);
             --accent: #2563eb;
             --accent-glow: rgba(37, 99, 235, 0.35);
@@ -183,34 +184,98 @@ object TabletClientHtml {
             background: rgba(37, 99, 235, 0.25);
         }
 
+        /* Виджет 3 последних действий */
+        .actions-card {
+            position: fixed;
+            top: 48px;
+            left: 10px;
+            background: var(--surface-color);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 6px 10px;
+            z-index: 45;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+            min-width: 190px;
+            max-width: 250px;
+            pointer-events: auto;
+            transition: all 0.2s ease;
+        }
+
+        .actions-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 700;
+            color: #e2e8f0;
+            cursor: pointer;
+        }
+
+        .actions-list {
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .actions-list.collapsed {
+            display: none;
+        }
+
+        .action-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 10px;
+            color: #cbd5e1;
+        }
+
+        .action-btn-undo {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #38bdf8;
+            border-radius: 5px;
+            padding: 1px 5px;
+            font-size: 9px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .action-btn-undo:active {
+            background: rgba(56, 189, 248, 0.3);
+        }
+
         /* Подсказка поворота в портретном режиме */
         .rotate-hint {
             position: fixed;
-            top: 50px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 48px;
+            right: 10px;
             background: rgba(30, 41, 59, 0.95);
             border: 1px solid rgba(56, 189, 248, 0.4);
             color: #e2e8f0;
-            padding: 7px 14px;
+            padding: 6px 12px;
             border-radius: 12px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             display: none;
             align-items: center;
-            gap: 8px;
-            z-index: 60;
+            gap: 6px;
+            z-index: 44;
             box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-            animation: pulse-border 2s infinite ease-in-out;
         }
 
         /* Плавающий тост-уведомление */
         .toast-pill {
             position: fixed;
-            top: 70px;
+            top: 86px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.92);
+            background: rgba(15, 23, 42, 0.94);
             border: 1px solid rgba(255, 255, 255, 0.16);
             color: #ffffff;
             padding: 8px 16px;
@@ -229,7 +294,7 @@ object TabletClientHtml {
             transform: translateX(-50%) translateY(4px);
         }
 
-        /* Плавающие кнопки быстрого действия под большой палец (Thumb Controls) */
+        /* Кнопки быстрого действия под большой палец (Thumb Controls) */
         .thumb-controls {
             position: fixed;
             right: 12px;
@@ -278,10 +343,10 @@ object TabletClientHtml {
             padding: 6px 12px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
             z-index: 50;
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-            max-width: 95vw;
+            max-width: 96vw;
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
         }
 
@@ -291,7 +356,6 @@ object TabletClientHtml {
             pointer-events: none;
         }
 
-        /* Кнопка вернуть свернутую панель */
         .btn-mini-restore {
             position: fixed;
             bottom: 14px;
@@ -316,13 +380,13 @@ object TabletClientHtml {
             background: transparent;
             border: 1px solid transparent;
             color: var(--text-muted);
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 17px;
             cursor: pointer;
             transition: all 0.15s ease;
             flex-shrink: 0;
@@ -336,8 +400,8 @@ object TabletClientHtml {
         }
 
         .color-dot {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             border: 2px solid transparent;
             cursor: pointer;
@@ -353,7 +417,7 @@ object TabletClientHtml {
 
         .divider {
             width: 1px;
-            height: 22px;
+            height: 20px;
             background: rgba(255, 255, 255, 0.15);
             flex-shrink: 0;
         }
@@ -433,7 +497,6 @@ object TabletClientHtml {
             margin-bottom: 16px;
         }
 
-        /* Поле имени ученика в диалоге */
         .student-name-box {
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.14);
@@ -502,11 +565,6 @@ object TabletClientHtml {
             color: #64748b;
             line-height: 1.4;
         }
-
-        @keyframes pulse-border {
-            0%, 100% { border-color: rgba(56, 189, 248, 0.4); }
-            50% { border-color: rgba(56, 189, 248, 0.9); }
-        }
     </style>
 </head>
 <body>
@@ -544,9 +602,22 @@ object TabletClientHtml {
         </div>
     </div>
 
+    <!-- Виджет 3 последних действий -->
+    <div class="actions-card" id="actions-card">
+        <div class="actions-header" id="actions-header" title="Показать / скрыть последние действия">
+            <span style="display:flex; align-items:center; gap:5px;">📋 3 действия</span>
+            <span id="actions-arrow" style="font-size: 9px; color: #94a3b8;">▼</span>
+        </div>
+        <div class="actions-list" id="actions-list">
+            <div id="actions-items-container">
+                <div style="color: #64748b; font-size: 10px; padding: 2px 0;">Действий пока нет</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Подсказка поворота экрана -->
     <div class="rotate-hint" id="rotate-hint">
-        <span>🔄 Поверните телефон горизонтально для наилучшего совпадения с экраном</span>
+        <span>🔄 Поверните телефон горизонтально</span>
     </div>
 
     <!-- Всплывающий тост обратной связи -->
@@ -568,6 +639,8 @@ object TabletClientHtml {
     <div class="toolbar-pill" id="toolbar">
         <button class="tool-btn active" id="tool-pen" title="Стилус / Ручка" type="button">🖊️</button>
         <button class="tool-btn" id="tool-highlighter" title="Маркер" type="button">🖍️</button>
+        <button class="tool-btn" id="tool-laser" title="Лазерная указка" type="button">🔴</button>
+        <button class="tool-btn" id="tool-line" title="Линейка / Прямая линия" type="button">📏</button>
         <button class="tool-btn" id="tool-eraser" title="Ластик" type="button">🧹</button>
 
         <div class="divider"></div>
@@ -622,7 +695,7 @@ object TabletClientHtml {
             // 1. Извлечение параметров индивидуальной ссылки (?id=...&name=...&color=...)
             const urlParams = new URLSearchParams(window.location.search);
             let studentId = urlParams.get('id') || ('tablet-' + Math.random().toString(36).substr(2, 6));
-            let studentName = urlParams.get('name') || localStorage.getItem('lkboard_tablet_name') || 'Планшет';
+            let studentName = urlParams.get('name') || localStorage.getItem('lkboard_tablet_name') || 'Преподаватель';
             let currentColorHex = urlParams.get('color') ? Number(urlParams.get('color')) : 0xFF2563EB;
             let currentCssColor = '#' + (currentColorHex & 0x00FFFFFF).toString(16).padStart(6, '0');
 
@@ -657,14 +730,108 @@ object TabletClientHtml {
             const btnThumbClear = document.getElementById('btn-thumb-clear');
             const btnThumbToggleTool = document.getElementById('btn-thumb-toggle-tool');
 
+            // Виджет 3 последних действий
+            const actionsHeader = document.getElementById('actions-header');
+            const actionsList = document.getElementById('actions-list');
+            const actionsArrow = document.getElementById('actions-arrow');
+            const actionsContainer = document.getElementById('actions-items-container');
+            let isActionsCollapsed = false;
+
+            // Хранилище 3 последних действий на планшете
+            let localRecentActions = [];
+
+            function toggleActions() {
+                isActionsCollapsed = !isActionsCollapsed;
+                actionsList.classList.toggle('collapsed', isActionsCollapsed);
+                actionsArrow.innerText = isActionsCollapsed ? '▶' : '▼';
+            }
+            if (actionsHeader) actionsHeader.addEventListener('click', toggleActions);
+
+            function addRecentAction(title, icon, elementId) {
+                const item = {
+                    id: 'act-' + Date.now(),
+                    title: title,
+                    icon: icon,
+                    elementId: elementId || null,
+                    timestamp: Date.now()
+                };
+                localRecentActions.unshift(item);
+                if (localRecentActions.length > 3) localRecentActions.pop();
+                renderRecentActions();
+            }
+
+            function renderRecentActions() {
+                if (!actionsContainer) return;
+                if (localRecentActions.length === 0) {
+                    actionsContainer.innerHTML = '<div style="color: #64748b; font-size: 10px; padding: 2px 0;">Действий пока нет</div>';
+                    return;
+                }
+                const now = Date.now();
+                actionsContainer.innerHTML = localRecentActions.map(act => {
+                    const sec = Math.max(0, Math.round((now - act.timestamp) / 1000));
+                    const timeStr = sec < 4 ? 'только что' : sec + 'с назад';
+                    const undoBtn = act.elementId ? ('<button class="action-btn-undo" onclick="window.undoAction(\'' + act.elementId + '\')">↩</button>') : '';
+                    return '<div class="action-row">' +
+                        '<span>' + act.icon + ' ' + escapeHtml(act.title) + '</span>' +
+                        '<div style="display:flex;align-items:center;gap:4px;">' +
+                            '<span style="font-size:9px;color:#94a3b8;">' + timeStr + '</span>' +
+                            undoBtn +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            }
+
+            window.undoAction = async function(elementId) {
+                if (!elementId) return;
+                await sendAction({
+                    type: 'delete_elements',
+                    elementIds: [elementId],
+                    senderId: studentId
+                });
+                strokesHistory = strokesHistory.filter(id => id !== elementId);
+                localRecentActions = localRecentActions.filter(act => act.elementId !== elementId);
+                addRecentAction('Отмена штриха', '↩️', null);
+                haptic(20);
+                showToast('↩️ Элемент отменен');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            };
+
+            // Синхронизация 3 последних действий с сервера ПК
+            async function fetchRecentActions() {
+                try {
+                    const res = await fetch('/api/recent-actions');
+                    if (res.ok) {
+                        const list = await res.json();
+                        if (Array.isArray(list) && list.length > 0) {
+                            // Если есть удаленные действия от других, дополняем ленту
+                            for (const a of list) {
+                                if (!localRecentActions.some(local => local.title === a.actionTitle && Math.abs(local.timestamp - a.timestamp) < 3000)) {
+                                    localRecentActions.push({
+                                        id: a.id,
+                                        title: a.peerName + ': ' + a.actionTitle,
+                                        icon: a.icon || '✏️',
+                                        elementId: null,
+                                        timestamp: a.timestamp
+                                    });
+                                }
+                            }
+                            localRecentActions.sort((x, y) => y.timestamp - x.timestamp);
+                            localRecentActions = localRecentActions.slice(0, 3);
+                            renderRecentActions();
+                        }
+                    }
+                } catch (_) {}
+            }
+            setInterval(fetchRecentActions, 2000);
+
             // Инициализация имени и цвета
             if (urlParams.get('name')) {
                 studentNameBox.style.display = 'none';
-                welcomeDesc.innerHTML = 'Привет, <b>' + escapeHtml(studentName) + '</b>!<br>Ваш персональный стилус подключен к монитору LKBoard.';
+                welcomeDesc.innerHTML = 'Привет, <b>' + escapeHtml(studentName) + '</b>!<br>Ваш персональный планшет подключен к монитору LKBoard.';
             } else {
                 inputStudentName.value = studentName;
                 inputStudentName.addEventListener('change', () => {
-                    studentName = inputStudentName.value.trim() || 'Планшет';
+                    studentName = inputStudentName.value.trim() || 'Преподаватель';
                     localStorage.setItem('lkboard_tablet_name', studentName);
                     updateStatusBadge();
                 });
@@ -722,7 +889,7 @@ object TabletClientHtml {
             }
 
             // Состояние инструментов
-            let currentTool = 'pen'; // 'pen', 'highlighter', 'eraser'
+            let currentTool = 'pen'; // 'pen', 'highlighter', 'eraser', 'laser', 'line'
             let currentWidth = 4;
             const widths = [2, 4, 8, 14];
             let widthIndex = 1;
@@ -734,6 +901,7 @@ object TabletClientHtml {
             let lastPointerMoveTime = 0;
             let activeStrokeId = null;
             let lastLiveStreamTime = 0;
+            let lastEdgeHapticTime = 0;
 
             // Режим пропорций: 'monitor' (1:1 геометрия монитора) или 'fill' (на весь экран)
             let aspectMode = localStorage.getItem('lkboard_aspect_mode') || 'monitor';
@@ -829,7 +997,7 @@ object TabletClientHtml {
                 localStorage.setItem('lkboard_aspect_mode', aspectMode);
                 updateDigitizerFrame();
                 haptic(15);
-                showToast(aspectMode === 'monitor' ? '📐 Режим: 1:1 монитор (без искажения)' : '📱 Режим: На весь экран');
+                showToast(aspectMode === 'monitor' ? '📐 1:1 монитор (без искажения)' : '📱 На весь экран');
             }
             addFastClickListener(btnToggleAspect, toggleAspectMode);
 
@@ -841,7 +1009,6 @@ object TabletClientHtml {
                 ctx.scale(dpr, dpr);
                 updateDigitizerFrame();
 
-                // Проверка ориентации: совет повернуть горизонтально
                 const isPortrait = window.innerHeight > window.innerWidth;
                 if (rotateHint) {
                     rotateHint.style.display = isPortrait ? 'flex' : 'none';
@@ -915,6 +1082,17 @@ object TabletClientHtml {
             function phoneToWorld(px, py) {
                 const b = getActiveBounds();
 
+                // Тактильный бампер границы: если стилус касается края активной зоны
+                const now = performance.now();
+                if (now - lastEdgeHapticTime > 350) {
+                    const edgeDist = 12;
+                    if (Math.abs(px - b.left) < edgeDist || Math.abs(px - (b.left + b.width)) < edgeDist ||
+                        Math.abs(py - b.top) < edgeDist || Math.abs(py - (b.top + b.height)) < edgeDist) {
+                        lastEdgeHapticTime = now;
+                        haptic(22);
+                    }
+                }
+
                 const worldLeft = (0 - pcViewport.panX) / pcViewport.scale;
                 const worldTop = (0 - pcViewport.panY) / pcViewport.scale;
                 const worldRight = (pcViewport.width - pcViewport.panX) / pcViewport.scale;
@@ -922,7 +1100,6 @@ object TabletClientHtml {
                 const worldW = worldRight - worldLeft;
                 const worldH = worldBottom - worldTop;
 
-                // Нормализация координат внутри активной зоны
                 const nx = Math.max(0, Math.min(1, (px - b.left) / b.width));
                 const ny = Math.max(0, Math.min(1, (py - b.top) / b.height));
 
@@ -943,10 +1120,10 @@ object TabletClientHtml {
                 } catch (_) {}
             }
 
-            // Отправка движения курсора пера
-            function streamPointerMove(worldPos) {
+            // Отправка движения курсора пера / лазера
+            function streamPointerMove(worldPos, isLaser) {
                 const now = performance.now();
-                if (now - lastPointerMoveTime < 24) return; // ~40 FPS throttle
+                if (now - lastPointerMoveTime < 24) return;
                 lastPointerMoveTime = now;
 
                 sendAction({
@@ -956,12 +1133,13 @@ object TabletClientHtml {
                     x: worldPos.x,
                     y: worldPos.y,
                     colorHex: currentColorHex,
-                    isLaser: false
+                    isLaser: !!isLaser
                 });
             }
 
             // Потоковая отправка живого штриха в реальном времени
             async function streamLiveStroke(isFinal) {
+                if (currentTool === 'laser') return;
                 if (!isDrawing || currentStrokePoints.length < 2) return;
                 const now = performance.now();
                 if (!isFinal && now - lastLiveStreamTime < 30) return;
@@ -984,7 +1162,9 @@ object TabletClientHtml {
                     zIndex: 10,
                     isLocked: false,
                     rotation: 0,
-                    points: currentStrokePoints.slice(),
+                    points: (currentTool === 'line' && currentStrokePoints.length >= 2)
+                        ? [currentStrokePoints[0], currentStrokePoints[currentStrokePoints.length - 1]]
+                        : currentStrokePoints.slice(),
                     strokeColorHex: currentColorHex,
                     strokeWidth: strokeWidth,
                     isHighlighter: isHighlighter
@@ -1012,6 +1192,7 @@ object TabletClientHtml {
                     prevMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                     haptic(15);
                     showToast('✋ Перемещение доски');
+                    addRecentAction('Сдвиг холста', '🖐️', null);
                 }
             }, { passive: false });
 
@@ -1047,6 +1228,8 @@ object TabletClientHtml {
             }, { passive: true });
 
             // ОБРАБОТКА ВВОДА СТИЛУСА / ПАЛЬЦА
+            let lineStartPx = { x: 0, y: 0 };
+
             canvas.addEventListener('pointerdown', (e) => {
                 if (isTwoFingerPan || activePointerId !== null) return;
 
@@ -1067,6 +1250,7 @@ object TabletClientHtml {
                 const py = e.clientY - rect.top;
                 const pressure = e.pressure > 0 ? e.pressure : 0.5;
 
+                lineStartPx = { x: px, y: py };
                 activeStrokeId = studentId + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
                 const world = phoneToWorld(px, py);
                 currentStrokePoints = [{ x: world.x, y: world.y }];
@@ -1078,7 +1262,15 @@ object TabletClientHtml {
                 ctx.lineWidth = currentWidth * (0.5 + pressure * 0.8);
                 ctx.moveTo(px, py);
 
-                streamPointerMove(world);
+                if (currentTool === 'laser') {
+                    streamPointerMove(world, true);
+                    ctx.fillStyle = '#ff1744';
+                    ctx.beginPath();
+                    ctx.arc(px, py, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    streamPointerMove(world, false);
+                }
             });
 
             canvas.addEventListener('pointermove', (e) => {
@@ -1095,13 +1287,35 @@ object TabletClientHtml {
                     const pressure = ev.pressure > 0 ? ev.pressure : 0.5;
                     const world = phoneToWorld(px, py);
 
-                    currentStrokePoints.push({ x: world.x, y: world.y });
+                    if (currentTool === 'laser') {
+                        streamPointerMove(world, true);
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#ff1744';
+                        ctx.beginPath();
+                        ctx.arc(px, py, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                        continue;
+                    }
 
+                    if (currentTool === 'line') {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.beginPath();
+                        ctx.strokeStyle = currentCssColor;
+                        ctx.lineWidth = currentWidth;
+                        ctx.moveTo(lineStartPx.x, lineStartPx.y);
+                        ctx.lineTo(px, py);
+                        ctx.stroke();
+                        currentStrokePoints = [{ x: phoneToWorld(lineStartPx.x, lineStartPx.y).x, y: phoneToWorld(lineStartPx.x, lineStartPx.y).y }, { x: world.x, y: world.y }];
+                        streamPointerMove(world, false);
+                        continue;
+                    }
+
+                    currentStrokePoints.push({ x: world.x, y: world.y });
                     ctx.lineWidth = currentWidth * (0.5 + pressure * 0.8);
                     ctx.lineTo(px, py);
                     ctx.stroke();
 
-                    streamPointerMove(world);
+                    streamPointerMove(world, false);
                     streamLiveStroke(false);
                 }
             });
@@ -1111,17 +1325,24 @@ object TabletClientHtml {
                 isDrawing = false;
                 activePointerId = null;
 
+                if (currentTool === 'laser') {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    return;
+                }
+
                 if (currentStrokePoints.length >= 2) {
                     await streamLiveStroke(true);
                     if (activeStrokeId) {
                         strokesHistory.push(activeStrokeId);
+                        const actTitle = (currentTool === 'line') ? 'Линейка (линия)' : ('Штрих (' + currentWidth + 'px)');
+                        const actIcon = (currentTool === 'line') ? '📏' : (currentTool === 'highlighter' ? '🖍️' : '✏️');
+                        addRecentAction(actTitle, actIcon, activeStrokeId);
                     }
                 }
 
                 activeStrokeId = null;
                 currentStrokePoints = [];
 
-                // Планшет очищает локальный экран после завершения штриха (режим чистого дигитайзера)
                 setTimeout(() => {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }, 200);
@@ -1150,10 +1371,18 @@ object TabletClientHtml {
                 const el = document.getElementById('tool-' + toolName);
                 if (el) el.classList.add('active');
                 haptic(12);
+
+                if (toolName === 'laser') showToast('🔴 Лазерная указка активна');
+                else if (toolName === 'line') showToast('📏 Режим линейки (прямая)');
+                else if (toolName === 'highlighter') showToast('🖍️ Маркер');
+                else if (toolName === 'eraser') showToast('🧹 Ластик');
+                else showToast('🖊️ Перо');
             }
 
             addFastClickListener(document.getElementById('tool-pen'), () => selectTool('pen'));
             addFastClickListener(document.getElementById('tool-highlighter'), () => selectTool('highlighter'));
+            addFastClickListener(document.getElementById('tool-laser'), () => selectTool('laser'));
+            addFastClickListener(document.getElementById('tool-line'), () => selectTool('line'));
             addFastClickListener(document.getElementById('tool-eraser'), () => selectTool('eraser'));
 
             // Быстрый переключатель под большой палец
@@ -1197,7 +1426,7 @@ object TabletClientHtml {
                 showToast(palmRejection ? '🖐️ Защита ладони включена' : '🖐️ Защита ладони отключена');
             });
 
-            // Отмена штриха (Undo)
+            // Отмена последнего штриха (Undo)
             async function triggerUndo() {
                 if (strokesHistory.length === 0) return;
                 const lastId = strokesHistory.pop();
@@ -1206,6 +1435,7 @@ object TabletClientHtml {
                     elementIds: [lastId],
                     senderId: studentId
                 });
+                addRecentAction('Отмена последнего штриха', '↩️', null);
                 haptic(20);
                 showToast('↩️ Штрих отменен');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1217,6 +1447,7 @@ object TabletClientHtml {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 haptic(20);
                 showToast('🗑️ Экран очищен');
+                addRecentAction('Очистка экрана', '🗑️', null);
             });
 
             // Уведомление ПК о подключении участника
