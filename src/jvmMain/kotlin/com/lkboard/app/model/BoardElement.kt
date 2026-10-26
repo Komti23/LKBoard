@@ -197,7 +197,15 @@ sealed interface BoardElement {
     ) : BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
-        override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun copyWithSize(newWidth: Float, newHeight: Float): Text {
+            val scale = if (height > 0f) newHeight / height else 1f
+            val newFontSize = if (kotlin.math.abs(newHeight - height) > 0.5f) {
+                (fontSize * scale).coerceIn(10f, 220f)
+            } else {
+                fontSize
+            }
+            return copy(width = newWidth, height = newHeight, fontSize = newFontSize)
+        }
         override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
 
@@ -485,7 +493,11 @@ sealed interface BoardElement {
     ) : BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
-        override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun copyWithSize(newWidth: Float, newHeight: Float): LatexFormula {
+            val scale = if (height > 0f) newHeight / height else (if (width > 0f) newWidth / width else 1f)
+            val newFontSize = (fontSize * scale).coerceIn(12f, 220f)
+            return copy(width = newWidth, height = newHeight, fontSize = newFontSize)
+        }
         override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
 

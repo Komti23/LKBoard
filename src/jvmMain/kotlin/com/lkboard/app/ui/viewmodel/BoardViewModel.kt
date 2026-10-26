@@ -1478,14 +1478,15 @@ class BoardViewModel {
         _editingLatexFormula.value = null
     }
 
-    fun saveLatexFormula(formulaText: String) {
+    fun saveLatexFormula(formulaText: String, fontSize: Float = 24f) {
         val editing = _editingLatexFormula.value
         if (editing != null) {
-            val estimated = com.lkboard.app.util.LatexRenderer.estimateSize(formulaText, editing.fontSize)
+            val estimated = com.lkboard.app.util.LatexRenderer.estimateSize(formulaText, fontSize)
             val w = estimated.first
             val h = estimated.second
             val updated = editing.copy(
                 formula = formulaText,
+                fontSize = fontSize,
                 width = maxOf(140f, w + 32f),
                 height = maxOf(60f, h + 24f)
             )
@@ -1493,7 +1494,7 @@ class BoardViewModel {
             collabManager.broadcastElementUpsert(updated)
             triggerAutoSave(immediate = false)
         } else {
-            val estimated = com.lkboard.app.util.LatexRenderer.estimateSize(formulaText, 22f)
+            val estimated = com.lkboard.app.util.LatexRenderer.estimateSize(formulaText, fontSize)
             val w = estimated.first
             val h = estimated.second
             val newElement = BoardElement.LatexFormula(
@@ -1503,13 +1504,91 @@ class BoardViewModel {
                 width = maxOf(160f, w + 32f),
                 height = maxOf(70f, h + 24f),
                 formula = formulaText,
-                fontSize = 22f,
+                fontSize = fontSize,
                 zIndex = nextZIndex()
             )
             executeCommand(AddElementCommand(newElement))
             _state.update { it.copy(selectedElementIds = setOf(newElement.id)) }
         }
         closeLatexDialog()
+    }
+
+    fun updateSelectedTextProperties(
+        fontSizeDelta: Float? = null,
+        targetFontSize: Float? = null,
+        isBold: Boolean? = null,
+        isItalic: Boolean? = null,
+        colorHex: Long? = null
+    ) {
+        val selectedId = _state.value.selectedElementIds.singleOrNull() ?: return
+        val current = _state.value.elements[selectedId] as? BoardElement.Text ?: return
+
+        val newFontSize = when {
+            targetFontSize != null -> targetFontSize.coerceIn(10f, 220f)
+            fontSizeDelta != null -> (current.fontSize + fontSizeDelta).coerceIn(10f, 220f)
+            else -> current.fontSize
+        }
+        val newBold = isBold ?: current.isBold
+        val newItalic = isItalic ?: current.isItalic
+        val newColor = colorHex ?: current.colorHex
+
+        val (w, h) = com.lkboard.app.ui.components.TextLayoutHelper.calculateDimensions(
+            text = current.text,
+            fontSize = newFontSize,
+            maxWidth = maxOf(current.width, 700f)
+        )
+        val updated = current.copy(
+            fontSize = newFontSize,
+            isBold = newBold,
+            isItalic = newItalic,
+            colorHex = newColor,
+            width = maxOf(current.width, w),
+            height = maxOf(current.height, h)
+        )
+        executeCommand(object : BoardCommand {
+            override val description = "Изменение стиля текста"
+            override fun execute(state: BoardState) = state.withElement(updated)
+            override fun undo(state: BoardState) = state.withElement(current)
+        })
+        collabManager.broadcastElementUpsert(updated)
+        triggerAutoSave(immediate = false)
+    }
+
+    fun updateSelectedLatexProperties(
+        fontSizeDelta: Float? = null,
+        targetFontSize: Float? = null,
+        colorHex: Long? = null,
+        toggleBackground: Boolean = false
+    ) {
+        val selectedId = _state.value.selectedElementIds.singleOrNull() ?: return
+        val current = _state.value.elements[selectedId] as? BoardElement.LatexFormula ?: return
+
+        val newFontSize = when {
+            targetFontSize != null -> targetFontSize.coerceIn(12f, 220f)
+            fontSizeDelta != null -> (current.fontSize + fontSizeDelta).coerceIn(12f, 220f)
+            else -> current.fontSize
+        }
+        val newColor = colorHex ?: current.colorHex
+        val newHasBg = if (toggleBackground) !current.hasBackgroundCard else current.hasBackgroundCard
+
+        val estimated = com.lkboard.app.util.LatexRenderer.estimateSize(current.formula, newFontSize)
+        val w = estimated.first
+        val h = estimated.second
+
+        val updated = current.copy(
+            fontSize = newFontSize,
+            colorHex = newColor,
+            hasBackgroundCard = newHasBg,
+            width = maxOf(140f, w + 32f),
+            height = maxOf(60f, h + 24f)
+        )
+        executeCommand(object : BoardCommand {
+            override val description = "Изменение параметров формулы"
+            override fun execute(state: BoardState) = state.withElement(updated)
+            override fun undo(state: BoardState) = state.withElement(current)
+        })
+        collabManager.broadcastElementUpsert(updated)
+        triggerAutoSave(immediate = false)
     }
 
     // --- Физический и инженерный конструктор (Stencils) ---

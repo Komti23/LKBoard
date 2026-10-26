@@ -19,6 +19,9 @@ enum class ResizeHandle(val cursorType: Int) {
     BOTTOM_LEFT(Cursor.SW_RESIZE_CURSOR),
     LEFT_CENTER(Cursor.W_RESIZE_CURSOR);
 
+    val isCorner: Boolean
+        get() = this == TOP_LEFT || this == TOP_RIGHT || this == BOTTOM_RIGHT || this == BOTTOM_LEFT
+
     fun getPosition(bounds: Rect): Offset {
         return when (this) {
             TOP_LEFT -> bounds.topLeft

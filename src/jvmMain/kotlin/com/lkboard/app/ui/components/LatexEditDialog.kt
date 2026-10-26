@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -49,11 +50,13 @@ import com.lkboard.app.util.LatexRenderer
 @Composable
 fun LatexEditDialog(
     initialFormula: String = "\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
+    initialFontSize: Float = 24f,
     onDismiss: () -> Unit,
-    onSave: (formula: String) -> Unit
+    onSave: (formula: String, fontSize: Float) -> Unit
 ) {
     val isDark = LocalAppTheme.current.isDark
     var formula by remember { mutableStateOf(initialFormula) }
+    var fontSize by remember { mutableStateOf(initialFontSize) }
 
     val quickSnippets = listOf(
         "Дробь" to "\\frac{a}{b}",
@@ -132,12 +135,72 @@ fun LatexEditDialog(
                     Spacer(Modifier.height(6.dp))
                     Text(
                         text = LatexRenderer.formatLatexToReadable(formula).replace("{", "").replace("}", ""),
-                        fontSize = 20.sp,
+                        fontSize = (fontSize * 0.9f).coerceIn(14f, 44f).sp,
                         fontFamily = FontFamily.Serif,
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Medium,
                         color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
                     )
+                }
+
+                // Выбор размера формулы
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "РАЗМЕР:",
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                    )
+
+                    // A-
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                            .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+                            .clickable { fontSize = (fontSize - 4f).coerceAtLeast(14f) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("A-", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B))
+                    }
+
+                    // A+
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                            .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+                            .clickable { fontSize = (fontSize + 4f).coerceAtMost(96f) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("A+", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B))
+                    }
+
+                    listOf(18f to "Мелкий", 24f to "Стандарт", 32f to "Крупный", 48f to "Огромный").forEach { (sz, label) ->
+                        val isSelected = fontSize.toInt() == sz.toInt()
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)))
+                                .border(1.dp, if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)), RoundedCornerShape(6.dp))
+                                .clickable { fontSize = sz }
+                                .padding(horizontal = 7.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${sz.toInt()} $label",
+                                fontSize = 10.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) Color.White else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF1E293B))
+                            )
+                        }
+                    }
                 }
 
                 // Ввод формулы
@@ -245,7 +308,7 @@ fun LatexEditDialog(
                     Button(
                         onClick = {
                             if (formula.isNotBlank()) {
-                                onSave(formula.trim())
+                                onSave(formula.trim(), fontSize)
                             }
                         },
                         shape = RoundedCornerShape(8.dp),

@@ -399,6 +399,10 @@ fun main() = application {
                             onCommitTextEdit = viewModel::commitTextEdit,
                             onCommitTextElementEdit = viewModel::commitTextElementEdit,
                             onCancelTextEdit = viewModel::cancelTextEdit,
+                            onUpdateSelectedTextProperties = viewModel::updateSelectedTextProperties,
+                            onUpdateSelectedLatexProperties = viewModel::updateSelectedLatexProperties,
+                            onEditSelectedLatex = { (boardState.selectedElements.singleOrNull() as? BoardElement.LatexFormula)?.let { viewModel.openLatexDialog(it) } },
+                            onStartEditingSelectedText = { (boardState.selectedElements.singleOrNull() as? BoardElement.Text)?.let { viewModel.startEditingElement(it) } },
                             onCursorPositionChange = { currentCursorScreenPos = it },
                             remotePointers = collabState.remotePointers,
                             modifier = Modifier.fillMaxSize()
@@ -556,7 +560,7 @@ fun main() = application {
                                     }
                                 }
                             )
-                        } else if (editingElement is BoardElement.StickyNote || editingElement is BoardElement.Text) {
+                        } else if (editingElement is BoardElement.StickyNote) {
                             TextEditDialog(
                                 element = editingElement!!,
                                 onSave = viewModel::commitTextEdit,
@@ -600,8 +604,9 @@ fun main() = application {
                         if (isLatexDialogOpen) {
                             LatexEditDialog(
                                 initialFormula = editingLatexFormula?.formula ?: "\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
+                                initialFontSize = editingLatexFormula?.fontSize ?: 24f,
                                 onDismiss = viewModel::closeLatexDialog,
-                                onSave = viewModel::saveLatexFormula
+                                onSave = { formula, fontSize -> viewModel.saveLatexFormula(formula, fontSize) }
                             )
                         }
 

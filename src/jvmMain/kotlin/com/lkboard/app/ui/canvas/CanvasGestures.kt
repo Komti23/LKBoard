@@ -482,11 +482,13 @@ class CanvasGestureHandler(
 
                     is InteractionMode.Resizing -> {
                         val delta = worldPos - mode.startWorld
+                        val targetEl = boardState.elements[mode.elementId]
+                        val forceKeepAspect = mode.handle.isCorner && (targetEl is BoardElement.LatexFormula || targetEl is BoardElement.Text)
                         val newBounds = GeometryUtils.calculateResizedBounds(
                             initialBounds = mode.initialBounds,
                             handle = mode.handle,
                             deltaWorld = delta,
-                            keepAspectRatio = isShift
+                            keepAspectRatio = isShift || forceKeepAspect
                         )
                         mode.currentBounds = newBounds
                         callbacks.onResizeElementLive(mode.elementId, newBounds)

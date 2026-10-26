@@ -106,6 +106,9 @@ fun InlineTextEditorOverlay(
     onCancel: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val isDark = com.lkboard.app.ui.theme.LocalAppTheme.current.isDark
+    val density = androidx.compose.ui.platform.LocalDensity.current
+
     var textValue by remember {
         mutableStateOf(
             TextFieldValue(
@@ -118,7 +121,11 @@ fun InlineTextEditorOverlay(
     var fontSize by remember { mutableStateOf(element.fontSize) }
     var isBold by remember { mutableStateOf(element.isBold) }
     var isItalic by remember { mutableStateOf(element.isItalic) }
-    var colorHex by remember { mutableStateOf(element.colorHex) }
+    var colorHex by remember {
+        mutableStateOf(
+            if (element.colorHex == 0xFF1E1E1EL && isDark) 0xFFF4F4F5L else element.colorHex
+        )
+    }
 
     val focusRequester = remember { FocusRequester() }
 
@@ -126,15 +133,19 @@ fun InlineTextEditorOverlay(
         focusRequester.requestFocus()
     }
 
-    // Экранные координаты и масштаб текстового блока
+    // Динамический пересчет размеров поля ввода под текст и размер шрифта "на глазах"
+    val (calcW, calcH) = TextLayoutHelper.calculateDimensions(textValue.text, fontSize)
+    val effectiveW = maxOf(element.width, calcW)
+    val effectiveH = maxOf(element.height, calcH)
+
     val screenLeft = element.x * transform.scale + transform.panX
     val screenTop = element.y * transform.scale + transform.panY
-    val screenWidth = (element.width * transform.scale).coerceAtLeast(140f)
-    val screenHeight = (element.height * transform.scale).coerceAtLeast(42f)
-    val scaledFontSize = (fontSize * transform.scale).coerceIn(11f, 72f)
+    val screenWidth = (effectiveW * transform.scale).coerceAtLeast(140f)
+    val screenHeight = (effectiveH * transform.scale).coerceAtLeast(42f)
+    val scaledFontSize = (fontSize * transform.scale).coerceIn(11f, 120f)
 
     val palette = listOf(
-        0xFF0F172AL, // Dark slate
+        if (isDark) 0xFFF4F4F5L else 0xFF0F172AL,
         0xFF2563EBL, // Blue
         0xFF16A34AL, // Green
         0xFFDC2626L, // Red
@@ -171,14 +182,55 @@ fun InlineTextEditorOverlay(
                 modifier = Modifier
                     .shadow(12.dp, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White)
-                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                    .background(if (isDark) Color(0xFF181B20) else Color.White)
+                    .border(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
                     .padding(horizontal = 8.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // Размеры шрифта
-                Text("Размер:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF64748B))
+                Text(
+                    "Размер:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                )
+
+                // Кнопка A-
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                        .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(5.dp))
+                        .clickable { fontSize = (fontSize - 2f).coerceAtLeast(10f) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "A-",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
+                    )
+                }
+
+                // Кнопка A+
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                        .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(5.dp))
+                        .clickable { fontSize = (fontSize + 2f).coerceAtMost(96f) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "A+",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
+                    )
+                }
 
                 listOf(14f, 18f, 24f, 32f, 48f).forEach { sz ->
                     val isSelected = (fontSize.toInt() == sz.toInt())
@@ -186,7 +238,8 @@ fun InlineTextEditorOverlay(
                         modifier = Modifier
                             .size(24.dp)
                             .clip(RoundedCornerShape(5.dp))
-                            .background(if (isSelected) Color(0xFF2563EB) else Color(0xFFF1F5F9))
+                            .background(if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)))
+                            .border(1.dp, if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)), RoundedCornerShape(5.dp))
                             .clickable { fontSize = sz },
                         contentAlignment = Alignment.Center
                     ) {
@@ -194,23 +247,24 @@ fun InlineTextEditorOverlay(
                             text = "${sz.toInt()}",
                             fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) Color.White else Color(0xFF1E293B)
+                            color = if (isSelected) Color.White else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF1E293B))
                         )
                     }
                 }
 
-                Box(modifier = Modifier.width(1.dp).height(16.dp).background(Color(0xFFE2E8F0)))
+                Box(modifier = Modifier.width(1.dp).height(16.dp).background(if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)))
 
                 // Жирный (Bold)
                 Box(
                     modifier = Modifier
                         .size(26.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(if (isBold) Color(0xFFDBEAFE) else Color.Transparent)
+                        .background(if (isBold) (if (isDark) Color(0xFF1E2638) else Color(0xFFDBEAFE)) else Color.Transparent)
+                        .border(1.dp, if (isBold) (if (isDark) Color(0xFF2563EB) else Color(0xFF93C5FD)) else Color.Transparent, RoundedCornerShape(6.dp))
                         .clickable { isBold = !isBold },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("B", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = if (isBold) Color(0xFF1D4ED8) else Color(0xFF334155))
+                    Text("B", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = if (isBold) (if (isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)))
                 }
 
                 // Курсив (Italic)
@@ -218,14 +272,15 @@ fun InlineTextEditorOverlay(
                     modifier = Modifier
                         .size(26.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(if (isItalic) Color(0xFFDBEAFE) else Color.Transparent)
+                        .background(if (isItalic) (if (isDark) Color(0xFF1E2638) else Color(0xFFDBEAFE)) else Color.Transparent)
+                        .border(1.dp, if (isItalic) (if (isDark) Color(0xFF2563EB) else Color(0xFF93C5FD)) else Color.Transparent, RoundedCornerShape(6.dp))
                         .clickable { isItalic = !isItalic },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("I", fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = if (isItalic) Color(0xFF1D4ED8) else Color(0xFF334155))
+                    Text("I", fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = if (isItalic) (if (isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)))
                 }
 
-                Box(modifier = Modifier.width(1.dp).height(16.dp).background(Color(0xFFE2E8F0)))
+                Box(modifier = Modifier.width(1.dp).height(16.dp).background(if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)))
 
                 // Цветовая палитра
                 palette.forEach { cHex ->
@@ -236,15 +291,15 @@ fun InlineTextEditorOverlay(
                             .clip(CircleShape)
                             .background(Color(cHex))
                             .border(
-                                width = if (isSelected) 2.dp else 0.dp,
-                                color = if (isSelected) Color(0xFF2563EB) else Color.Transparent,
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)),
                                 shape = CircleShape
                             )
                             .clickable { colorHex = cHex }
                     )
                 }
 
-                Box(modifier = Modifier.width(1.dp).height(16.dp).background(Color(0xFFE2E8F0)))
+                Box(modifier = Modifier.width(1.dp).height(16.dp).background(if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)))
 
                 // Кнопка подтверждения
                 Box(
@@ -260,12 +315,15 @@ fun InlineTextEditorOverlay(
                 }
             }
 
+            val boxWidthDp = with(density) { screenWidth.toDp() }
+            val boxHeightDp = with(density) { screenHeight.toDp() }
+
             // Поле ввода текста с живым стилем
             Box(
                 modifier = Modifier
                     .padding(top = 6.dp)
-                    .size(screenWidth.dp, screenHeight.dp)
-                    .background(Color.White.copy(alpha = 0.95f), RoundedCornerShape(8.dp))
+                    .size(boxWidthDp, boxHeightDp)
+                    .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.95f) else Color.White.copy(alpha = 0.95f), RoundedCornerShape(8.dp))
                     .border(2.dp, Color(0xFF2563EB), RoundedCornerShape(8.dp))
                     .padding(8.dp)
                     .clickable(

@@ -83,6 +83,8 @@ import com.lkboard.app.model.getAnchorOffset
 import com.lkboard.app.ui.components.ElementRenderer
 import com.lkboard.app.ui.components.InlineTextEditorOverlay
 import com.lkboard.app.ui.components.SelectionRenderer
+import com.lkboard.app.ui.components.TextFloatingQuickBar
+import com.lkboard.app.ui.components.LatexFloatingQuickBar
 import com.lkboard.app.util.FileDialogs
 import java.awt.Cursor
 import java.util.UUID
@@ -146,6 +148,10 @@ fun InfiniteCanvas(
     onCommitTextEdit: (String) -> Unit = {},
     onCommitTextElementEdit: (text: String, fontSize: Float, isBold: Boolean, isItalic: Boolean, colorHex: Long) -> Unit = { t, _, _, _, _ -> onCommitTextEdit(t) },
     onCancelTextEdit: () -> Unit = {},
+    onUpdateSelectedTextProperties: ((fontSizeDelta: Float?, targetFontSize: Float?, isBold: Boolean?, isItalic: Boolean?, colorHex: Long?) -> Unit)? = null,
+    onUpdateSelectedLatexProperties: ((fontSizeDelta: Float?, targetFontSize: Float?, colorHex: Long?, toggleBackground: Boolean) -> Unit)? = null,
+    onEditSelectedLatex: (() -> Unit)? = null,
+    onStartEditingSelectedText: (() -> Unit)? = null,
     onCursorPositionChange: (Offset) -> Unit = {},
     remotePointers: Map<String, com.lkboard.app.collaboration.RemotePointer> = emptyMap(),
     modifier: Modifier = Modifier
@@ -644,6 +650,30 @@ fun InfiniteCanvas(
                 onCommitDetailed = onCommitTextElementEdit,
                 onCancel = onCancelTextEdit
             )
+        }
+
+        // Контекстные плавающие панели быстрого изменения размера и стиля "на глазах"
+        if (editingElement == null && state.selectedElementIds.size == 1) {
+            val selectedId = state.selectedElementIds.first()
+            val selectedEl = state.elements[selectedId]
+
+            if (selectedEl is BoardElement.Text && onUpdateSelectedTextProperties != null) {
+                TextFloatingQuickBar(
+                    element = selectedEl,
+                    transform = state.transform,
+                    onUpdateProperties = onUpdateSelectedTextProperties,
+                    onStartEditing = { onStartEditingSelectedText?.invoke() ?: onDoubleTapElement(selectedEl) },
+                    onDelete = { onDeleteElements(listOf(selectedEl)) }
+                )
+            } else if (selectedEl is BoardElement.LatexFormula && onUpdateSelectedLatexProperties != null) {
+                LatexFloatingQuickBar(
+                    element = selectedEl,
+                    transform = state.transform,
+                    onUpdateProperties = onUpdateSelectedLatexProperties,
+                    onEditFormula = { onEditSelectedLatex?.invoke() ?: onDoubleTapElement(selectedEl) },
+                    onDelete = { onDeleteElements(listOf(selectedEl)) }
+                )
+            }
         }
 
         // 6. Интерактивная плавающая панель управления слайдами презентации / PDF
