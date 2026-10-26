@@ -612,19 +612,19 @@ fun main() = application {
                                 onSelectStencil = viewModel::addPhysicsStencil
                             )
                         }
-
-                        // 9. Диалог настроек темы и набора инструментов
-                        if (isSettingsDialogOpen) {
-                            SettingsDialog(
-                                currentTheme = currentTheme,
-                                currentRole = currentUserRole,
-                                enabledTools = boardState.enabledTools,
-                                onDismiss = viewModel::closeSettingsDialog,
-                                onSaveSettings = viewModel::applySettings
-                            )
-                        }
                     }
                 }
+            }
+
+            // Диалог настроек темы и набора инструментов (доступен и с холста, и с дашборда)
+            if (isSettingsDialogOpen) {
+                SettingsDialog(
+                    currentTheme = currentTheme,
+                    currentRole = currentUserRole,
+                    enabledTools = boardState.enabledTools,
+                    onDismiss = viewModel::closeSettingsDialog,
+                    onSaveSettings = viewModel::applySettings
+                )
             }
 
             // Онбординг при первом запуске (выбор роли и фильтрация инструментов)

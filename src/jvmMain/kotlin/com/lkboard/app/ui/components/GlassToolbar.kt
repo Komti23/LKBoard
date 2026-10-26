@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.lkboard.app.ui.theme.LocalAppTheme
 import androidx.compose.ui.unit.sp
 import com.lkboard.app.model.CanvasTool
 import com.lkboard.app.model.GridType
@@ -57,6 +58,7 @@ fun GlassPanel(
     shape: Shape = RoundedCornerShape(14.dp),
     content: @Composable () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     Box(
         modifier = modifier
             .shadow(
@@ -66,8 +68,8 @@ fun GlassPanel(
                 spotColor = Color.Black.copy(alpha = 0.08f)
             )
             .clip(shape)
-            .background(Color(0xFFF7F7F9))
-            .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.85f)), shape)
+            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.92f) else Color(0xFFF7F7F9).copy(alpha = 0.92f))
+            .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.85f)), shape)
     ) {
         content()
     }
@@ -137,6 +139,7 @@ fun GlassToolbar(
     modifier: Modifier = Modifier
 ) {
     if (isPresentationMode) return
+    val isDark = LocalAppTheme.current.isDark
 
     Box(
         modifier = modifier
@@ -214,7 +217,7 @@ fun GlassToolbar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Undo,
                             contentDescription = "Отменить (Ctrl+Z)",
-                            tint = if (canUndo) Color(0xFF1E293B) else Color(0xFF94A3B8),
+                            tint = if (canUndo) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B)) else (if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)),
                             modifier = Modifier.size(17.dp)
                         )
                     }
@@ -227,7 +230,7 @@ fun GlassToolbar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Redo,
                             contentDescription = "Повторить (Ctrl+Y)",
-                            tint = if (canRedo) Color(0xFF1E293B) else Color(0xFF94A3B8),
+                            tint = if (canRedo) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B)) else (if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)),
                             modifier = Modifier.size(17.dp)
                         )
                     }
@@ -236,7 +239,7 @@ fun GlassToolbar(
                         modifier = Modifier
                             .width(1.dp)
                             .height(16.dp)
-                            .background(Color.Black.copy(alpha = 0.10f))
+                            .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f))
                     )
 
                     IconButton(
@@ -246,7 +249,7 @@ fun GlassToolbar(
                         Icon(
                             imageVector = Icons.Default.ContentPaste,
                             contentDescription = "Вставить (Ctrl+V)",
-                            tint = Color(0xFF2563EB),
+                            tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
                             modifier = Modifier.size(17.dp)
                         )
                     }
@@ -259,7 +262,7 @@ fun GlassToolbar(
                             Icon(
                                 imageVector = Icons.Default.ContentCopy,
                                 contentDescription = "Копировать (Ctrl+C)",
-                                tint = Color(0xFF1E293B),
+                                tint = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
                                 modifier = Modifier.size(17.dp)
                             )
                         }
@@ -314,7 +317,7 @@ fun GlassToolbar(
                     Icon(
                         imageVector = Icons.Default.Remove,
                         contentDescription = "Отдалить",
-                        tint = Color(0xFF334155),
+                        tint = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -327,14 +330,14 @@ fun GlassToolbar(
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF0F172A)
+                    color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                 )
 
                 IconButton(onClick = onZoomIn, modifier = Modifier.size(32.dp)) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Приблизить",
-                        tint = Color(0xFF334155),
+                        tint = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -343,7 +346,7 @@ fun GlassToolbar(
                     Icon(
                         imageVector = Icons.Default.FitScreen,
                         contentDescription = "По размеру контента",
-                        tint = Color(0xFF334155),
+                        tint = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -352,7 +355,7 @@ fun GlassToolbar(
                     modifier = Modifier
                         .width(1.dp)
                         .height(16.dp)
-                        .background(Color.Black.copy(alpha = 0.10f))
+                        .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f))
                 )
 
                 // Кнопка переключения сетки (Точки -> Клетка -> Чистый лист)
@@ -366,7 +369,7 @@ fun GlassToolbar(
                     Icon(
                         imageVector = gridIcon,
                         contentDescription = gridDesc,
-                        tint = if (gridType == GridType.NONE) Color(0xFF94A3B8) else Color(0xFF2563EB),
+                        tint = if (gridType == GridType.NONE) (if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)) else (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)),
                         modifier = Modifier.size(16.dp)
                     )
                 }

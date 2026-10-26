@@ -60,6 +60,7 @@ import com.lkboard.app.model.CanvasTool
 import com.lkboard.app.model.GridType
 import com.lkboard.app.model.PenSettings
 import com.lkboard.app.model.ShapeSettings
+import com.lkboard.app.ui.theme.LocalAppTheme
 
 /**
  * Левый тулбар инструментов Lkboard в эталонном стиле Apple Liquid Glass:
@@ -110,6 +111,8 @@ fun LeftToolbar(
         }
     }
 
+    val isDark = LocalAppTheme.current.isDark
+
     Row(
         modifier = modifier.background(Color.Transparent),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -125,8 +128,8 @@ fun LeftToolbar(
                     spotColor = Color.Black.copy(alpha = 0.08f)
                 )
                 .clip(RoundedCornerShape(22.dp))
-                .background(Color(0xFFF7F7F9))
-                .border(1.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
+                .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.92f) else Color(0xFFF7F7F9).copy(alpha = 0.92f))
+                .border(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
         ) {
             Column(
                 modifier = Modifier
@@ -403,15 +406,16 @@ private fun ToolbarIconButton(
     colorIndicator: Color? = null,
     onClick: () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val backgroundColor = when {
-        isSelected -> Color(0xFF007AFF).copy(alpha = 0.12f)
-        isHovered -> Color.Black.copy(alpha = 0.05f)
+        isSelected -> (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)).copy(alpha = 0.16f)
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
         else -> Color.Transparent
     }
-    val tintColor = if (isSelected) Color(0xFF007AFF) else Color(0xFF3C3C43)
+    val tintColor = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)) else (if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43))
 
     TooltipArea(
         tooltip = {

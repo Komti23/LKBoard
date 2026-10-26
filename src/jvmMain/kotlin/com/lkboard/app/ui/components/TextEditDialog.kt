@@ -1,5 +1,6 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.lkboard.app.model.BoardElement
+import com.lkboard.app.ui.theme.LocalAppTheme
 
 /**
  * Диалог редактирования текста стикера или текстового блока с настройкой шрифта, стиля и цвета.
@@ -59,6 +61,7 @@ fun TextEditDialog(
     onSaveDetailed: (text: String, fontSize: Float, isBold: Boolean, isItalic: Boolean, colorHex: Long) -> Unit = { t, _, _, _, _ -> onSave(t) },
     onDismiss: () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     val initialText = when (element) {
         is BoardElement.StickyNote -> element.text
         is BoardElement.Text -> element.text
@@ -86,11 +89,11 @@ fun TextEditDialog(
         mutableStateOf(if (element is BoardElement.Text) element.isItalic else false)
     }
     var colorHex by remember {
-        mutableStateOf(if (element is BoardElement.Text) element.colorHex else 0xFF1E1E1EL)
+        mutableStateOf(if (element is BoardElement.Text) element.colorHex else (if (isDark) 0xFFF4F4F5L else 0xFF1E1E1EL))
     }
 
     val palette = listOf(
-        0xFF0F172AL, // Dark slate
+        if (isDark) 0xFFF4F4F5L else 0xFF0F172AL,
         0xFF2563EBL, // Blue
         0xFF16A34AL, // Green
         0xFFDC2626L, // Red
@@ -113,25 +116,26 @@ fun TextEditDialog(
     }
 
     val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF0F172A),
-        unfocusedTextColor = Color(0xFF0F172A),
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White,
+        focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+        unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
         cursorColor = Color(0xFF2563EB),
         focusedBorderColor = Color(0xFF2563EB),
-        unfocusedBorderColor = Color(0xFFCBD5E1),
-        focusedPlaceholderColor = Color(0xFF94A3B8),
-        unfocusedPlaceholderColor = Color(0xFF94A3B8)
+        unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1),
+        focusedPlaceholderColor = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8),
+        unfocusedPlaceholderColor = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
     )
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(18.dp),
-            color = Color.White,
+            color = if (isDark) Color(0xFF181B20) else Color.White,
+            border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
             shadowElevation = 16.dp,
             modifier = Modifier.width(460.dp)
         ) {
-            CompositionLocalProvider(LocalContentColor provides Color(0xFF0F172A)) {
+            CompositionLocalProvider(LocalContentColor provides (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))) {
                 Column(
                     modifier = Modifier.padding(22.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -140,7 +144,7 @@ fun TextEditDialog(
                     text = if (element is BoardElement.StickyNote) "📝 Редактирование стикера" else "✏️ Редактирование текста",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
+                    color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B)
                 )
 
                 // Если это текстовый блок — панель настроек стиля
@@ -149,8 +153,8 @@ fun TextEditDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFFF8FAFC))
-                            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
+                            .background(if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                            .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                             .padding(10.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -159,7 +163,7 @@ fun TextEditDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("Размер:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF64748B))
+                            Text("Размер:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
 
                             listOf(14f, 18f, 24f, 32f, 48f).forEach { sz ->
                                 val isSelected = (fontSize.toInt() == sz.toInt())
@@ -167,8 +171,8 @@ fun TextEditDialog(
                                     modifier = Modifier
                                         .size(26.dp)
                                         .clip(RoundedCornerShape(6.dp))
-                                        .background(if (isSelected) Color(0xFF2563EB) else Color.White)
-                                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+                                        .background(if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF1E222A) else Color.White))
+                                        .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
                                         .clickable { fontSize = sz },
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -176,7 +180,7 @@ fun TextEditDialog(
                                         text = "${sz.toInt()}",
                                         fontSize = 11.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) Color.White else Color(0xFF1E293B)
+                                        color = if (isSelected) Color.White else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF1E293B))
                                     )
                                 }
                             }
@@ -188,12 +192,12 @@ fun TextEditDialog(
                                 modifier = Modifier
                                     .size(28.dp)
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(if (isBold) Color(0xFFDBEAFE) else Color.White)
-                                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+                                    .background(if (isBold) (if (isDark) Color(0xFF1E2638) else Color(0xFFDBEAFE)) else (if (isDark) Color(0xFF1E222A) else Color.White))
+                                    .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
                                     .clickable { isBold = !isBold },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("B", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = if (isBold) Color(0xFF1D4ED8) else Color(0xFF334155))
+                                Text("B", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = if (isBold) (if (isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)))
                             }
 
                             // Italic
@@ -201,12 +205,12 @@ fun TextEditDialog(
                                 modifier = Modifier
                                     .size(28.dp)
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(if (isItalic) Color(0xFFDBEAFE) else Color.White)
-                                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+                                    .background(if (isItalic) (if (isDark) Color(0xFF1E2638) else Color(0xFFDBEAFE)) else (if (isDark) Color(0xFF1E222A) else Color.White))
+                                    .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
                                     .clickable { isItalic = !isItalic },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("I", fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = if (isItalic) Color(0xFF1D4ED8) else Color(0xFF334155))
+                                Text("I", fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = if (isItalic) (if (isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)))
                             }
                         }
 
@@ -215,7 +219,7 @@ fun TextEditDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Цвет:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF64748B))
+                            Text("Цвет:", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                             palette.forEach { cHex ->
                                 val isSelected = colorHex == cHex
                                 Box(
@@ -266,9 +270,10 @@ fun TextEditDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.padding(end = 8.dp),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1))
                     ) {
-                        Text("Отмена", color = Color(0xFF64748B))
+                        Text("Отмена", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                     }
 
                     Button(

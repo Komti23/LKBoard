@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lkboard.app.collaboration.CollabSessionState
+import com.lkboard.app.ui.theme.LocalAppTheme
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
@@ -66,6 +67,7 @@ fun ShareBoardDialog(
     onDisconnectClient: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var selectedTab by remember { mutableStateOf(if (collabState.isConnectedAsClient) 1 else 0) } // 0: Хост (Раздать), 1: Подключиться
     var hostUserName by remember { mutableStateOf(collabState.userName.ifBlank { "Хост" }) }
     var clientUserName by remember { mutableStateOf(collabState.userName.ifBlank { "Участник" }) }
@@ -98,8 +100,8 @@ fun ShareBoardDialog(
                 .width(580.dp)
                 .clip(RoundedCornerShape(24.dp))
                 .shadow(28.dp, RoundedCornerShape(24.dp))
-                .background(Color.White.copy(alpha = 0.94f))
-                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.90f)), RoundedCornerShape(24.dp))
+                .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.94f))
+                .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.90f)), RoundedCornerShape(24.dp))
                 .clickable(enabled = false) {}
                 .padding(26.dp)
         ) {
@@ -119,7 +121,7 @@ fun ShareBoardDialog(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFFE0F2FE)),
+                                .background(if (isDark) Color(0xFF1E2638) else Color(0xFFE0F2FE)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -134,12 +136,12 @@ fun ShareBoardDialog(
                                 text = "Совместная работа",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
+                                color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                             )
                             Text(
                                 text = boardTitle,
                                 fontSize = 12.sp,
-                                color = Color(0xFF64748B)
+                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                             )
                         }
                     }
@@ -151,7 +153,7 @@ fun ShareBoardDialog(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Закрыть",
-                            tint = Color(0xFF64748B),
+                            tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -164,14 +166,14 @@ fun ShareBoardDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF1F5F9))
+                        .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
                         .padding(4.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (selectedTab == 0) Color.White else Color.Transparent)
+                            .background(if (selectedTab == 0) (if (isDark) Color(0xFF1E222A) else Color.White) else Color.Transparent)
                             .clickable { selectedTab = 0 }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
@@ -183,14 +185,14 @@ fun ShareBoardDialog(
                             Icon(
                                 imageVector = Icons.Default.Language,
                                 contentDescription = null,
-                                tint = if (selectedTab == 0) Color(0xFF0284C7) else Color(0xFF64748B),
+                                tint = if (selectedTab == 0) Color(0xFF0284C7) else (if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)),
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
                                 text = "Поделиться ссылкой (Хост)",
                                 fontSize = 13.sp,
                                 fontWeight = if (selectedTab == 0) FontWeight.SemiBold else FontWeight.Medium,
-                                color = if (selectedTab == 0) Color(0xFF0F172A) else Color(0xFF64748B)
+                                color = if (selectedTab == 0) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)) else (if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                             )
                         }
                     }
@@ -199,7 +201,7 @@ fun ShareBoardDialog(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (selectedTab == 1) Color.White else Color.Transparent)
+                            .background(if (selectedTab == 1) (if (isDark) Color(0xFF1E222A) else Color.White) else Color.Transparent)
                             .clickable { selectedTab = 1 }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
@@ -211,14 +213,14 @@ fun ShareBoardDialog(
                             Icon(
                                 imageVector = Icons.Default.Laptop,
                                 contentDescription = null,
-                                tint = if (selectedTab == 1) Color(0xFF0284C7) else Color(0xFF64748B),
+                                tint = if (selectedTab == 1) Color(0xFF0284C7) else (if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)),
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
                                 text = "Подключиться к доске",
                                 fontSize = 13.sp,
                                 fontWeight = if (selectedTab == 1) FontWeight.SemiBold else FontWeight.Medium,
-                                color = if (selectedTab == 1) Color(0xFF0F172A) else Color(0xFF64748B)
+                                color = if (selectedTab == 1) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)) else (if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                             )
                         }
                     }
@@ -234,11 +236,15 @@ fun ShareBoardDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (collabState.isHosting) Color(0xFFF0FDF4) else Color(0xFFF8FAFC))
+                            .background(
+                                if (collabState.isHosting) (if (isDark) Color(0xFF064E3B).copy(alpha = 0.4f) else Color(0xFFF0FDF4))
+                                else (if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                            )
                             .border(
                                 BorderStroke(
                                     1.dp,
-                                    if (collabState.isHosting) Color(0xFFBBF7D0) else Color(0xFFE2E8F0)
+                                    if (collabState.isHosting) (if (isDark) Color(0xFF059669) else Color(0xFFBBF7D0))
+                                    else (if (isDark) Color(0xFF3F4554) else Color(0xFFE2E8F0))
                                 ),
                                 RoundedCornerShape(16.dp)
                             )
@@ -307,7 +313,7 @@ fun ShareBoardDialog(
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Text("🌐", fontSize = 14.sp)
-                                        Text("Интернет-ссылка (для участников в любой точке мира)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF0F172A))
+                                        Text("Интернет-ссылка (для участников в любой точке мира)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))
                                     }
                                     if (copiedPublicFeedback) {
                                         Text("Скопировано!", fontSize = 12.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
@@ -318,8 +324,8 @@ fun ShareBoardDialog(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFEFF6FF))
-                                        .border(BorderStroke(1.2.dp, Color(0xFF93C5FD)), RoundedCornerShape(12.dp))
+                                        .background(if (isDark) Color(0xFF1E2638) else Color(0xFFEFF6FF))
+                                        .border(BorderStroke(1.2.dp, if (isDark) Color(0xFF2563EB).copy(alpha = 0.6f) else Color(0xFF93C5FD)), RoundedCornerShape(12.dp))
                                         .padding(horizontal = 12.dp, vertical = 8.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
@@ -327,7 +333,7 @@ fun ShareBoardDialog(
                                     Text(
                                         text = collabState.publicWebShareLink,
                                         fontSize = 12.5.sp,
-                                        color = Color(0xFF1D4ED8),
+                                        color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8),
                                         fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier.weight(1f)
                                     )
@@ -345,7 +351,7 @@ fun ShareBoardDialog(
                                 Text(
                                     text = "Открывается на любом телефоне, планшете или компьютере через интернет (работает без общего Wi-Fi).",
                                     fontSize = 11.sp,
-                                    color = Color(0xFF64748B)
+                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                                 )
                             }
 
@@ -361,7 +367,7 @@ fun ShareBoardDialog(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Text("🏠", fontSize = 14.sp)
-                                    Text("Локальная ссылка (для одной Wi-Fi сети)", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp, color = Color(0xFF334155))
+                                    Text("Локальная ссылка (для одной Wi-Fi сети)", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp, color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155))
                                 }
                                 if (copiedWebFeedback) {
                                     Text("Скопировано!", fontSize = 12.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
@@ -372,8 +378,8 @@ fun ShareBoardDialog(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFFF8FAFC))
-                                    .border(BorderStroke(1.dp, Color(0xFFCBD5E1)), RoundedCornerShape(12.dp))
+                                    .background(if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                                    .border(BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)), RoundedCornerShape(12.dp))
                                     .padding(horizontal = 12.dp, vertical = 7.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -381,18 +387,19 @@ fun ShareBoardDialog(
                                 Text(
                                     text = collabState.webShareLink,
                                     fontSize = 12.5.sp,
-                                    color = Color(0xFF475569),
+                                    color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
                                     fontWeight = FontWeight.Medium,
                                     modifier = Modifier.weight(1f)
                                 )
 
                                 OutlinedButton(
                                     onClick = { copyToClipboard(collabState.webShareLink, type = 1) },
+                                    border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Копировать", fontSize = 12.sp)
+                                    Text("Копировать", fontSize = 12.sp, color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
                                 }
                             }
                         }
@@ -408,15 +415,15 @@ fun ShareBoardDialog(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFFF1F5F9))
+                                    .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
                                     .padding(12.dp)
                             ) {
                                 Column {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Icon(Icons.Default.VpnKey, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(14.dp))
-                                        Text("Код комнаты", fontSize = 11.sp, color = Color(0xFF64748B))
+                                        Icon(Icons.Default.VpnKey, contentDescription = null, tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B), modifier = Modifier.size(14.dp))
+                                        Text("Код комнаты", fontSize = 11.sp, color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                                     }
-                                    Text(collabState.roomCode, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+                                    Text(collabState.roomCode, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))
                                 }
                             }
 
@@ -424,7 +431,7 @@ fun ShareBoardDialog(
                                 modifier = Modifier
                                     .weight(1.5f)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFFF1F5F9))
+                                    .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
                                     .clickable { copyToClipboard(collabState.appShareLink, type = 2) }
                                     .padding(12.dp)
                             ) {
@@ -435,8 +442,8 @@ fun ShareBoardDialog(
                                 ) {
                                     Column {
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Icon(Icons.Default.Laptop, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(14.dp))
-                                            Text("Для приложения LKBoard", fontSize = 11.sp, color = Color(0xFF64748B))
+                                            Icon(Icons.Default.Laptop, contentDescription = null, tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B), modifier = Modifier.size(14.dp))
+                                            Text("Для приложения LKBoard", fontSize = 11.sp, color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                                         }
                                         Text(if (copiedAppFeedback) "Скопировано!" else "Копировать код", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0284C7))
                                     }
@@ -452,14 +459,14 @@ fun ShareBoardDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFF0FDF4))
-                                .border(BorderStroke(1.dp, Color(0xFFBBF7D0)), RoundedCornerShape(10.dp))
+                                .background(if (isDark) Color(0xFF064E3B).copy(alpha = 0.35f) else Color(0xFFF0FDF4))
+                                .border(BorderStroke(1.dp, if (isDark) Color(0xFF059669) else Color(0xFFBBF7D0)), RoundedCornerShape(10.dp))
                                 .padding(10.dp)
                         ) {
                             Text(
                                 text = "🚀 Облачный сервер LKBoard (164.37.224.219) активен: участники могут мгновенно подключиться по интернет-ссылке из любого браузера или смартфона без дополнительных настроек!",
                                 fontSize = 11.sp,
-                                color = Color(0xFF166534)
+                                color = if (isDark) Color(0xFF6EE7B7) else Color(0xFF166534)
                             )
                         }
                     }
@@ -477,13 +484,13 @@ fun ShareBoardDialog(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color(0xFF0F172A),
-                                unfocusedTextColor = Color(0xFF0F172A),
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White,
+                                focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                                unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                                focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+                                unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
                                 cursorColor = Color(0xFF0284C7),
                                 focusedBorderColor = Color(0xFF0284C7),
-                                unfocusedBorderColor = Color(0xFFCBD5E1)
+                                unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)
                             )
                         )
 
@@ -495,13 +502,13 @@ fun ShareBoardDialog(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color(0xFF0F172A),
-                                unfocusedTextColor = Color(0xFF0F172A),
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White,
+                                focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                                unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                                focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+                                unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
                                 cursorColor = Color(0xFF0284C7),
                                 focusedBorderColor = Color(0xFF0284C7),
-                                unfocusedBorderColor = Color(0xFFCBD5E1)
+                                unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)
                             )
                         )
 
@@ -519,7 +526,7 @@ fun ShareBoardDialog(
                             Text(
                                 text = collabState.statusMessage,
                                 fontSize = 12.sp,
-                                color = if (collabState.isConnectedAsClient) Color(0xFF15803D) else Color(0xFF64748B)
+                                color = if (collabState.isConnectedAsClient) (if (isDark) Color(0xFF34D399) else Color(0xFF15803D)) else (if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                             )
                         }
 
@@ -562,7 +569,7 @@ fun ShareBoardDialog(
                 ) {
                     Button(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F172A)),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF2563EB) else Color(0xFF0F172A)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Готово", fontSize = 13.sp)

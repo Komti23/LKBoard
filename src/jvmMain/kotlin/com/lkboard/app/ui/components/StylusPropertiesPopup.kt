@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lkboard.app.model.GridType
 import com.lkboard.app.model.PenSettings
+import com.lkboard.app.ui.theme.LocalAppTheme
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -72,6 +73,8 @@ fun StylusPropertiesPopup(
     val titleText = if (settings.isHighlighter) "Маркер" else colorTitle
     val formattedWidth = String.format(Locale.US, "%.1f px", settings.strokeWidth)
 
+    val isDark = LocalAppTheme.current.isDark
+
     // ЕДИНСТВЕННЫЙ фоновый контейнер окна:
     Box(
         modifier = modifier
@@ -82,8 +85,8 @@ fun StylusPropertiesPopup(
                 spotColor = Color.Black.copy(alpha = 0.08f)
             )
             .clip(RoundedCornerShape(22.dp))
-            .background(Color(0xFFF7F7F9))
-            .border(1.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
+            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color(0xFFF7F7F9))
+            .border(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
             .padding(16.dp)
     ) {
         // ВНУТРИ ТОЛЬКО ПРОЗРАЧНЫЙ COLUMN:
@@ -116,7 +119,7 @@ fun StylusPropertiesPopup(
                         text = titleText,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1C1C1E)
+                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1C1C1E)
                     )
                 }
 
@@ -132,7 +135,7 @@ fun StylusPropertiesPopup(
                         text = formattedWidth,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF007AFF)
+                        color = if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)
                     )
                 }
             }
@@ -271,7 +274,7 @@ fun StylusPropertiesPopup(
                     text = String.format(Locale.US, "%.1f", settings.strokeWidth),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF3C3C43),
+                    color = if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43),
                     modifier = Modifier.width(28.dp),
                     textAlign = TextAlign.End
                 )
@@ -293,7 +296,7 @@ fun StylusPropertiesPopup(
                     Icon(
                         imageVector = Icons.Default.Straighten,
                         contentDescription = "Прямая линия",
-                        tint = if (settings.isStraightLine) Color(0xFF007AFF) else Color(0xFF8E8E93),
+                        tint = if (settings.isStraightLine) (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)) else (if (isDark) Color(0xFF71717A) else Color(0xFF8E8E93)),
                         modifier = Modifier.size(17.dp)
                     )
                     Column(modifier = Modifier.background(Color.Transparent)) {
@@ -301,12 +304,12 @@ fun StylusPropertiesPopup(
                             text = "Прямая линия",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF1C1C1E)
+                            color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1C1C1E)
                         )
                         Text(
                             text = "Shift во время рисования",
                             fontSize = 10.sp,
-                            color = Color(0xFF8E8E93)
+                            color = if (isDark) Color(0xFF71717A) else Color(0xFF8E8E93)
                         )
                     }
                 }
@@ -318,9 +321,9 @@ fun StylusPropertiesPopup(
                     },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFF007AFF),
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = Color.Black.copy(alpha = 0.12f),
+                        checkedTrackColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF),
+                        uncheckedThumbColor = if (isDark) Color(0xFF94A3B8) else Color.White,
+                        uncheckedTrackColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.12f),
                         uncheckedBorderColor = Color.Transparent
                     ),
                     modifier = Modifier.scale(0.80f)
@@ -339,7 +342,7 @@ fun StylusPropertiesPopup(
                         text = "Фон холста",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF6E6E73)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF6E6E73)
                     )
 
                     Box(
@@ -347,7 +350,7 @@ fun StylusPropertiesPopup(
                             .fillMaxWidth()
                             .height(34.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(Color.Black.copy(alpha = 0.05f))
+                            .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f))
                             .padding(2.dp)
                     ) {
                         Row(
@@ -395,12 +398,13 @@ private fun IosSegmentButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = LocalAppTheme.current.isDark
     Box(
         modifier = modifier
             .fillMaxSize()
             .clip(RoundedCornerShape(8.dp))
             .background(
-                if (isSelected) Color(0xFF007AFF).copy(alpha = 0.15f)
+                if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)).copy(alpha = 0.16f)
                 else Color.Transparent
             )
             .clickable(onClick = onClick),
@@ -410,7 +414,7 @@ private fun IosSegmentButton(
             text = title,
             fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-            color = if (isSelected) Color(0xFF007AFF) else Color(0xFF3C3C43).copy(alpha = 0.70f)
+            color = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)) else (if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43).copy(alpha = 0.70f))
         )
     }
 }

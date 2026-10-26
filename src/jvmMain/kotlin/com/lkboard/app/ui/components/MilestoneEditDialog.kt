@@ -1,5 +1,6 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.lkboard.app.model.BoardElement
 import com.lkboard.app.model.MilestoneStatus
+import com.lkboard.app.ui.theme.LocalAppTheme
 
 /**
  * Диалог редактирования параметров вехи дорожной карты (Milestone Card).
@@ -48,6 +50,7 @@ fun MilestoneEditDialog(
     onSave: (BoardElement.MilestoneCard) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var title by remember { mutableStateOf(element.title) }
     var description by remember { mutableStateOf(element.description) }
     var status by remember { mutableStateOf(element.status) }
@@ -56,27 +59,28 @@ fun MilestoneEditDialog(
     var tagsString by remember { mutableStateOf(element.tags.joinToString(", ")) }
 
     val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF0F172A),
-        unfocusedTextColor = Color(0xFF0F172A),
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White,
+        focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+        unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
         cursorColor = Color(0xFF2563EB),
         focusedBorderColor = Color(0xFF2563EB),
-        unfocusedBorderColor = Color(0xFFCBD5E1),
-        focusedLabelColor = Color(0xFF2563EB),
-        unfocusedLabelColor = Color(0xFF64748B),
-        focusedPlaceholderColor = Color(0xFF94A3B8),
-        unfocusedPlaceholderColor = Color(0xFF94A3B8)
+        unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1),
+        focusedLabelColor = Color(0xFF3B82F6),
+        unfocusedLabelColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+        focusedPlaceholderColor = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8),
+        unfocusedPlaceholderColor = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
     )
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(18.dp),
-            color = Color.White,
+            color = if (isDark) Color(0xFF181B20) else Color.White,
+            border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
             shadowElevation = 16.dp,
             modifier = Modifier.width(480.dp)
         ) {
-            CompositionLocalProvider(LocalContentColor provides Color(0xFF0F172A)) {
+            CompositionLocalProvider(LocalContentColor provides (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))) {
                 Column(
                     modifier = Modifier.padding(22.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -85,7 +89,7 @@ fun MilestoneEditDialog(
                         text = "🏷️ Веха дорожной карты",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                     )
 
                     OutlinedTextField(
@@ -110,7 +114,7 @@ fun MilestoneEditDialog(
                     text = "Статус задачи:",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF64748B)
+                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                 )
 
                 Row(
@@ -124,10 +128,10 @@ fun MilestoneEditDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) stColor.copy(alpha = 0.15f) else Color(0xFFF1F5F9))
+                                .background(if (isSelected) stColor.copy(alpha = 0.20f) else (if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)))
                                 .border(
                                     width = if (isSelected) 1.5.dp else 1.dp,
-                                    color = if (isSelected) stColor else Color.Transparent,
+                                    color = if (isSelected) stColor else (if (isDark) Color(0xFF3F4554) else Color.Transparent),
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .clickable { status = st }
@@ -138,7 +142,7 @@ fun MilestoneEditDialog(
                                 text = "${st.icon} ${st.label}",
                                 fontSize = 11.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) stColor else Color(0xFF475569)
+                                color = if (isSelected) stColor else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
                             )
                         }
                     }
@@ -153,7 +157,7 @@ fun MilestoneEditDialog(
                         text = "Прогресс выполнения:",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF64748B)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
                     Text(
                         text = "${(progress * 100).toInt()}%",
@@ -203,9 +207,10 @@ fun MilestoneEditDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)),
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
-                        Text("Отмена", color = Color(0xFF64748B))
+                        Text("Отмена", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                     }
 
                     Button(

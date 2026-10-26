@@ -103,7 +103,8 @@ object PhysicsStencilRenderer {
 
         // Подпись массы и угла
         val txt = if (label.isNotBlank()) label else "m, α"
-        drawScope.drawText(
+        drawLabel(
+            drawScope = drawScope,
             textMeasurer = textMeasurer,
             text = txt,
             topLeft = Offset(x + w * 0.82f, y + h - 22f),
@@ -146,8 +147,8 @@ object PhysicsStencilRenderer {
         // Груз m2
         drawScope.drawRect(strokeColor, Offset(rightX - loadSize / 2f, rightLoadY), Size(loadSize, loadSize), style = Stroke(strokeWidth))
 
-        drawScope.drawText(textMeasurer, "m₁", Offset(leftX - 8f, leftLoadY + 4f), TextStyle(fontSize = 10.sp, color = strokeColor, fontWeight = FontWeight.Bold))
-        drawScope.drawText(textMeasurer, "m₂", Offset(rightX - 8f, rightLoadY + 4f), TextStyle(fontSize = 10.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, "m₁", Offset(leftX - 8f, leftLoadY + 4f), TextStyle(fontSize = 10.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, "m₂", Offset(rightX - 8f, rightLoadY + 4f), TextStyle(fontSize = 10.sp, color = strokeColor, fontWeight = FontWeight.Bold))
     }
 
     // 3. Пружина с грузом
@@ -190,7 +191,7 @@ object PhysicsStencilRenderer {
             style = Stroke(strokeWidth)
         )
         val txt = if (label.isNotBlank()) label else "k, m"
-        drawScope.drawText(textMeasurer, txt, Offset(cx + loadW / 2f + 8f, springBottom + 4f), TextStyle(fontSize = 11.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, txt, Offset(cx + loadW / 2f + 8f, springBottom + 4f), TextStyle(fontSize = 11.sp, color = strokeColor, fontWeight = FontWeight.Bold))
     }
 
     // 4. Оптическая линза
@@ -224,8 +225,8 @@ object PhysicsStencilRenderer {
 
         drawScope.drawLine(strokeColor, Offset(f1X, cy - 6f), Offset(f1X, cy + 6f), strokeWidth = 2f)
         drawScope.drawLine(strokeColor, Offset(f2X, cy - 6f), Offset(f2X, cy + 6f), strokeWidth = 2f)
-        drawScope.drawText(textMeasurer, "F", Offset(f1X - 4f, cy + 8f), TextStyle(fontSize = 11.sp, color = strokeColor, fontWeight = FontWeight.Bold))
-        drawScope.drawText(textMeasurer, "F'", Offset(f2X - 4f, cy + 8f), TextStyle(fontSize = 11.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, "F", Offset(f1X - 4f, cy + 8f), TextStyle(fontSize = 11.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, "F'", Offset(f2X - 4f, cy + 8f), TextStyle(fontSize = 11.sp, color = strokeColor, fontWeight = FontWeight.Bold))
 
         // Ход луча (параллельный луч преломляется в фокус)
         val rayY = cy - h * 0.25f
@@ -255,7 +256,7 @@ object PhysicsStencilRenderer {
         drawScope.drawRect(strokeColor, Offset(bodyX, bodyY), Size(bodyW, bodyH), style = Stroke(strokeWidth))
 
         val txt = if (label.isNotBlank()) label else "R"
-        drawScope.drawText(textMeasurer, txt, Offset(bodyX + bodyW / 2f - 6f, bodyY - 18f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, txt, Offset(bodyX + bodyW / 2f - 6f, bodyY - 18f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
     }
 
     // 6. Источник тока (Батарейка)
@@ -280,10 +281,10 @@ object PhysicsStencilRenderer {
         // Короткая толстая (-) пластина
         drawScope.drawLine(strokeColor, Offset(cx + gap / 2f, cy - shortPlateH / 2f), Offset(cx + gap / 2f, cy + shortPlateH / 2f), strokeWidth = 4.5f)
 
-        drawScope.drawText(textMeasurer, "+", Offset(cx - gap - 8f, cy - longPlateH / 2f - 4f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
-        drawScope.drawText(textMeasurer, "-", Offset(cx + gap + 2f, cy - shortPlateH / 2f - 6f), TextStyle(fontSize = 14.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, "+", Offset(cx - gap - 8f, cy - longPlateH / 2f - 4f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, "-", Offset(cx + gap + 2f, cy - shortPlateH / 2f - 6f), TextStyle(fontSize = 14.sp, color = strokeColor, fontWeight = FontWeight.Bold))
         val txt = if (label.isNotBlank()) label else "E, r"
-        drawScope.drawText(textMeasurer, txt, Offset(cx - 10f, cy + longPlateH / 2f + 4f), TextStyle(fontSize = 11.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, txt, Offset(cx - 10f, cy + longPlateH / 2f + 4f), TextStyle(fontSize = 11.sp, color = strokeColor, fontWeight = FontWeight.Bold))
     }
 
     // 7. Конденсатор
@@ -304,7 +305,7 @@ object PhysicsStencilRenderer {
         drawScope.drawLine(strokeColor, Offset(cx + gap / 2f, cy - plateH / 2f), Offset(cx + gap / 2f, cy + plateH / 2f), strokeWidth = 3f)
 
         val txt = if (label.isNotBlank()) label else "C"
-        drawScope.drawText(textMeasurer, txt, Offset(cx - 5f, cy - plateH / 2f - 18f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, txt, Offset(cx - 5f, cy - plateH / 2f - 18f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
     }
 
     // 8. Катушка индуктивности
@@ -332,7 +333,7 @@ object PhysicsStencilRenderer {
         }
 
         val txt = if (label.isNotBlank()) label else "L"
-        drawScope.drawText(textMeasurer, txt, Offset(bodyX + bodyW / 2f - 5f, cy - r - 16f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, txt, Offset(bodyX + bodyW / 2f - 5f, cy - r - 16f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
     }
 
     // 9. Ключ
@@ -354,7 +355,7 @@ object PhysicsStencilRenderer {
         // Откинутый контакт ключа
         drawScope.drawLine(strokeColor, Offset(cx - gap / 2f, cy), Offset(cx + gap / 2f - 4f, cy - 18f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
         val txt = if (label.isNotBlank()) label else "K"
-        drawScope.drawText(textMeasurer, txt, Offset(cx - 5f, cy - 32f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
+        drawLabel(drawScope, textMeasurer, txt, Offset(cx - 5f, cy - 32f), TextStyle(fontSize = 12.sp, color = strokeColor, fontWeight = FontWeight.Bold))
     }
 
     // 10. Лампа
@@ -448,5 +449,16 @@ object PhysicsStencilRenderer {
         }
         val label = if (element.label.isNotBlank()) element.label else element.stencilType.displayName
         canvas.drawString(label, x + 8f, y + 16f, font, fillPaint)
+    }
+
+    private fun drawLabel(
+        drawScope: DrawScope,
+        textMeasurer: TextMeasurer,
+        text: String,
+        topLeft: Offset,
+        style: TextStyle
+    ) {
+        val layout = textMeasurer.measure(text, style)
+        drawScope.drawText(textLayoutResult = layout, topLeft = topLeft)
     }
 }

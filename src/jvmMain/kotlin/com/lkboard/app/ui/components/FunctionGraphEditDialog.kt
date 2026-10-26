@@ -1,5 +1,6 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,6 +59,7 @@ import kotlin.math.roundToInt
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.lkboard.app.model.BoardElement
+import com.lkboard.app.ui.theme.LocalAppTheme
 import com.lkboard.app.util.MathEvaluator
 
 /**
@@ -122,18 +124,20 @@ fun FunctionGraphEditDialog(
     val parsedYMin = yMinText.toFloatOrNull() ?: -5f
     val parsedYMax = yMaxText.toFloatOrNull() ?: 5f
 
+    val isDark = LocalAppTheme.current.isDark
+
     val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF0F172A),
-        unfocusedTextColor = Color(0xFF0F172A),
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White,
+        focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+        unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
         cursorColor = Color(0xFF2563EB),
         focusedBorderColor = Color(0xFF2563EB),
-        unfocusedBorderColor = Color(0xFFCBD5E1),
-        focusedLabelColor = Color(0xFF2563EB),
-        unfocusedLabelColor = Color(0xFF64748B),
-        focusedPlaceholderColor = Color(0xFF94A3B8),
-        unfocusedPlaceholderColor = Color(0xFF94A3B8)
+        unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1),
+        focusedLabelColor = Color(0xFF3B82F6),
+        unfocusedLabelColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+        focusedPlaceholderColor = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8),
+        unfocusedPlaceholderColor = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
     )
 
     Dialog(
@@ -142,14 +146,15 @@ fun FunctionGraphEditDialog(
     ) {
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = Color.White,
+            color = if (isDark) Color(0xFF181B20) else Color.White,
+            border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
             shadowElevation = 24.dp,
             modifier = Modifier
                 .width(960.dp)
                 .height(680.dp)
                 .padding(16.dp)
         ) {
-            CompositionLocalProvider(LocalContentColor provides Color(0xFF0F172A)) {
+            CompositionLocalProvider(LocalContentColor provides (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -176,22 +181,23 @@ fun FunctionGraphEditDialog(
                                 text = "Desmos Математическая Студия",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
+                                color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                             )
                         }
                         Text(
                             text = "Интерактивное построение функций с математической клавиатурой",
                             fontSize = 12.sp,
-                            color = Color(0xFF64748B)
+                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                         )
                     }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(
                             onClick = onDismiss,
-                            shape = RoundedCornerShape(10.dp)
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1))
                         ) {
-                            Text("Отмена", color = Color(0xFF475569))
+                            Text("Отмена", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569))
                         }
                         Button(
                             onClick = {
@@ -246,7 +252,7 @@ fun FunctionGraphEditDialog(
                             text = "Функции f(x):",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E293B)
+                            color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
                         )
 
                         // Expressions list
@@ -261,10 +267,13 @@ fun FunctionGraphEditDialog(
                                         .clip(RoundedCornerShape(10.dp))
                                         .border(
                                             width = if (isActive) 1.5.dp else 1.dp,
-                                            color = if (isActive) Color(0xFF2563EB) else Color(0xFFE2E8F0),
+                                            color = if (isActive) Color(0xFF2563EB) else (if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
                                             shape = RoundedCornerShape(10.dp)
                                         )
-                                        .background(if (isActive) Color(0xFFF8FAFC) else Color.White)
+                                        .background(
+                                            if (isActive) (if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                                            else (if (isDark) Color(0xFF1E222A) else Color.White)
+                                        )
                                         .padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -304,7 +313,7 @@ fun FunctionGraphEditDialog(
                                                 },
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text("✕", fontSize = 12.sp, color = Color(0xFF94A3B8))
+                                            Text("✕", fontSize = 12.sp, color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8))
                                         }
                                     }
                                 }
@@ -318,11 +327,11 @@ fun FunctionGraphEditDialog(
                                         expressions.add(nextPreset)
                                         activeExpressionIndex = expressions.size - 1
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1F5F9)),
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)),
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Text("+ Добавить функцию", color = Color(0xFF2563EB), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                                    Text("+ Добавить функцию", color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                                 }
                             }
                         }
@@ -332,62 +341,62 @@ fun FunctionGraphEditDialog(
                             text = "Виртуальная математическая клавиатура:",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155)
+                            color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)
                         )
 
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFFF1F5F9))
+                                .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
                                 .padding(8.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             // Row 1: Variables & Powers
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                MathKey("x", onClick = { insertIntoActive("x") }, modifier = Modifier.weight(1f))
-                                MathKey("y", onClick = { insertIntoActive("y") }, modifier = Modifier.weight(1f))
-                                MathKey("x²", onClick = { insertIntoActive("^2") }, modifier = Modifier.weight(1f))
-                                MathKey("x^", onClick = { insertIntoActive("^") }, modifier = Modifier.weight(1f))
-                                MathKey("√x", onClick = { insertIntoActive("sqrt(") }, modifier = Modifier.weight(1f))
-                                MathKey("|x|", onClick = { insertIntoActive("abs(") }, modifier = Modifier.weight(1f))
-                                MathKey("π", onClick = { insertIntoActive("pi") }, modifier = Modifier.weight(1f))
-                                MathKey("e", onClick = { insertIntoActive("e") }, modifier = Modifier.weight(1f))
+                                MathKey("x", onClick = { insertIntoActive("x") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("y", onClick = { insertIntoActive("y") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("x²", onClick = { insertIntoActive("^2") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("x^", onClick = { insertIntoActive("^") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("√x", onClick = { insertIntoActive("sqrt(") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("|x|", onClick = { insertIntoActive("abs(") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("π", onClick = { insertIntoActive("pi") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("e", onClick = { insertIntoActive("e") }, modifier = Modifier.weight(1f), isDark = isDark)
                             }
 
                             // Row 2: Trig & Log
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                MathKey("sin", onClick = { insertIntoActive("sin(") }, modifier = Modifier.weight(1f))
-                                MathKey("cos", onClick = { insertIntoActive("cos(") }, modifier = Modifier.weight(1f))
-                                MathKey("tan", onClick = { insertIntoActive("tan(") }, modifier = Modifier.weight(1f))
-                                MathKey("ln", onClick = { insertIntoActive("log(") }, modifier = Modifier.weight(1f))
-                                MathKey("(", onClick = { insertIntoActive("(") }, modifier = Modifier.weight(1f))
-                                MathKey(")", onClick = { insertIntoActive(")") }, modifier = Modifier.weight(1f))
-                                MathKey("⌫", onClick = { backspaceActive() }, isSpecial = true, modifier = Modifier.weight(1f))
-                                MathKey("C", onClick = { clearActive() }, isSpecial = true, modifier = Modifier.weight(1f))
+                                MathKey("sin", onClick = { insertIntoActive("sin(") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("cos", onClick = { insertIntoActive("cos(") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("tan", onClick = { insertIntoActive("tan(") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("ln", onClick = { insertIntoActive("log(") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("(", onClick = { insertIntoActive("(") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey(")", onClick = { insertIntoActive(")") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("⌫", onClick = { backspaceActive() }, isSpecial = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("C", onClick = { clearActive() }, isSpecial = true, modifier = Modifier.weight(1f), isDark = isDark)
                             }
 
                             // Row 3: Digits 7,8,9 and Operators
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                MathKey("7", onClick = { insertIntoActive("7") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("8", onClick = { insertIntoActive("8") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("9", onClick = { insertIntoActive("9") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("/", onClick = { insertIntoActive(" / ") }, modifier = Modifier.weight(1f))
-                                MathKey("*", onClick = { insertIntoActive("*") }, modifier = Modifier.weight(1f))
-                                MathKey("-", onClick = { insertIntoActive("-") }, modifier = Modifier.weight(1f))
-                                MathKey("+", onClick = { insertIntoActive("+") }, modifier = Modifier.weight(1f))
+                                MathKey("7", onClick = { insertIntoActive("7") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("8", onClick = { insertIntoActive("8") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("9", onClick = { insertIntoActive("9") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("/", onClick = { insertIntoActive(" / ") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("*", onClick = { insertIntoActive("*") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("-", onClick = { insertIntoActive("-") }, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("+", onClick = { insertIntoActive("+") }, modifier = Modifier.weight(1f), isDark = isDark)
                             }
 
                             // Row 4: Digits 4,5,6, 1,2,3, 0
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                MathKey("4", onClick = { insertIntoActive("4") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("5", onClick = { insertIntoActive("5") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("6", onClick = { insertIntoActive("6") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("1", onClick = { insertIntoActive("1") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("2", onClick = { insertIntoActive("2") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("3", onClick = { insertIntoActive("3") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey("0", onClick = { insertIntoActive("0") }, isDigit = true, modifier = Modifier.weight(1f))
-                                MathKey(".", onClick = { insertIntoActive(".") }, modifier = Modifier.weight(1f))
+                                MathKey("4", onClick = { insertIntoActive("4") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("5", onClick = { insertIntoActive("5") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("6", onClick = { insertIntoActive("6") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("1", onClick = { insertIntoActive("1") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("2", onClick = { insertIntoActive("2") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("3", onClick = { insertIntoActive("3") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey("0", onClick = { insertIntoActive("0") }, isDigit = true, modifier = Modifier.weight(1f), isDark = isDark)
+                                MathKey(".", onClick = { insertIntoActive(".") }, modifier = Modifier.weight(1f), isDark = isDark)
                             }
                         }
 
@@ -396,7 +405,7 @@ fun FunctionGraphEditDialog(
                             text = "Диапазон осей:",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF334155)
+                            color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -453,7 +462,7 @@ fun FunctionGraphEditDialog(
                                 text = "Интерактивный предпросмотр (Live Preview):",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E293B)
+                                color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
                             )
                             Text(
                                 text = "Обрезается строго по рамке",
@@ -468,8 +477,8 @@ fun FunctionGraphEditDialog(
                                 .fillMaxWidth()
                                 .weight(1f)
                                 .clip(RoundedCornerShape(14.dp))
-                                .border(1.5.dp, Color(0xFFCBD5E1), RoundedCornerShape(14.dp))
-                                .background(Color(0xFFFAFAFA))
+                                .border(1.5.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFCBD5E1), RoundedCornerShape(14.dp))
+                                .background(if (isDark) Color(0xFF0F1115) else Color(0xFFFAFAFA))
                         ) {
                             Canvas(modifier = Modifier.fillMaxSize()) {
                                 val w = size.width
@@ -522,7 +531,7 @@ fun FunctionGraphEditDialog(
                                     val numStyle = TextStyle(
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF64748B)
+                                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                                     )
 
                                     // X Grid & Numbers
@@ -532,13 +541,13 @@ fun FunctionGraphEditDialog(
                                         val sx = toScreenX(currentX)
                                         if (kotlin.math.abs(currentX) > 1e-5) {
                                             drawLine(
-                                                color = Color(0xFFE2E8F0),
+                                                color = if (isDark) Color(0xFF242830) else Color(0xFFE2E8F0),
                                                 start = Offset(sx, 0f),
                                                 end = Offset(sx, h),
                                                 strokeWidth = 1f
                                             )
                                             drawLine(
-                                                color = Color(0xFF94A3B8),
+                                                color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
                                                 start = Offset(sx, originY - 3.5f),
                                                 end = Offset(sx, originY + 3.5f),
                                                 strokeWidth = 1.2f
@@ -558,13 +567,13 @@ fun FunctionGraphEditDialog(
                                         val sy = toScreenY(currentY)
                                         if (kotlin.math.abs(currentY) > 1e-5) {
                                             drawLine(
-                                                color = Color(0xFFE2E8F0),
+                                                color = if (isDark) Color(0xFF242830) else Color(0xFFE2E8F0),
                                                 start = Offset(0f, sy),
                                                 end = Offset(w, sy),
                                                 strokeWidth = 1f
                                             )
                                             drawLine(
-                                                color = Color(0xFF94A3B8),
+                                                color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
                                                 start = Offset(originX - 3.5f, sy),
                                                 end = Offset(originX + 3.5f, sy),
                                                 strokeWidth = 1.2f
@@ -579,13 +588,13 @@ fun FunctionGraphEditDialog(
 
                                     // Axes
                                     drawLine(
-                                        color = Color(0xFF94A3B8),
+                                        color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
                                         start = Offset(0f, originY),
                                         end = Offset(w, originY),
                                         strokeWidth = 1.5f
                                     )
                                     drawLine(
-                                        color = Color(0xFF94A3B8),
+                                        color = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8),
                                         start = Offset(originX, 0f),
                                         end = Offset(originX, h),
                                         strokeWidth = 1.5f
@@ -645,17 +654,18 @@ private fun MathKey(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isDigit: Boolean = false,
-    isSpecial: Boolean = false
+    isSpecial: Boolean = false,
+    isDark: Boolean = false
 ) {
     val bg = when {
-        isSpecial -> Color(0xFFFEE2E2)
-        isDigit -> Color.White
-        else -> Color(0xFFE0E7FF)
+        isSpecial -> if (isDark) Color(0xFF450A0A) else Color(0xFFFEE2E2)
+        isDigit -> if (isDark) Color(0xFF1E222A) else Color.White
+        else -> if (isDark) Color(0xFF1E293B) else Color(0xFFE0E7FF)
     }
     val textColor = when {
-        isSpecial -> Color(0xFFDC2626)
-        isDigit -> Color(0xFF0F172A)
-        else -> Color(0xFF1D4ED8)
+        isSpecial -> if (isDark) Color(0xFFF87171) else Color(0xFFDC2626)
+        isDigit -> if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
+        else -> if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
     }
 
     Box(
@@ -663,7 +673,7 @@ private fun MathKey(
             .height(34.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(bg)
-            .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+            .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {

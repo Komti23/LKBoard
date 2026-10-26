@@ -49,6 +49,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import com.lkboard.app.update.AppVersion
 import com.lkboard.app.update.UpdateCheckState
+import com.lkboard.app.ui.theme.LocalAppTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -101,6 +102,8 @@ fun DashboardScreen(
     var showCreateDialog by remember { mutableStateOf(false) }
     var newBoardTemplate by remember { mutableStateOf(BoardTemplate.BLANK) }
 
+    val isDark = LocalAppTheme.current.isDark
+
     val filteredBoards = remember(boards, searchQuery) {
         if (searchQuery.isBlank()) boards
         else boards.filter { it.title.contains(searchQuery.trim(), ignoreCase = true) }
@@ -109,7 +112,7 @@ fun DashboardScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F8FA))
+            .background(if (isDark) Color(0xFF0F1115) else Color(0xFFF7F8FA))
     ) {
         Column(
             modifier = Modifier
@@ -128,7 +131,8 @@ fun DashboardScreen(
                 updateState = updateState,
                 onCheckUpdates = onCheckUpdates,
                 onOpenUpdateDialog = onOpenUpdateDialog,
-                onOpenSettings = onOpenSettings
+                onOpenSettings = onOpenSettings,
+                isDark = isDark
             )
 
             Spacer(modifier = Modifier.height(28.dp))
@@ -144,7 +148,8 @@ fun DashboardScreen(
                         BoardTemplate.MATH_STUDIO -> "Математика: Графики и Функции"
                     }
                     onCreateBoard(defaultName, template)
-                }
+                },
+                isDark = isDark
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -160,20 +165,20 @@ fun DashboardScreen(
                         text = "Все доски",
                         fontSize = 20.dp.value.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(Color(0xFFE2E8F0))
+                            .background(if (isDark) Color(0xFF242830) else Color(0xFFE2E8F0))
                             .padding(horizontal = 10.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = "${filteredBoards.size}",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF475569)
+                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
                         )
                     }
                 }
@@ -189,7 +194,8 @@ fun DashboardScreen(
                     onCreateNew = {
                         newBoardTemplate = BoardTemplate.BLANK
                         showCreateDialog = true
-                    }
+                    },
+                    isDark = isDark
                 )
             } else {
                 LazyVerticalGrid(
@@ -263,7 +269,8 @@ private fun DashboardHeader(
     updateState: UpdateCheckState,
     onCheckUpdates: () -> Unit,
     onOpenUpdateDialog: () -> Unit,
-    onOpenSettings: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    isDark: Boolean = false
 ) {
     Box(
         modifier = Modifier
@@ -275,8 +282,8 @@ private fun DashboardHeader(
                 spotColor = Color.Black.copy(alpha = 0.06f)
             )
             .clip(RoundedCornerShape(18.dp))
-            .background(Color.White.copy(alpha = 0.90f))
-            .border(BorderStroke(1.dp, Color.White), RoundedCornerShape(18.dp))
+            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.95f) else Color.White.copy(alpha = 0.90f))
+            .border(BorderStroke(1.dp, if (isDark) Color(0xFF27272A) else Color.White), RoundedCornerShape(18.dp))
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         Row(
@@ -297,28 +304,28 @@ private fun DashboardHeader(
                             text = "LKBoard",
                             fontSize = 21.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFF0F172A),
+                            color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
                             letterSpacing = (-0.5).sp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFEFF6FF))
+                                .background(if (isDark) Color(0xFF1E293B) else Color(0xFFEFF6FF))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = "v${AppVersion.VERSION_NAME}",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2563EB)
+                                color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
                             )
                         }
                     }
                     Text(
                         text = "Бесконечные доски, дорожные карты & презентации",
                         fontSize = 12.sp,
-                        color = Color(0xFF64748B)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
                 }
             }
@@ -334,8 +341,8 @@ private fun DashboardHeader(
                     onClick = if (hasUpdate) onOpenUpdateDialog else onCheckUpdates,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (hasUpdate) Color(0xFFFEF3C7) else Color(0xFFF1F5F9),
-                        contentColor = if (hasUpdate) Color(0xFFB45309) else Color(0xFF475569)
+                        containerColor = if (hasUpdate) Color(0xFFFEF3C7) else if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9),
+                        contentColor = if (hasUpdate) Color(0xFFB45309) else if (isDark) Color(0xFFE4E4E7) else Color(0xFF475569)
                     ),
                     border = if (hasUpdate) BorderStroke(1.5.dp, Color(0xFFF59E0B)) else null,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
@@ -369,7 +376,8 @@ private fun DashboardHeader(
                         .width(280.dp)
                         .height(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF1F5F9))
+                        .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                        .border(1.dp, if (isDark) Color(0xFF333842) else Color.Transparent, RoundedCornerShape(12.dp))
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
@@ -386,16 +394,18 @@ private fun DashboardHeader(
                         Spacer(modifier = Modifier.width(8.dp))
                         OutlinedTextField(
                             value = searchQuery,
-                            onValueChange = onSearchQueryChange,
+                            onSearchQueryChange,
                             placeholder = {
                                 Text(
                                     "Поиск по доскам...",
                                     fontSize = 13.sp,
-                                    color = Color(0xFF94A3B8)
+                                    color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
                                 )
                             },
                             singleLine = true,
                             colors = TextFieldDefaults.colors(
+                                focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                                unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
                                 focusedIndicatorColor = Color.Transparent,
@@ -426,8 +436,8 @@ private fun DashboardHeader(
                     onClick = onImportClick,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFF1F5F9),
-                        contentColor = Color(0xFF334155)
+                        containerColor = if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9),
+                        contentColor = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
                     ),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
                 ) {
@@ -435,14 +445,14 @@ private fun DashboardHeader(
                         imageVector = Icons.Default.FolderOpen,
                         contentDescription = "Импорт",
                         modifier = Modifier.size(17.dp),
-                        tint = Color(0xFF475569)
+                        tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Импорт",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF334155)
+                        color = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
                     )
                 }
 
@@ -451,8 +461,8 @@ private fun DashboardHeader(
                     onClick = onOpenSettings,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFF1F5F9),
-                        contentColor = Color(0xFF334155)
+                        containerColor = if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9),
+                        contentColor = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
                     ),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
                 ) {
@@ -460,14 +470,14 @@ private fun DashboardHeader(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Настройки",
                         modifier = Modifier.size(17.dp),
-                        tint = Color(0xFF475569)
+                        tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Настройки",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF334155)
+                        color = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
                     )
                 }
 
@@ -503,14 +513,15 @@ private fun DashboardHeader(
  */
 @Composable
 private fun TemplatesSection(
-    onSelectTemplate: (BoardTemplate) -> Unit
+    onSelectTemplate: (BoardTemplate) -> Unit,
+    isDark: Boolean = false
 ) {
     Column {
         Text(
             text = "Быстрый старт с шаблонами",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF64748B)
+            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
         )
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -521,9 +532,9 @@ private fun TemplatesSection(
             BoardTemplate.values().forEach { template ->
                 val isRoadmap = template == BoardTemplate.ROADMAP
                 val cardBorder = if (isRoadmap) {
-                    BorderStroke(1.5.dp, Color(0xFF2563EB).copy(alpha = 0.6f))
+                    BorderStroke(1.5.dp, if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB).copy(alpha = 0.6f))
                 } else {
-                    BorderStroke(1.dp, Color.White)
+                    BorderStroke(1.dp, if (isDark) Color(0xFF27272A) else Color.White)
                 }
 
                 Box(
@@ -537,7 +548,11 @@ private fun TemplatesSection(
                         )
                         .clip(RoundedCornerShape(16.dp))
                         .background(
-                            if (isRoadmap) Color(0xFFF8FAFF) else Color.White
+                            if (isRoadmap) {
+                                if (isDark) Color(0xFF1E2638) else Color(0xFFF8FAFF)
+                            } else {
+                                if (isDark) Color(0xFF181B20) else Color.White
+                            }
                         )
                         .border(cardBorder, RoundedCornerShape(16.dp))
                         .clickable { onSelectTemplate(template) }
@@ -561,7 +576,7 @@ private fun TemplatesSection(
                             text = template.displayName,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -569,7 +584,7 @@ private fun TemplatesSection(
                         Text(
                             text = template.description,
                             fontSize = 11.sp,
-                            color = Color(0xFF64748B),
+                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
                             lineHeight = 15.sp,
                             maxLines = 2
                         )
@@ -592,6 +607,7 @@ private fun BoardCard(
     onDuplicate: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var menuOpen by remember { mutableStateOf(false) }
 
     val formattedDate = remember(board.updatedAt) {
@@ -609,10 +625,10 @@ private fun BoardCard(
                 spotColor = if (isActive) Color(0x332563EB) else Color.Black.copy(alpha = 0.07f)
             )
             .clip(RoundedCornerShape(18.dp))
-            .background(Color.White)
+            .background(if (isDark) Color(0xFF181B20) else Color.White)
             .border(
-                if (isActive) BorderStroke(1.5.dp, Color(0xFF2563EB))
-                else BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                if (isActive) BorderStroke(1.5.dp, if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
+                else BorderStroke(1.dp, if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)),
                 RoundedCornerShape(18.dp)
             )
             .clickable { onOpen() }
@@ -643,14 +659,14 @@ private fun BoardCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color.Black.copy(alpha = 0.06f))
+                            .background(if (isDark) Color.Black.copy(alpha = 0.40f) else Color.Black.copy(alpha = 0.06f))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = templateIcon,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF334155)
+                            color = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
                         )
                     }
 
@@ -658,14 +674,14 @@ private fun BoardCard(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF2563EB))
+                                .background(if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = "Открыта сейчас",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = if (isDark) Color(0xFF0F1115) else Color.White
                             )
                         }
                     }
@@ -676,14 +692,14 @@ private fun BoardCard(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color.White.copy(alpha = 0.85f))
+                        .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.88f) else Color.White.copy(alpha = 0.85f))
                         .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = if (board.elementCount > 0) "${board.elementCount} объектов" else "Пустая",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF475569)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
                     )
                 }
             }
@@ -703,7 +719,7 @@ private fun BoardCard(
                         text = board.title,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A),
+                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
                         maxLines = 1,
                         modifier = Modifier.weight(1f)
                     )
@@ -717,7 +733,7 @@ private fun BoardCard(
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = "Меню",
-                                tint = Color(0xFF64748B),
+                                tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -729,44 +745,60 @@ private fun BoardCard(
                             modifier = Modifier
                                 .shadow(14.dp, RoundedCornerShape(12.dp))
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White)
-                                .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(12.dp))
+                                .background(if (isDark) Color(0xFF1E222A) else Color.White)
+                                .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)), RoundedCornerShape(12.dp))
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Открыть", fontSize = 13.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
+                                text = { Text("Открыть", fontSize = 13.sp, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                 leadingIcon = {
-                                    Icon(Icons.AutoMirrored.Filled.OpenInNew, null, tint = Color(0xFF475569), modifier = Modifier.size(16.dp))
+                                    Icon(Icons.AutoMirrored.Filled.OpenInNew, null, tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
+                                colors = MenuDefaults.itemColors(
+                                    textColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
+                                    leadingIconColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                ),
                                 onClick = {
                                     menuOpen = false
                                     onOpen()
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Переименовать", fontSize = 13.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
+                                text = { Text("Переименовать", fontSize = 13.sp, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Edit, null, tint = Color(0xFF475569), modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Edit, null, tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
+                                colors = MenuDefaults.itemColors(
+                                    textColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
+                                    leadingIconColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                ),
                                 onClick = {
                                     menuOpen = false
                                     onRename()
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Дублировать", fontSize = 13.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
+                                text = { Text("Дублировать", fontSize = 13.sp, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                 leadingIcon = {
-                                    Icon(Icons.Default.ContentCopy, null, tint = Color(0xFF475569), modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.ContentCopy, null, tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
+                                colors = MenuDefaults.itemColors(
+                                    textColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
+                                    leadingIconColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                ),
                                 onClick = {
                                     menuOpen = false
                                     onDuplicate()
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Удалить", fontSize = 13.sp, color = Color(0xFFDC2626), fontWeight = FontWeight.Medium) },
+                                text = { Text("Удалить", fontSize = 13.sp, color = Color(0xFFEF4444), fontWeight = FontWeight.Medium) },
                                 leadingIcon = {
-                                    Icon(Icons.Default.DeleteOutline, null, tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.DeleteOutline, null, tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
                                 },
+                                colors = MenuDefaults.itemColors(
+                                    textColor = Color(0xFFEF4444),
+                                    leadingIconColor = Color(0xFFEF4444)
+                                ),
                                 onClick = {
                                     menuOpen = false
                                     onDelete()
@@ -786,7 +818,7 @@ private fun BoardCard(
                     Text(
                         text = "Изменено: $formattedDate",
                         fontSize = 11.sp,
-                        color = Color(0xFF94A3B8)
+                        color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
                     )
 
                     // Кнопка открыть
@@ -794,8 +826,8 @@ private fun BoardCard(
                         onClick = onOpen,
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isActive) Color(0xFF2563EB) else Color(0xFFF1F5F9),
-                            contentColor = if (isActive) Color.White else Color(0xFF1E293B)
+                            containerColor = if (isActive) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)) else (if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)),
+                            contentColor = if (isActive) (if (isDark) Color(0xFF0F1115) else Color.White) else (if (isDark) Color(0xFFE4E4E7) else Color(0xFF1E293B))
                         ),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         modifier = Modifier.height(28.dp)
@@ -819,7 +851,8 @@ private fun BoardCard(
 private fun EmptyBoardsState(
     isSearch: Boolean,
     onClearSearch: () -> Unit,
-    onCreateNew: () -> Unit
+    onCreateNew: () -> Unit,
+    isDark: Boolean = false
 ) {
     Box(
         modifier = Modifier
@@ -840,13 +873,13 @@ private fun EmptyBoardsState(
                 text = if (isSearch) "Ничего не найдено" else "У вас пока нет созданных досок",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A)
+                color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = if (isSearch) "Попробуйте изменить поисковый запрос" else "Выберите шаблон выше или создайте чистую доску для работы",
                 fontSize = 13.sp,
-                color = Color(0xFF64748B)
+                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
@@ -869,15 +902,16 @@ private fun CreateBoardDialog(
     onDismiss: () -> Unit,
     onCreate: (String, BoardTemplate) -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var title by remember { mutableStateOf("") }
     var selectedTemplate by remember { mutableStateOf(initialTemplate) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF0F172A),
-        textContentColor = Color(0xFF334155),
-        title = { Text("Создать новую доску", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A)) },
+        containerColor = if (isDark) Color(0xFF181B20) else Color.White,
+        titleContentColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        textContentColor = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155),
+        title = { Text("Создать новую доску", fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 OutlinedTextField(
@@ -887,18 +921,20 @@ private fun CreateBoardDialog(
                     placeholder = { Text("Например: Дорожная карта Q4") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF0F172A),
-                        unfocusedTextColor = Color(0xFF0F172A),
+                        focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                        unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                        focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+                        unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
                         cursorColor = Color(0xFF2563EB),
                         focusedBorderColor = Color(0xFF2563EB),
-                        unfocusedBorderColor = Color(0xFFCBD5E1),
-                        focusedLabelColor = Color(0xFF2563EB),
-                        unfocusedLabelColor = Color(0xFF64748B)
+                        unfocusedBorderColor = if (isDark) Color(0xFF3F3F46) else Color(0xFFCBD5E1),
+                        focusedLabelColor = Color(0xFF38BDF8),
+                        unfocusedLabelColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Text("Выберите шаблон:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF475569))
+                Text("Выберите шаблон:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -910,7 +946,8 @@ private fun CreateBoardDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) Color(0xFF2563EB) else Color(0xFFF1F5F9))
+                                .background(if (isSel) Color(0xFF2563EB) else if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                                .border(1.dp, if (isDark) Color(0xFF3F3F46) else Color.Transparent, RoundedCornerShape(8.dp))
                                 .clickable { selectedTemplate = tmpl }
                                 .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center
@@ -919,7 +956,7 @@ private fun CreateBoardDialog(
                                 text = "${tmpl.icon} ${tmpl.displayName.substringBefore(" ")}",
                                 fontSize = 11.sp,
                                 fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSel) Color.White else Color(0xFF1E293B)
+                                color = if (isSel) Color.White else if (isDark) Color(0xFFE4E4E7) else Color(0xFF1E293B)
                             )
                         }
                     }
@@ -939,7 +976,7 @@ private fun CreateBoardDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text("Отмена", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569))
             }
         }
     )
@@ -954,14 +991,15 @@ private fun RenameBoardDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var newTitle by remember { mutableStateOf(currentTitle) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF0F172A),
-        textContentColor = Color(0xFF334155),
-        title = { Text("Переименовать доску", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A)) },
+        containerColor = if (isDark) Color(0xFF181B20) else Color.White,
+        titleContentColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        textContentColor = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155),
+        title = { Text("Переименовать доску", fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)) },
         text = {
             OutlinedTextField(
                 value = newTitle,
@@ -969,13 +1007,15 @@ private fun RenameBoardDialog(
                 label = { Text("Новое название") },
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color(0xFF0F172A),
-                    unfocusedTextColor = Color(0xFF0F172A),
+                    focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                    unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                    focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+                    unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
                     cursorColor = Color(0xFF2563EB),
                     focusedBorderColor = Color(0xFF2563EB),
-                    unfocusedBorderColor = Color(0xFFCBD5E1),
-                    focusedLabelColor = Color(0xFF2563EB),
-                    unfocusedLabelColor = Color(0xFF64748B)
+                    unfocusedBorderColor = if (isDark) Color(0xFF3F3F46) else Color(0xFFCBD5E1),
+                    focusedLabelColor = Color(0xFF38BDF8),
+                    unfocusedLabelColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -994,7 +1034,7 @@ private fun RenameBoardDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text("Отмена", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569))
             }
         }
     )
@@ -1009,14 +1049,16 @@ private fun DeleteConfirmDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF0F172A),
-        textContentColor = Color(0xFF334155),
-        title = { Text("Удалить доску?", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A)) },
+        containerColor = if (isDark) Color(0xFF181B20) else Color.White,
+        titleContentColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        textContentColor = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155),
+        title = { Text("Удалить доску?", fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)) },
         text = {
-            Text("Вы уверены, что хотите безвозвратно удалить доску «$boardTitle»? Это действие нельзя отменить.", color = Color(0xFF334155))
+            Text("Вы уверены, что хотите безвозвратно удалить доску «$boardTitle»? Это действие нельзя отменить.", color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155))
         },
         confirmButton = {
             Button(
@@ -1028,7 +1070,7 @@ private fun DeleteConfirmDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text("Отмена", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569))
             }
         }
     )

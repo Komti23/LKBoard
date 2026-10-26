@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lkboard.app.ui.theme.LocalAppTheme
 import com.lkboard.app.update.AppVersion
 import com.lkboard.app.update.UpdateCheckState
 import java.awt.Desktop
@@ -52,6 +53,7 @@ fun UpdateDialog(
     state: UpdateCheckState,
     onDismiss: () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -88,7 +90,7 @@ fun UpdateDialog(
         dismissButton = {
             if (state.updateAvailable) {
                 TextButton(onClick = onDismiss) {
-                    Text("Напомнить позже", color = Color(0xFF64748B))
+                    Text("Напомнить позже", color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                 }
             }
         },
@@ -97,13 +99,13 @@ fun UpdateDialog(
                 if (state.isChecking) {
                     CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.5.dp, color = Color(0xFF2563EB))
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text("Проверка обновлений...", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    Text("Проверка обновлений...", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))
                 } else if (state.updateAvailable && state.updateInfo != null) {
                     Box(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFEFF6FF)),
+                            .background(if (isDark) Color(0xFF1E2638) else Color(0xFFEFF6FF)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -115,15 +117,15 @@ fun UpdateDialog(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("Доступно обновление!", fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                        Text("Версия ${state.updateInfo.version}", fontSize = 12.sp, color = Color(0xFF2563EB), fontWeight = FontWeight.SemiBold)
+                        Text("Доступно обновление!", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))
+                        Text("Версия ${state.updateInfo.version}", fontSize = 12.sp, color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB), fontWeight = FontWeight.SemiBold)
                     }
                 } else {
                     Box(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFDCFCE7)),
+                            .background(if (isDark) Color(0xFF064E3B) else Color(0xFFDCFCE7)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -135,7 +137,7 @@ fun UpdateDialog(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("У вас последняя версия", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        Text("У вас последняя версия", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))
                         Text("LKBoard v${AppVersion.VERSION_NAME}", fontSize = 12.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Medium)
                     }
                 }
@@ -147,14 +149,14 @@ fun UpdateDialog(
                     Text(
                         "Связываемся с сервером обновлений LKBoard...",
                         fontSize = 13.sp,
-                        color = Color(0xFF64748B)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
                 } else if (state.updateAvailable && state.updateInfo != null) {
                     val info = state.updateInfo
                     Text(
                         text = if (info.title.isNotBlank()) info.title else "Вышла новая версия приложения LKBoard с улучшениями и исправлениями.",
                         fontSize = 13.sp,
-                        color = Color(0xFF334155),
+                        color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155),
                         lineHeight = 18.sp
                     )
 
@@ -164,7 +166,7 @@ fun UpdateDialog(
                             "Список изменений:",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Box(
@@ -172,8 +174,8 @@ fun UpdateDialog(
                                 .fillMaxWidth()
                                 .heightIn(max = 180.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFFF8FAFC))
-                                .border(BorderStroke(1.dp, Color(0xFFE2E8F0)), RoundedCornerShape(8.dp))
+                                .background(if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                                .border(BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFE2E8F0)), RoundedCornerShape(8.dp))
                                 .padding(10.dp)
                                 .verticalScroll(rememberScrollState())
                         ) {
@@ -181,7 +183,7 @@ fun UpdateDialog(
                                 info.changelog.forEach { item ->
                                     Row(verticalAlignment = Alignment.Top) {
                                         Text("• ", color = Color(0xFF2563EB), fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                        Text(item, fontSize = 12.sp, color = Color(0xFF334155), lineHeight = 16.sp)
+                                        Text(item, fontSize = 12.sp, color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155), lineHeight = 16.sp)
                                     }
                                 }
                             }
@@ -192,21 +194,21 @@ fun UpdateDialog(
                     Text(
                         "Текущая версия: v${AppVersion.VERSION_NAME} → Новая: v${info.version}",
                         fontSize = 11.sp,
-                        color = Color(0xFF94A3B8)
+                        color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
                     )
                 } else {
                     Text(
                         "Приложение работает на актуальной версии v${AppVersion.VERSION_NAME}. Все последние функции, шаблоны дорожных карт и Desmos-студия уже доступны.",
                         fontSize = 13.sp,
-                        color = Color(0xFF475569),
+                        color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
                         lineHeight = 18.sp
                     )
                 }
             }
         },
         shape = RoundedCornerShape(16.dp),
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF0F172A),
-        textContentColor = Color(0xFF334155)
+        containerColor = if (isDark) Color(0xFF181B20) else Color.White,
+        titleContentColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+        textContentColor = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)
     )
 }

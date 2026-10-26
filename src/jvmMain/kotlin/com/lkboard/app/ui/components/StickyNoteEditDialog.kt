@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lkboard.app.model.BoardElement
+import com.lkboard.app.ui.theme.LocalAppTheme
 
 /**
  * Стеклянный диалог редактирования текста, цвета и чекбоксов стикера (Apple Liquid Glass).
@@ -54,6 +55,7 @@ fun StickyNoteEditDialog(
     onSave: (noteId: String, newText: String, newColorHex: Long) -> Unit,
     onDelete: (noteId: String) -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var text by remember { mutableStateOf(note.text) }
     var selectedColorHex by remember { mutableStateOf(note.colorHex) }
 
@@ -73,8 +75,8 @@ fun StickyNoteEditDialog(
                     spotColor = Color.Black.copy(alpha = 0.15f)
                 )
                 .clip(RoundedCornerShape(22.dp))
-                .background(Color(0xFFFBFBFD).copy(alpha = 0.96f))
-                .border(1.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
+                .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color(0xFFFBFBFD).copy(alpha = 0.96f))
+                .border(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
                 .clickable(enabled = false) {}
                 .padding(22.dp)
         ) {
@@ -112,7 +114,7 @@ fun StickyNoteEditDialog(
                             text = "Стикер заметки",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                         )
                     }
 
@@ -123,7 +125,7 @@ fun StickyNoteEditDialog(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Закрыть",
-                            tint = Color(0xFF64748B),
+                            tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -140,7 +142,7 @@ fun StickyNoteEditDialog(
                             text = "Текст и To-Do чекбоксы",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF475569)
+                            color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569)
                         )
 
                         // Кнопка быстрой вставки чекбокса
@@ -181,19 +183,19 @@ fun StickyNoteEditDialog(
                             .height(160.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color(0xFF0F172A),
-                            unfocusedTextColor = Color(0xFF0F172A),
+                            focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                            unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
                             cursorColor = Color(0xFF007AFF),
                             focusedBorderColor = Color(0xFF007AFF),
-                            unfocusedBorderColor = Color(0xFFCBD5E1),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
+                            unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1),
+                            focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+                            unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White
                         ),
                         placeholder = {
                             Text(
                                 text = "Введите текст...\nСтроки с '- [ ]' превратятся в интерактивные чекбоксы",
                                 fontSize = 12.sp,
-                                color = Color(0xFF94A3B8)
+                                color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
                             )
                         }
                     )
@@ -205,7 +207,7 @@ fun StickyNoteEditDialog(
                         text = "Цвет стикера",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF475569)
+                        color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569)
                     )
 
                     Row(
@@ -267,8 +269,8 @@ fun StickyNoteEditDialog(
                         Button(
                             onClick = onDismiss,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Black.copy(alpha = 0.06f),
-                                contentColor = Color(0xFF334155)
+                                containerColor = if (isDark) Color(0xFF242830) else Color.Black.copy(alpha = 0.06f),
+                                contentColor = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)
                             ),
                             shape = RoundedCornerShape(10.dp)
                         ) {

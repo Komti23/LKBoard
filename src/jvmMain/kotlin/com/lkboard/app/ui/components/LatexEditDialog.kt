@@ -1,5 +1,6 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.lkboard.app.ui.theme.LocalAppTheme
 import com.lkboard.app.util.LatexRenderer
 
 /**
@@ -50,6 +52,7 @@ fun LatexEditDialog(
     onDismiss: () -> Unit,
     onSave: (formula: String) -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var formula by remember { mutableStateOf(initialFormula) }
 
     val quickSnippets = listOf(
@@ -82,9 +85,9 @@ fun LatexEditDialog(
             modifier = Modifier.width(520.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = if (isDark) Color(0xFF181B20) else Color.White
             ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+            border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0))
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -100,13 +103,13 @@ fun LatexEditDialog(
                         text = "Формула LaTeX «на лету»",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                     )
                     Text(
                         text = "∑ Math Engine",
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF2563EB)
+                        color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB)
                     )
                 }
 
@@ -115,8 +118,8 @@ fun LatexEditDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFF8FAFC))
-                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                        .background(if (isDark) Color(0xFF0F1115) else Color(0xFFF8FAFC))
+                        .border(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
                         .padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -124,7 +127,7 @@ fun LatexEditDialog(
                         text = "ПРЕДПРОСМОТР:",
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF64748B)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
@@ -133,7 +136,7 @@ fun LatexEditDialog(
                         fontFamily = FontFamily.Serif,
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF1D4ED8)
+                        color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
                     )
                 }
 
@@ -145,13 +148,15 @@ fun LatexEditDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF0F172A),
-                        unfocusedTextColor = Color(0xFF0F172A),
+                        focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                        unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
                         focusedBorderColor = Color(0xFF2563EB),
-                        unfocusedBorderColor = Color(0xFFCBD5E1),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor = Color(0xFF2563EB)
+                        unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1),
+                        focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+                        unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+                        cursorColor = Color(0xFF2563EB),
+                        focusedLabelColor = Color(0xFF3B82F6),
+                        unfocusedLabelColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     ),
                     textStyle = androidx.compose.ui.text.TextStyle(
                         fontFamily = FontFamily.Monospace,
@@ -164,7 +169,7 @@ fun LatexEditDialog(
                     text = "БЫСТРЫЕ ВСТАВКИ:",
                     fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = Color(0xFF64748B)
+                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -174,8 +179,8 @@ fun LatexEditDialog(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFF1F5F9))
-                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
+                                .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                                .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
                                 .clickable { formula = if (formula.isBlank()) code else "$formula $code" }
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
@@ -183,7 +188,7 @@ fun LatexEditDialog(
                                 text = label,
                                 fontSize = 11.sp,
                                 fontFamily = FontFamily.Monospace,
-                                color = Color(0xFF1E293B)
+                                color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B)
                             )
                         }
                     }
@@ -194,7 +199,7 @@ fun LatexEditDialog(
                     text = "ГОТОВЫЕ ФОРМУЛЫ:",
                     fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = Color(0xFF64748B)
+                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -204,15 +209,15 @@ fun LatexEditDialog(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFEFF6FF))
-                                .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
+                                .background(if (isDark) Color(0xFF1E293B) else Color(0xFFEFF6FF))
+                                .border(1.dp, if (isDark) Color(0xFF2563EB).copy(alpha = 0.5f) else Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
                                 .clickable { formula = code }
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = title,
                                 fontSize = 11.sp,
-                                color = Color(0xFF1D4ED8)
+                                color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
                             )
                         }
                     }
@@ -228,9 +233,9 @@ fun LatexEditDialog(
                         onClick = onDismiss,
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFF64748B)
+                            contentColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                         ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1))
+                        border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1))
                     ) {
                         Text("Отмена", fontSize = 12.sp)
                     }

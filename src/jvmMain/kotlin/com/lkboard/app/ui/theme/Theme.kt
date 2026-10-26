@@ -4,20 +4,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.lkboard.app.data.AppTheme
+
+val LocalAppTheme = staticCompositionLocalOf { AppTheme.LIGHT }
 
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFF38BDF8),
     onPrimary = Color(0xFF0D0F12),
     secondary = Color(0xFF94A3B8),
     onSecondary = Color(0xFF0D0F12),
-    background = Color(0xFF0D0F12),
+    background = Color(0xFF0F1115),
     onBackground = Color(0xFFF4F4F5),
-    surface = Color(0xFF13161A),
+    surface = Color(0xFF181B20),
     onSurface = Color(0xFFF4F4F5),
-    surfaceVariant = Color(0xFF181B20),
-    outline = Color(0xFF242830)
+    surfaceVariant = Color(0xFF242830),
+    outline = Color(0xFF2E333D)
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -56,8 +60,10 @@ fun LkboardTheme(
         AppTheme.LIGHT -> LightColorScheme
         AppTheme.NOTEBOOK -> NotebookColorScheme
     }
-    MaterialTheme(
-        colorScheme = colorScheme,
-        content = content
-    )
+    CompositionLocalProvider(LocalAppTheme provides appTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            content = content
+        )
+    }
 }

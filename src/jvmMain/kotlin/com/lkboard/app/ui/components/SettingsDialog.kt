@@ -59,13 +59,14 @@ fun SettingsDialog(
     var theme by remember { mutableStateOf(currentTheme) }
     var role by remember { mutableStateOf(currentRole) }
     var tools by remember { mutableStateOf(enabledTools) }
+    val isDark = theme.isDark
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.width(560.dp),
             shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+            colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF181B20) else Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0))
         ) {
             Column(
                 modifier = Modifier.padding(22.dp),
@@ -81,13 +82,13 @@ fun SettingsDialog(
                         text = "Настройки приложения",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                     )
                     Text(
                         text = "LKBoard v1.0",
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF2563EB)
+                        color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
                     )
                 }
 
@@ -97,7 +98,7 @@ fun SettingsDialog(
                         text = "ТЕМА ОФОРМЛЕНИЯ ХОЛСТА И ИНТЕРФЕЙСА:",
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF64748B)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -109,8 +110,16 @@ fun SettingsDialog(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) Color(0xFFEFF6FF) else Color(0xFFF8FAFC))
-                                    .border(1.5.dp, if (isSelected) Color(0xFF2563EB) else Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (isSelected) (if (isDark) Color(0xFF1E2638) else Color(0xFFEFF6FF))
+                                        else (if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                                    )
+                                    .border(
+                                        1.5.dp,
+                                        if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
+                                        else (if (isDark) Color(0xFF333842) else Color(0xFFE2E8F0)),
+                                        RoundedCornerShape(8.dp)
+                                    )
                                     .clickable { theme = appTheme }
                                     .padding(vertical = 10.dp),
                                 contentAlignment = Alignment.Center
@@ -119,7 +128,7 @@ fun SettingsDialog(
                                     text = appTheme.displayName,
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) Color(0xFF2563EB) else Color(0xFF475569)
+                                    color = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
                                 )
                             }
                         }
@@ -132,7 +141,7 @@ fun SettingsDialog(
                         text = "БЫСТРЫЙ ПРОФИЛЬ ДЛЯ ВАШИХ ЗАДАЧ:",
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF64748B)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -144,8 +153,16 @@ fun SettingsDialog(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) Color(0xFFEFF6FF) else Color(0xFFF8FAFC))
-                                    .border(1.dp, if (isSelected) Color(0xFF2563EB) else Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (isSelected) (if (isDark) Color(0xFF1E2638) else Color(0xFFEFF6FF))
+                                        else (if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
+                                        else (if (isDark) Color(0xFF333842) else Color(0xFFE2E8F0)),
+                                        RoundedCornerShape(8.dp)
+                                    )
                                     .clickable {
                                         role = r
                                         tools = r.tools
@@ -165,7 +182,7 @@ fun SettingsDialog(
                                         },
                                         fontSize = 10.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) Color(0xFF1D4ED8) else Color(0xFF475569)
+                                        color = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
                                     )
                                 }
                             }
@@ -179,7 +196,7 @@ fun SettingsDialog(
                         text = "ВИДИМОСТЬ ИНСТРУМЕНТОВ НА ПАНЕЛИ:",
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF64748B)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -190,8 +207,8 @@ fun SettingsDialog(
                             Row(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFFF8FAFC))
-                                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
+                                    .background(if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                                    .border(1.dp, if (isDark) Color(0xFF333842) else Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
                                     .clickable {
                                         tools = if (isEnabled) tools - tool else tools + tool
                                     }
@@ -204,15 +221,15 @@ fun SettingsDialog(
                                         tools = if (checked) tools + tool else tools - tool
                                     },
                                     colors = CheckboxDefaults.colors(
-                                        checkedColor = Color(0xFF2563EB),
-                                        checkmarkColor = Color.White,
-                                        uncheckedColor = Color(0xFF94A3B8)
+                                        checkedColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
+                                        checkmarkColor = if (isDark) Color(0xFF0F1115) else Color.White,
+                                        uncheckedColor = if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)
                                     )
                                 )
                                 Text(
                                     text = tool.displayName.substringBefore(" ("),
                                     fontSize = 11.sp,
-                                    color = if (isEnabled) Color(0xFF0F172A) else Color(0xFF94A3B8)
+                                    color = if (isEnabled) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)) else (if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8))
                                 )
                             }
                         }
@@ -228,8 +245,8 @@ fun SettingsDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF64748B)),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1))
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF3F3F46) else Color(0xFFCBD5E1))
                     ) {
                         Text("Отмена", fontSize = 12.sp)
                     }

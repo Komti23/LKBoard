@@ -74,6 +74,7 @@ import com.lkboard.app.model.GridType
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Timeline
 import com.lkboard.app.ui.components.AppLogo
+import com.lkboard.app.ui.theme.LocalAppTheme
 
 /**
  * Верхнее меню Lkboard в стиле плавающей стеклянной капсулы (Glass Capsule Menu Bar):
@@ -128,6 +129,7 @@ fun TopMenuBar(
     onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var isFileMenuOpen by remember { mutableStateOf(false) }
     var isEditMenuOpen by remember { mutableStateOf(false) }
     var isViewMenuOpen by remember { mutableStateOf(false) }
@@ -141,8 +143,8 @@ fun TopMenuBar(
                 spotColor = Color.Black.copy(alpha = 0.08f)
             )
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.75f))
-            .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.60f)), RoundedCornerShape(14.dp))
+            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.90f) else Color.White.copy(alpha = 0.75f))
+            .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.60f)), RoundedCornerShape(14.dp))
     ) {
         Row(
             modifier = Modifier
@@ -165,7 +167,7 @@ fun TopMenuBar(
                     text = "Доски",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2563EB)
+                    color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
                 )
             }
 
@@ -173,7 +175,7 @@ fun TopMenuBar(
                 modifier = Modifier
                     .width(1.dp)
                     .height(14.dp)
-                    .background(Color.Black.copy(alpha = 0.10f))
+                    .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f))
             )
 
             // Пункт «Файл»
@@ -199,8 +201,8 @@ fun TopMenuBar(
                             spotColor = Color.Black.copy(alpha = 0.08f)
                         )
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.96f))
-                        .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
+                        .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.96f))
+                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
                         .padding(vertical = 4.dp)
                 ) {
                     StyledMenuItem(
@@ -368,8 +370,8 @@ fun TopMenuBar(
                             spotColor = Color.Black.copy(alpha = 0.08f)
                         )
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.96f))
-                        .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
+                        .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.96f))
+                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
                         .padding(vertical = 4.dp)
                 ) {
                     StyledMenuItem(
@@ -477,8 +479,8 @@ fun TopMenuBar(
                             spotColor = Color.Black.copy(alpha = 0.08f)
                         )
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.96f))
-                        .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
+                        .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.96f))
+                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
                         .padding(vertical = 4.dp)
                 ) {
                     StyledMenuItem(
@@ -631,7 +633,7 @@ fun TopMenuBar(
                 modifier = Modifier
                     .width(1.dp)
                     .height(14.dp)
-                    .background(Color.Black.copy(alpha = 0.10f))
+                    .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f))
             )
 
             // Название доски
@@ -639,7 +641,7 @@ fun TopMenuBar(
                 text = boardTitle,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1E293B),
+                color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
 
@@ -648,11 +650,21 @@ fun TopMenuBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (isCollabActive) Color(0xFFECFDF5) else Color(0xFFF1F5F9))
+                    .background(
+                        if (isCollabActive) {
+                            if (isDark) Color(0xFF064E3B) else Color(0xFFECFDF5)
+                        } else {
+                            if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)
+                        }
+                    )
                     .border(
                         BorderStroke(
                             1.dp,
-                            if (isCollabActive) Color(0xFFA7F3D0) else Color(0xFFE2E8F0)
+                            if (isCollabActive) {
+                                if (isDark) Color(0xFF059669) else Color(0xFFA7F3D0)
+                            } else {
+                                if (isDark) Color(0xFF333842) else Color(0xFFE2E8F0)
+                            }
                         ),
                         RoundedCornerShape(8.dp)
                     )
@@ -671,13 +683,13 @@ fun TopMenuBar(
                         text = if (collabClientsCount > 1) "В эфире ($collabClientsCount)" else "В эфире",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF047857)
+                        color = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Default.Link,
                         contentDescription = "Поделиться",
-                        tint = Color(0xFF0284C7),
+                        tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF0284C7),
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -685,7 +697,7 @@ fun TopMenuBar(
                         text = "Поделиться",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF0284C7)
+                        color = if (isDark) Color(0xFF38BDF8) else Color(0xFF0284C7)
                     )
                 }
             }
@@ -694,7 +706,7 @@ fun TopMenuBar(
                 modifier = Modifier
                     .width(1.dp)
                     .height(14.dp)
-                    .background(Color.Black.copy(alpha = 0.10f))
+                    .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f))
             )
 
             // Кнопка «Настройки приложения»
@@ -709,14 +721,14 @@ fun TopMenuBar(
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Настройки",
-                    tint = Color(0xFF475569),
+                    tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
                     modifier = Modifier.size(15.dp)
                 )
                 Text(
                     text = "Настройки",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF334155)
+                    color = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
                 )
             }
         }
@@ -733,17 +745,18 @@ private fun TopMenuCapsuleButton(
     onClick: () -> Unit,
     menuContent: @Composable () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val backgroundColor = when {
-        isOpen -> Color(0xFF007AFF).copy(alpha = 0.12f)
-        isHovered -> Color.Black.copy(alpha = 0.05f)
+        isOpen -> (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)).copy(alpha = 0.16f)
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
         else -> Color.Transparent
     }
     val textColor = when {
-        isOpen -> Color(0xFF007AFF)
-        else -> Color(0xFF1E293B)
+        isOpen -> if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)
+        else -> if (isDark) Color(0xFFE4E4E7) else Color(0xFF1E293B)
     }
 
     Box {
@@ -785,26 +798,27 @@ private fun StyledMenuItem(
     isDestructive: Boolean = false,
     onClick: () -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val itemBg = when {
         !enabled -> Color.Transparent
-        isHovered && isDestructive -> Color(0xFFEF4444).copy(alpha = 0.12f)
-        isHovered -> Color.Black.copy(alpha = 0.06f)
+        isHovered && isDestructive -> Color(0xFFEF4444).copy(alpha = 0.16f)
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
         else -> Color.Transparent
     }
 
     val contentColor = when {
-        !enabled -> Color(0xFF94A3B8)
+        !enabled -> if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)
         isDestructive -> Color(0xFFEF4444)
-        else -> Color(0xFF1E293B)
+        else -> if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B)
     }
 
     val iconColor = when {
-        !enabled -> Color(0xFF94A3B8)
+        !enabled -> if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)
         isDestructive -> Color(0xFFEF4444)
-        else -> Color(0xFF475569)
+        else -> if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
     }
 
     Row(
@@ -857,7 +871,7 @@ private fun StyledMenuItem(
                 text = shortcut,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Normal,
-                color = if (enabled) Color(0xFF94A3B8) else Color(0xFFCBD5E1),
+                color = if (enabled) (if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)) else (if (isDark) Color(0xFF3F3F46) else Color(0xFFCBD5E1)),
                 maxLines = 1,
                 softWrap = false
             )
@@ -870,9 +884,10 @@ private fun StyledMenuItem(
  */
 @Composable
 private fun MenuDivider() {
+    val isDark = LocalAppTheme.current.isDark
     HorizontalDivider(
         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
         thickness = 1.dp,
-        color = Color.Black.copy(alpha = 0.07f)
+        color = if (isDark) Color(0xFF27272A) else Color.Black.copy(alpha = 0.07f)
     )
 }

@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.lkboard.app.model.ShapeSettings
 import com.lkboard.app.model.ShapeType
 import com.lkboard.app.model.StrokeStyle
+import com.lkboard.app.ui.theme.LocalAppTheme
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -96,6 +97,8 @@ fun ShapePropertiesPopup(
     }
     val formattedWidth = String.format(Locale.US, "%.1f px", settings.strokeWidth)
 
+    val isDark = LocalAppTheme.current.isDark
+
     // ЕДИНСТВЕННЫЙ внешний фоновый слой
     Box(
         modifier = modifier
@@ -107,8 +110,8 @@ fun ShapePropertiesPopup(
                 spotColor = Color.Black.copy(alpha = 0.08f)
             )
             .clip(RoundedCornerShape(22.dp))
-            .background(Color(0xFFF7F7F9))
-            .border(1.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
+            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color(0xFFF7F7F9))
+            .border(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
             .padding(14.dp)
     ) {
         Column(
@@ -130,12 +133,12 @@ fun ShapePropertiesPopup(
                         text = mainTitle,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1C1C1E)
+                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1C1C1E)
                     )
                     Text(
                         text = shapeTitle,
                         fontSize = 11.sp,
-                        color = Color(0xFF8E8E93)
+                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF8E8E93)
                     )
                 }
 
@@ -715,15 +718,16 @@ private fun ShapeTypeButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = LocalAppTheme.current.isDark
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
     val bgColor = when {
-        isSelected -> Color(0xFF007AFF).copy(alpha = 0.12f)
-        isHovered -> Color.Black.copy(alpha = 0.05f)
+        isSelected -> (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)).copy(alpha = 0.16f)
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
         else -> Color.Transparent
     }
-    val iconColor = if (isSelected) Color(0xFF007AFF) else Color(0xFF3C3C43)
+    val iconColor = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)) else (if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43))
 
     Box(
         modifier = modifier

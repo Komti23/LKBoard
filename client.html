@@ -1253,6 +1253,46 @@
         function formatLatexReadable(raw) {
             if (!raw) return '';
             let s = raw.trim();
+
+            function extractBalanced(text, startIdx) {
+                if (startIdx >= text.length || text[startIdx] !== '{') return null;
+                let depth = 0;
+                for (let i = startIdx; i < text.length; i++) {
+                    if (text[i] === '{') depth++;
+                    else if (text[i] === '}') {
+                        depth--;
+                        if (depth === 0) return { content: text.substring(startIdx + 1, i), endIndex: i };
+                    }
+                }
+                return null;
+            }
+
+            // Replace \frac with balanced braces
+            while (s.includes('\\frac')) {
+                const idx = s.indexOf('\\frac');
+                const afterFrac = idx + 5;
+                let firstBrace = s.indexOf('{', afterFrac);
+                if (firstBrace === -1 || s.substring(afterFrac, firstBrace).trim().length > 0) break;
+                const num = extractBalanced(s, firstBrace);
+                if (!num) break;
+                let secondBrace = s.indexOf('{', num.endIndex + 1);
+                if (secondBrace === -1 || s.substring(num.endIndex + 1, secondBrace).trim().length > 0) break;
+                const den = extractBalanced(s, secondBrace);
+                if (!den) break;
+                const numFmt = formatLatexReadable(num.content);
+                const denFmt = formatLatexReadable(den.content);
+                s = s.substring(0, idx) + '(' + numFmt + ') / ' + denFmt + s.substring(den.endIndex + 1);
+            }
+
+            // Superscripts & Subscripts
+            const supers = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻','=':'⁼','(':'⁽',')':'⁾','n':'ⁿ','x':'ˣ','y':'ʸ' };
+            const subs = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','+':'₊','-':'₋','=':'‗','(':'₍',')':'₎','a':'ₐ','e':'ₑ','i':'ᵢ','o':'ₒ','r':'ᵣ','u':'ᵤ','v':'ᵥ','x':'ₓ' };
+
+            s = s.replace(/\^\{([^}]+)\}/g, (_, p) => p.split('').map(c => supers[c] || c).join(''));
+            s = s.replace(/\^([0-9a-zA-Z+-])/g, (_, p) => supers[p] || ('^' + p));
+            s = s.replace(/_\{([^}]+)\}/g, (_, p) => p.split('').map(c => subs[c] || c).join(''));
+            s = s.replace(/_([0-9a-zA-Z+-])/g, (_, p) => subs[p] || ('_' + p));
+
             const map = {
                 '\\alpha': 'α', '\\beta': 'β', '\\gamma': 'γ', '\\delta': 'δ',
                 '\\Delta': 'Δ', '\\epsilon': 'ε', '\\theta': 'θ', '\\lambda': 'λ',
@@ -1261,14 +1301,13 @@
                 '\\pm': '±', '\\times': '×', '\\cdot': '·', '\\div': '÷',
                 '\\le': '≤', '\\ge': '≥', '\\ne': '≠', '\\approx': '≈',
                 '\\infty': '∞', '\\to': '→', '\\partial': '∂', '\\nabla': '∇',
-                '\\sum': '∑', '\\int': '∫', '\\prod': '∏', '\\sqrt': '√'
+                '\\sum': '∑', '\\int': '∫', '\\prod': '∏', '\\sqrt': '√',
+                '\\vec': ''
             };
             for (const [k, v] of Object.entries(map)) {
                 s = s.split(k).join(v);
             }
-            return s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-                    .replace(/\{/g, '')
-                    .replace(/\}/g, '');
+            return s.replace(/\{/g, '').replace(/\}/g, '').replace(/\s+/g, ' ').trim();
         }
 
         function drawLatexFormula(el) {

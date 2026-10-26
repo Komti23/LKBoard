@@ -1,5 +1,6 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.lkboard.app.model.PhysicsStencilType
+import com.lkboard.app.ui.theme.LocalAppTheme
 
 /**
  * Диалог физического и инженерного конструктора:
@@ -46,6 +48,7 @@ fun PhysicsStencilDialog(
     onDismiss: () -> Unit,
     onSelectStencil: (type: PhysicsStencilType, label: String) -> Unit
 ) {
+    val isDark = LocalAppTheme.current.isDark
     var selectedType by remember { mutableStateOf(PhysicsStencilType.INCLINED_PLANE) }
     var selectedCategory by remember { mutableStateOf("Механика") }
     var customLabel by remember { mutableStateOf("") }
@@ -57,8 +60,10 @@ fun PhysicsStencilDialog(
         Card(
             modifier = Modifier.width(540.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDark) Color(0xFF181B20) else Color.White
+            ),
+            border = BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0))
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -74,13 +79,13 @@ fun PhysicsStencilDialog(
                         text = "Физический конструктор",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                     )
                     Text(
                         text = "Stencils 1-Click",
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF2563EB)
+                        color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB)
                     )
                 }
 
@@ -95,8 +100,15 @@ fun PhysicsStencilDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) Color(0xFFEFF6FF) else Color(0xFFF8FAFC))
-                                .border(1.dp, if (isSelected) Color(0xFF2563EB) else Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isSelected) (if (isDark) Color(0xFF1E2638) else Color(0xFFEFF6FF))
+                                    else (if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF3F4554) else Color(0xFFE2E8F0)),
+                                    RoundedCornerShape(8.dp)
+                                )
                                 .clickable {
                                     selectedCategory = cat
                                     selectedType = PhysicsStencilType.entries.first { it.category == cat }
@@ -108,7 +120,7 @@ fun PhysicsStencilDialog(
                                 text = cat,
                                 fontSize = 12.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) Color(0xFF2563EB) else Color(0xFF64748B)
+                                color = if (isSelected) (if (isDark) Color(0xFF93C5FD) else Color(0xFF2563EB)) else (if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B))
                             )
                         }
                     }
@@ -122,8 +134,15 @@ fun PhysicsStencilDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isCurrent) Color(0xFFEFF6FF) else Color(0xFFF8FAFC))
-                                .border(1.dp, if (isCurrent) Color(0xFF2563EB) else Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                                .background(
+                                    if (isCurrent) (if (isDark) Color(0xFF1E2638) else Color(0xFFEFF6FF))
+                                    else (if (isDark) Color(0xFF242830) else Color(0xFFF8FAFC))
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isCurrent) Color(0xFF2563EB) else (if (isDark) Color(0xFF3F4554) else Color(0xFFE2E8F0)),
+                                    RoundedCornerShape(8.dp)
+                                )
                                 .clickable { selectedType = stencil }
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -133,14 +152,14 @@ fun PhysicsStencilDialog(
                                 text = stencil.displayName,
                                 fontSize = 13.sp,
                                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isCurrent) Color(0xFF1D4ED8) else Color(0xFF1E293B)
+                                color = if (isCurrent) (if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B))
                             )
                             if (isCurrent) {
                                 Text(
                                     text = "✓ ВЫБРАН",
                                     fontSize = 10.sp,
                                     fontFamily = FontFamily.Monospace,
-                                    color = Color(0xFF2563EB)
+                                    color = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB)
                                 )
                             }
                         }
@@ -155,15 +174,15 @@ fun PhysicsStencilDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF0F172A),
-                        unfocusedTextColor = Color(0xFF0F172A),
+                        focusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
+                        unfocusedTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
                         focusedBorderColor = Color(0xFF2563EB),
-                        unfocusedBorderColor = Color(0xFFCBD5E1),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
+                        unfocusedBorderColor = if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1),
+                        focusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
+                        unfocusedContainerColor = if (isDark) Color(0xFF242830) else Color.White,
                         cursorColor = Color(0xFF2563EB),
-                        focusedLabelColor = Color(0xFF2563EB),
-                        unfocusedLabelColor = Color(0xFF64748B)
+                        focusedLabelColor = Color(0xFF3B82F6),
+                        unfocusedLabelColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                     ),
                     singleLine = true
                 )
@@ -177,8 +196,10 @@ fun PhysicsStencilDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF64748B)),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1))
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                        ),
+                        border = BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1))
                     ) {
                         Text("Отмена", fontSize = 12.sp)
                     }
