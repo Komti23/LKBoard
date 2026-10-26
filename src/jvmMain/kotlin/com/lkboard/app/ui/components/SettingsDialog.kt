@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -80,19 +81,16 @@ import java.awt.datatransfer.StringSelection
 import java.net.URI
 
 /**
- * Боковая панель настроек LKBoard (Settings Side Drawer):
- * - Располагается справа (docked to the right), открывается с плавной slide-анимацией.
- * - Полупрозрачный scrim-фон с затемнением и закрытием по клику вне панели.
+ * Диалог настроек LKBoard (отображается по центру экрана):
  * - Выбор положения панели инструментов: Слева / Снизу / Справа (ToolbarPosition).
- * - Выбор темы приложения (Тёмная, Светлая, Тетрадь в клетку).
+ * - Выбор темы приложения (Тёмная, Светлая, Тетрадь в клетку, Система).
  * - Режим графического планшета (телефон со стилусом): длинная индивидуальная ссылка, QR-код, лента 3 действий, Focus Lock, Chime, калибровка нажима.
  * - Выбор быстрого профиля роли (Репетитор, Команда, Скетчи, Все инструменты).
- * - Выборочное включение / отключение инструментов на панели.
+ * - Выборочное включение / отключение инструментов на панели (скроллируемый список с иконками).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsSidePanel(
-    isOpen: Boolean,
+fun SettingsDialog(
     currentTheme: AppTheme,
     currentRole: UserRole,
     enabledTools: Set<CanvasTool>,
@@ -126,114 +124,69 @@ fun SettingsSidePanel(
     var showQrModal by remember { mutableStateOf(false) }
     val isDark = theme.isDark
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Затемняющий оверлей (Scrim)
-        AnimatedVisibility(
-            visible = isOpen,
-            enter = fadeIn(animationSpec = tween(180)),
-            exit = fadeOut(animationSpec = tween(180))
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .width(620.dp)
+                .heightIn(max = 760.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = if (isDark) Color(0xFF14171D) else Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 24.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.45f))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onDismiss
-                    )
-            )
-        }
-
-        // Правая боковая панель с плавной анимацией выезда
-        AnimatedVisibility(
-            visible = isOpen,
-            enter = slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
-            ) + fadeIn(),
-            exit = slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
-            ) + fadeOut(),
-            modifier = Modifier.align(Alignment.CenterEnd)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(480.dp)
-                    .shadow(
-                        elevation = 24.dp,
-                        shape = RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp),
-                        ambientColor = Color.Black.copy(alpha = 0.12f),
-                        spotColor = Color.Black.copy(alpha = 0.28f)
-                    )
-                    .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
-                    .background(if (isDark) Color(0xFF14171D) else Color.White)
-                    .border(
-                        1.dp,
-                        if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0),
-                        RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp)
-                    )
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {} // Не пропускаем клики на scrim
-                    )
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize()
+                // 1. Верхний заголовок диалога с кнопкой закрытия
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(if (isDark) Color(0xFF181B22) else Color(0xFFF8FAFC))
+                        .border(1.dp, if (isDark) Color(0xFF232730) else Color(0xFFE2E8F0))
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // 1. Верхний заголовок панели с кнопкой закрытия
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(if (isDark) Color(0xFF181B22) else Color(0xFFF8FAFC))
-                            .border(1.dp, if (isDark) Color(0xFF232730) else Color(0xFFE2E8F0))
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Панель настроек",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
-                            )
-                            Text(
-                                text = "LKBoard v${AppVersion.VERSION_NAME}",
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isDark) Color(0xFF282D37) else Color(0xFFE2E8F0))
-                                .clickable(onClick = onDismiss),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Закрыть",
-                                tint = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                    Column {
+                        Text(
+                            text = "Настройки",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
+                        )
+                        Text(
+                            text = "LKBoard v${AppVersion.VERSION_NAME}",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
+                        )
                     }
 
-                    // 2. Скроллируемое тело настроек
-                    Column(
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isDark) Color(0xFF282D37) else Color(0xFFE2E8F0))
+                            .clickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Закрыть",
+                            tint = if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                // 2. Скроллируемое тело настроек
+                Column(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                         // 1. ПОЛОЖЕНИЕ ПАНЕЛИ ИНСТРУМЕНТОВ (Слева / Снизу / Справа)
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
@@ -1163,13 +1116,13 @@ fun SettingsSidePanel(
             }
         }
     }
-}
 
 /**
- * Обратная совместимость с вызовом SettingsDialog.
+ * Обратная совместимость с вызовом SettingsSidePanel.
  */
 @Composable
-fun SettingsDialog(
+fun SettingsSidePanel(
+    isOpen: Boolean,
     currentTheme: AppTheme,
     currentRole: UserRole,
     enabledTools: Set<CanvasTool>,
@@ -1189,27 +1142,28 @@ fun SettingsDialog(
     onDismiss: () -> Unit,
     onSaveSettings: (newTheme: AppTheme, newRole: UserRole, newEnabledTools: Set<CanvasTool>, newToolbarPosition: ToolbarPosition) -> Unit
 ) {
-    SettingsSidePanel(
-        isOpen = true,
-        currentTheme = currentTheme,
-        currentRole = currentRole,
-        enabledTools = enabledTools,
-        toolbarPosition = toolbarPosition,
-        onChangeToolbarPosition = onChangeToolbarPosition,
-        isTabletModeActive = isTabletModeActive,
-        tabletWebLink = tabletWebLink,
-        connectedTabletClientsCount = connectedTabletClientsCount,
-        recentTabletActions = recentTabletActions,
-        isFocusLocked = isFocusLocked,
-        stylusPressureCurve = stylusPressureCurve,
-        isConnectChimeEnabled = isConnectChimeEnabled,
-        onToggleTabletMode = onToggleTabletMode,
-        onToggleFocusLock = onToggleFocusLock,
-        onChangeStylusPressureCurve = onChangeStylusPressureCurve,
-        onToggleConnectChime = onToggleConnectChime,
-        onDismiss = onDismiss,
-        onSaveSettings = onSaveSettings
-    )
+    if (isOpen) {
+        SettingsDialog(
+            currentTheme = currentTheme,
+            currentRole = currentRole,
+            enabledTools = enabledTools,
+            toolbarPosition = toolbarPosition,
+            onChangeToolbarPosition = onChangeToolbarPosition,
+            isTabletModeActive = isTabletModeActive,
+            tabletWebLink = tabletWebLink,
+            connectedTabletClientsCount = connectedTabletClientsCount,
+            recentTabletActions = recentTabletActions,
+            isFocusLocked = isFocusLocked,
+            stylusPressureCurve = stylusPressureCurve,
+            isConnectChimeEnabled = isConnectChimeEnabled,
+            onToggleTabletMode = onToggleTabletMode,
+            onToggleFocusLock = onToggleFocusLock,
+            onChangeStylusPressureCurve = onChangeStylusPressureCurve,
+            onToggleConnectChime = onToggleConnectChime,
+            onDismiss = onDismiss,
+            onSaveSettings = onSaveSettings
+        )
+    }
 }
 
 /**

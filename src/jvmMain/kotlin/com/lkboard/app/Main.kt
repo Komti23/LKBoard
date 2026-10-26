@@ -666,30 +666,31 @@ fun main() = application {
                 }
             }
 
-            // Боковая панель настроек справа (доступна и с холста, и с дашборда)
-            SettingsSidePanel(
-                isOpen = isSettingsDialogOpen,
-                currentTheme = currentTheme,
-                currentRole = currentUserRole,
-                enabledTools = boardState.enabledTools,
-                toolbarPosition = toolbarPosition,
-                onChangeToolbarPosition = viewModel::setToolbarPosition,
-                isTabletModeActive = isTabletModeActive,
-                tabletWebLink = collabState.tabletWebLink,
-                connectedTabletClientsCount = collabState.connectedPeers.count { it.clientType == "Tablet" || it.id.contains("tablet") },
-                recentTabletActions = collabState.recentTabletActions,
-                isFocusLocked = collabState.isFocusLocked,
-                stylusPressureCurve = collabState.stylusPressureCurve,
-                isConnectChimeEnabled = collabState.isConnectChimeEnabled,
-                onToggleTabletMode = viewModel::toggleTabletMode,
-                onToggleFocusLock = viewModel::toggleFocusLock,
-                onChangeStylusPressureCurve = viewModel::setStylusPressureCurve,
-                onToggleConnectChime = viewModel::setConnectChimeEnabled,
-                onDismiss = viewModel::closeSettingsDialog,
-                onSaveSettings = { newTheme, newRole, newTools, newPosition ->
-                    viewModel.applySettings(newTheme, newRole, newTools, newPosition)
-                }
-            )
+            // Диалог настроек по центру экрана (доступен и с холста, и с дашборда)
+            if (isSettingsDialogOpen) {
+                SettingsDialog(
+                    currentTheme = currentTheme,
+                    currentRole = currentUserRole,
+                    enabledTools = boardState.enabledTools,
+                    toolbarPosition = toolbarPosition,
+                    onChangeToolbarPosition = viewModel::setToolbarPosition,
+                    isTabletModeActive = isTabletModeActive,
+                    tabletWebLink = collabState.tabletWebLink,
+                    connectedTabletClientsCount = collabState.connectedPeers.count { it.clientType == "Tablet" || it.id.contains("tablet") },
+                    recentTabletActions = collabState.recentTabletActions,
+                    isFocusLocked = collabState.isFocusLocked,
+                    stylusPressureCurve = collabState.stylusPressureCurve,
+                    isConnectChimeEnabled = collabState.isConnectChimeEnabled,
+                    onToggleTabletMode = viewModel::toggleTabletMode,
+                    onToggleFocusLock = viewModel::toggleFocusLock,
+                    onChangeStylusPressureCurve = viewModel::setStylusPressureCurve,
+                    onToggleConnectChime = viewModel::setConnectChimeEnabled,
+                    onDismiss = viewModel::closeSettingsDialog,
+                    onSaveSettings = { newTheme, newRole, newTools, newPosition ->
+                        viewModel.applySettings(newTheme, newRole, newTools, newPosition)
+                    }
+                )
+            }
 
             // Онбординг при первом запуске (выбор роли и фильтрация инструментов)
             if (isOnboardingOpen) {

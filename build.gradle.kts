@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.lkboard"
-version = "1.9.1"
+version = "1.9.2"
 
 kotlin {
     jvmToolchain(21)
@@ -49,7 +49,7 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi
             )
             packageName = "Lkboard"
-            packageVersion = "1.9.1"
+            packageVersion = "1.9.2"
             description = "Lkboard - Infinite Canvas Collaborative Workspace"
             copyright = "© 2026 Lkboard Team"
             vendor = "Lkboard"

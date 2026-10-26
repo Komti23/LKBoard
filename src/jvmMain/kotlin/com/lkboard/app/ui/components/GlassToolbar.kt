@@ -155,7 +155,7 @@ fun GlassToolbar(
         // 1. Верхняя панель: Стеклянная капсула меню (TopMenuBar) + кнопки быстрого действия
         Row(
             modifier = Modifier
-                .align(Alignment.TopStart)
+                .align(Alignment.TopCenter)
                 .background(Color.Transparent),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
