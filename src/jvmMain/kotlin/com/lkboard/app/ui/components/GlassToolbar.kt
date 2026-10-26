@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lkboard.app.ui.theme.LocalAppTheme
 import androidx.compose.ui.unit.sp
+import com.lkboard.app.data.ToolbarPosition
 import com.lkboard.app.model.CanvasTool
 import com.lkboard.app.model.GridType
 import com.lkboard.app.model.PenSettings
@@ -131,6 +132,8 @@ fun GlassToolbar(
     onOpenSettings: () -> Unit = {},
     onOpenVersionDetails: () -> Unit = {},
     enabledTools: Set<CanvasTool> = CanvasTool.entries.toSet(),
+    toolbarPosition: ToolbarPosition = ToolbarPosition.LEFT,
+    onChangeToolbarPosition: ((ToolbarPosition) -> Unit)? = null,
     onCopyBoardImage: () -> Unit = {},
     onTogglePresentation: () -> Unit = {},
     onToggleLaser: () -> Unit = {},
@@ -285,7 +288,13 @@ fun GlassToolbar(
             }
         }
 
-        // 2. Левый тулбар инструментов с выплывающими меню (LeftToolbar)
+        // 2. Тулбар инструментов с выплывающими меню (LeftToolbar / DockedToolbar)
+        val toolbarAlignment = when (toolbarPosition) {
+            ToolbarPosition.LEFT -> Alignment.CenterStart
+            ToolbarPosition.BOTTOM -> Alignment.BottomCenter
+            ToolbarPosition.RIGHT -> Alignment.CenterEnd
+        }
+
         LeftToolbar(
             activeTool = activeTool,
             penSettings = penSettings,
@@ -300,7 +309,9 @@ fun GlassToolbar(
             gridType = gridType,
             onGridTypeChange = onGridTypeChange,
             enabledTools = enabledTools,
-            modifier = Modifier.align(Alignment.CenterStart)
+            position = toolbarPosition,
+            onChangePosition = onChangeToolbarPosition,
+            modifier = Modifier.align(toolbarAlignment)
         )
 
         // 3. Виджет масштабирования (Zoom HUD) и сетки в правом нижнем углу

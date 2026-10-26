@@ -36,6 +36,7 @@ import com.lkboard.app.ui.components.LatexEditDialog
 import com.lkboard.app.ui.components.PhysicsStencilDialog
 import com.lkboard.app.ui.components.FirstRunOnboardingDialog
 import com.lkboard.app.ui.components.SettingsDialog
+import com.lkboard.app.ui.components.SettingsSidePanel
 import com.lkboard.app.ui.components.VersionDetailsDialog
 import com.lkboard.app.ui.dashboard.DashboardScreen
 import com.lkboard.app.ui.theme.LkboardTheme
@@ -71,6 +72,7 @@ fun main() = application {
 
     val currentTheme by viewModel.currentTheme.collectAsState()
     val currentUserRole by viewModel.currentUserRole.collectAsState()
+    val toolbarPosition by viewModel.toolbarPosition.collectAsState()
     val isOnboardingOpen by viewModel.isOnboardingOpen.collectAsState()
     val isSettingsDialogOpen by viewModel.isSettingsDialogOpen.collectAsState()
     val isLatexDialogOpen by viewModel.isLatexDialogOpen.collectAsState()
@@ -113,7 +115,12 @@ fun main() = application {
         state = windowState,
         icon = logoPainter,
         onKeyEvent = { keyEvent ->
-            if (showVersionDetailsDialog && keyEvent.type == KeyEventType.KeyDown &&
+            if (isSettingsDialogOpen && keyEvent.type == KeyEventType.KeyDown &&
+                (keyEvent.key == Key.Escape || (keyEvent.nativeKeyEvent as? java.awt.event.KeyEvent)?.keyCode == java.awt.event.KeyEvent.VK_ESCAPE)
+            ) {
+                viewModel.closeSettingsDialog()
+                true
+            } else if (showVersionDetailsDialog && keyEvent.type == KeyEventType.KeyDown &&
                 (keyEvent.key == Key.Escape || (keyEvent.nativeKeyEvent as? java.awt.event.KeyEvent)?.keyCode == java.awt.event.KeyEvent.VK_ESCAPE)
             ) {
                 showVersionDetailsDialog = false
@@ -552,6 +559,8 @@ fun main() = application {
                             onExit = handleExit,
                             onSelectAll = { viewModel.selectAll() },
                             enabledTools = boardState.enabledTools,
+                            toolbarPosition = toolbarPosition,
+                            onChangeToolbarPosition = viewModel::setToolbarPosition,
                             onExportSelectionPng = {
                                 if (boardState.selectedElementIds.isNotEmpty()) {
                                     val target = FileDialogs.exportPngFileDialog(window, "${boardState.title}_selection.png")
@@ -639,27 +648,30 @@ fun main() = application {
                 }
             }
 
-            // Диалог настроек темы и набора инструментов (доступен и с холста, и с дашборда)
-            if (isSettingsDialogOpen) {
-                SettingsDialog(
-                    currentTheme = currentTheme,
-                    currentRole = currentUserRole,
-                    enabledTools = boardState.enabledTools,
-                    isTabletModeActive = isTabletModeActive,
-                    tabletWebLink = collabState.tabletWebLink,
-                    connectedTabletClientsCount = collabState.connectedPeers.count { it.clientType == "Tablet" || it.id.contains("tablet") },
-                    recentTabletActions = collabState.recentTabletActions,
-                    isFocusLocked = collabState.isFocusLocked,
-                    stylusPressureCurve = collabState.stylusPressureCurve,
-                    isConnectChimeEnabled = collabState.isConnectChimeEnabled,
-                    onToggleTabletMode = viewModel::toggleTabletMode,
-                    onToggleFocusLock = viewModel::toggleFocusLock,
-                    onChangeStylusPressureCurve = viewModel::setStylusPressureCurve,
-                    onToggleConnectChime = viewModel::setConnectChimeEnabled,
-                    onDismiss = viewModel::closeSettingsDialog,
-                    onSaveSettings = viewModel::applySettings
-                )
-            }
+            // Боковая панель настроек справа (доступна и с холста, и с дашборда)
+            SettingsSidePanel(
+                isOpen = isSettingsDialogOpen,
+                currentTheme = currentTheme,
+                currentRole = currentUserRole,
+                enabledTools = boardState.enabledTools,
+                toolbarPosition = toolbarPosition,
+                onChangeToolbarPosition = viewModel::setToolbarPosition,
+                isTabletModeActive = isTabletModeActive,
+                tabletWebLink = collabState.tabletWebLink,
+                connectedTabletClientsCount = collabState.connectedPeers.count { it.clientType == "Tablet" || it.id.contains("tablet") },
+                recentTabletActions = collabState.recentTabletActions,
+                isFocusLocked = collabState.isFocusLocked,
+                stylusPressureCurve = collabState.stylusPressureCurve,
+                isConnectChimeEnabled = collabState.isConnectChimeEnabled,
+                onToggleTabletMode = viewModel::toggleTabletMode,
+                onToggleFocusLock = viewModel::toggleFocusLock,
+                onChangeStylusPressureCurve = viewModel::setStylusPressureCurve,
+                onToggleConnectChime = viewModel::setConnectChimeEnabled,
+                onDismiss = viewModel::closeSettingsDialog,
+                onSaveSettings = { newTheme, newRole, newTools, newPosition ->
+                    viewModel.applySettings(newTheme, newRole, newTools, newPosition)
+                }
+            )
 
             // Онбординг при первом запуске (выбор роли и фильтрация инструментов)
             if (isOnboardingOpen) {

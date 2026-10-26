@@ -23,6 +23,7 @@ import com.lkboard.app.model.ShapeSettings
 import com.lkboard.app.model.PhysicsStencilType
 import com.lkboard.app.data.AppPreferences
 import com.lkboard.app.data.AppTheme
+import com.lkboard.app.data.ToolbarPosition
 import com.lkboard.app.data.UserRole
 import com.lkboard.app.data.PreferencesManager
 import com.lkboard.app.util.DocumentImporter
@@ -148,6 +149,14 @@ class BoardViewModel {
     private val _currentUserRole = MutableStateFlow(AppPreferences.loadUserRole())
     val currentUserRole: StateFlow<UserRole> = _currentUserRole.asStateFlow()
 
+    private val _toolbarPosition = MutableStateFlow(AppPreferences.loadToolbarPosition())
+    val toolbarPosition: StateFlow<ToolbarPosition> = _toolbarPosition.asStateFlow()
+
+    fun setToolbarPosition(position: ToolbarPosition) {
+        _toolbarPosition.value = position
+        AppPreferences.saveToolbarPosition(position)
+    }
+
     private val _isOnboardingOpen = MutableStateFlow(AppPreferences.isFirstRun())
     val isOnboardingOpen: StateFlow<Boolean> = _isOnboardingOpen.asStateFlow()
 
@@ -231,17 +240,9 @@ class BoardViewModel {
     }
 
     init {
-        refreshBoardsList()
-        val index = boardManager.getIndex()
-        val targetId = index.lastActiveBoardId ?: index.boards.firstOrNull()?.id
-        if (targetId != null) {
-            val pair = boardManager.loadBoard(targetId)
-            if (pair != null) {
-                val (info, loadedState) = pair
-                _activeBoardId.value = info.id
-                _currentFile.value = boardManager.getBoardFile(info)
-                _state.value = loadedState
-            }
+        // Фоновая быстрая загрузка списка досок без блокировки первого кадра UI
+        ioScope.launch {
+            refreshBoardsList()
         }
 
         // Фоновый тикер для плавающего таймера воркшопов
@@ -1700,12 +1701,18 @@ class BoardViewModel {
         _isSettingsDialogOpen.value = false
     }
 
-    fun applySettings(newTheme: AppTheme, newRole: UserRole, newTools: Set<CanvasTool>) {
+    fun applySettings(
+        newTheme: AppTheme,
+        newRole: UserRole,
+        newTools: Set<CanvasTool>,
+        newPosition: ToolbarPosition = _toolbarPosition.value
+    ) {
         updateTheme(newTheme)
         _currentUserRole.value = newRole
         AppPreferences.saveUserRole(newRole)
         AppPreferences.saveEnabledTools(newTools)
         _state.update { it.copy(enabledTools = newTools) }
+        setToolbarPosition(newPosition)
         closeSettingsDialog()
     }
 
@@ -1732,6 +1739,20 @@ class BoardViewModel {
 
     private fun loadOrCreateInitialState(): BoardState {
         try {
+            val index = boardManager.getIndex()
+            val targetId = index.lastActiveBoardId ?: index.boards.firstOrNull()?.id
+            if (targetId != null) {
+                val pair = boardManager.loadBoard(targetId)
+                if (pair != null) {
+                    val (info, loadedState) = pair
+                    _activeBoardId.value = info.id
+                    _currentFile.value = boardManager.getBoardFile(info)
+                    return loadedState.copy(
+                        selectedElementIds = emptySet(),
+                        enabledTools = AppPreferences.loadEnabledTools()
+                    )
+                }
+            }
             val autoSaveFile = AppPreferences.getAutoSaveFile()
             if (autoSaveFile.exists() && autoSaveFile.length() > 0) {
                 val loaded = com.lkboard.app.data.BoardSerializer.load(autoSaveFile)

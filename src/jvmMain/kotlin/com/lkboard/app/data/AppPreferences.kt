@@ -85,6 +85,7 @@ object AppPreferences {
     private const val KEY_USER_ROLE = "user_role_profile"
     private const val KEY_FIRST_RUN_DONE = "first_run_onboarding_completed"
     private const val KEY_ENABLED_TOOLS = "enabled_tools_csv"
+    private const val KEY_TOOLBAR_POSITION = "toolbar_dock_position"
 
     private val prefs: Preferences by lazy {
         Preferences.userNodeForPackage(AppPreferences::class.java)
@@ -278,6 +279,24 @@ object AppPreferences {
         try {
             val csv = tools.joinToString(",") { it.name }
             prefs.put(KEY_ENABLED_TOOLS, csv)
+            prefs.flush()
+        } catch (_: Exception) {}
+    }
+
+    // --- Положение панели инструментов (Слева / Снизу / Справа) ---
+
+    fun loadToolbarPosition(): ToolbarPosition {
+        return try {
+            val id = prefs.get(KEY_TOOLBAR_POSITION, ToolbarPosition.LEFT.id)
+            ToolbarPosition.fromId(id)
+        } catch (_: Exception) {
+            ToolbarPosition.LEFT
+        }
+    }
+
+    fun saveToolbarPosition(position: ToolbarPosition) {
+        try {
+            prefs.put(KEY_TOOLBAR_POSITION, position.id)
             prefs.flush()
         } catch (_: Exception) {}
     }

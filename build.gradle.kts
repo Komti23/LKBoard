@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.lkboard"
-version = "1.8.1"
+version = "1.9.0"
 
 kotlin {
     jvmToolchain(21)
@@ -37,6 +37,11 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "com.lkboard.app.MainKt"
+        jvmArgs(
+            "-XX:+TieredCompilation",
+            "-Dskiko.renderApi=DIRECT3D",
+            "-Dsun.java2d.d3d=true"
+        )
 
         nativeDistributions {
             targetFormats(
@@ -44,7 +49,7 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi
             )
             packageName = "Lkboard"
-            packageVersion = "1.8.1"
+            packageVersion = "1.9.0"
             description = "Lkboard - Infinite Canvas Collaborative Workspace"
             copyright = "© 2026 Lkboard Team"
             vendor = "Lkboard"

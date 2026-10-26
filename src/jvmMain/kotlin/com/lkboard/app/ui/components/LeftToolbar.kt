@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.ViewKanban
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -61,6 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lkboard.app.data.ToolbarPosition
 import com.lkboard.app.model.CanvasTool
 import com.lkboard.app.model.GridType
 import com.lkboard.app.model.PenSettings
@@ -68,12 +70,13 @@ import com.lkboard.app.model.ShapeSettings
 import com.lkboard.app.ui.theme.LocalAppTheme
 
 /**
- * Левый тулбар инструментов Lkboard в эталонном стиле Apple Liquid Glass:
- * - Монолитный стеклянный Box без использования Material 3 Surface и без внутренних белых подложек/полос.
- * - Единый внешний фон: Color(0xFFF5F5F7).copy(alpha = 0.85f), скругление 22.dp, граница 1.dp Color.White.copy(alpha = 0.70f).
+ * Панель инструментов Lkboard в эталонном стиле Apple Liquid Glass:
+ * - Монолитный стеклянный Box без использования Material 3 Surface и без внутренних подложек/полос.
+ * - Поддерживает свободное размещение: Слева (Left), Снизу (Bottom), Справа (Right).
  * - Все внутренние Layout-компоненты (Column, Row, Box) строго прозрачные (Color.Transparent).
  * - Поддержка открытия меню свойств для Пера (StylusPropertiesPopup) и Фигур (ShapePropertiesPopup).
  * - Тоггл при повторном клике на активный инструмент (Перо / Фигура).
+ * - Кнопка быстрой смены положения тулбара прямо на панели.
  */
 @Composable
 fun LeftToolbar(
@@ -90,6 +93,8 @@ fun LeftToolbar(
     gridType: GridType = GridType.DOTS,
     onGridTypeChange: ((GridType) -> Unit)? = null,
     enabledTools: Set<CanvasTool> = CanvasTool.entries.toSet(),
+    position: ToolbarPosition = ToolbarPosition.LEFT,
+    onChangePosition: ((ToolbarPosition) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var isStylusMenuOpen by remember { mutableStateOf(activeTool == CanvasTool.PEN) }
@@ -117,253 +122,264 @@ fun LeftToolbar(
     }
 
     val isDark = LocalAppTheme.current.isDark
+    val isBottom = position == ToolbarPosition.BOTTOM
+    val isRight = position == ToolbarPosition.RIGHT
 
-    Row(
-        modifier = modifier.background(Color.Transparent),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Монолитная стеклянная панель тулбара (чистый прозрачный Column внутри)
-        Box(
-            modifier = Modifier
-                .shadow(
-                    elevation = 18.dp,
-                    shape = RoundedCornerShape(22.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.04f),
-                    spotColor = Color.Black.copy(alpha = 0.08f)
-                )
-                .clip(RoundedCornerShape(22.dp))
-                .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.92f) else Color(0xFFF7F7F9).copy(alpha = 0.92f))
-                .border(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
-        ) {
-            Column(
-                modifier = Modifier
-                    .background(Color.Transparent)
-                    .padding(7.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // 1. Выделение
-                ToolbarIconButton(
-                    icon = Icons.Default.Navigation,
-                    label = "Выделение (1 / V)",
-                    isSelected = activeTool == CanvasTool.SELECT,
-                    onClick = {
-                        isStylusMenuOpen = false
-                        isShapeMenuOpen = false
-                        onToolSelect(CanvasTool.SELECT)
-                    }
-                )
-
-                // 2. Панорама
-                ToolbarIconButton(
-                    icon = Icons.Default.PanTool,
-                    label = "Панорама (H / Пробел)",
-                    isSelected = activeTool == CanvasTool.HAND,
-                    onClick = {
-                        isStylusMenuOpen = false
-                        isShapeMenuOpen = false
-                        onToolSelect(CanvasTool.HAND)
-                    }
-                )
-
-                // 3. Перо (стилус) с индикатором цвета
-                if (CanvasTool.PEN in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.Create,
-                        label = "Перо (Q / P)",
-                        isSelected = activeTool == CanvasTool.PEN,
-                        colorIndicator = Color(penSettings.colorHex),
-                        onClick = {
-                            if (activeTool == CanvasTool.PEN) {
-                                isStylusMenuOpen = !isStylusMenuOpen
-                            } else {
-                                onToolSelect(CanvasTool.PEN)
-                                isStylusMenuOpen = true
-                                isShapeMenuOpen = false
-                            }
-                        }
-                    )
-                }
-
-                // 4. Ластик
-                if (CanvasTool.ERASER in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.AutoFixNormal,
-                        label = "Ластик (E)",
-                        isSelected = activeTool == CanvasTool.ERASER,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.ERASER)
-                        }
-                    )
-                }
-
-                // 5. Стикер
-                if (CanvasTool.STICKY_NOTE in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.AutoMirrored.Filled.StickyNote2,
-                        label = "Стикер (S)",
-                        isSelected = activeTool == CanvasTool.STICKY_NOTE,
-                        colorIndicator = Color(0xFFFEF08A),
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.STICKY_NOTE)
-                        }
-                    )
-                }
-
-                // 6. Геометрические фигуры
-                if (CanvasTool.SHAPE in enabledTools) {
-                    val effectiveShapeSettings = selectedShapeSettings ?: shapeSettings
-                    ToolbarIconButton(
-                        icon = Icons.Default.CropLandscape,
-                        label = "Фигура (R)",
-                        isSelected = activeTool == CanvasTool.SHAPE || hasSelectedShape,
-                        colorIndicator = Color(effectiveShapeSettings.strokeColorHex),
-                        onClick = {
-                            if (activeTool == CanvasTool.SHAPE || hasSelectedShape) {
-                                isShapeMenuOpen = !isShapeMenuOpen
-                            } else {
-                                onToolSelect(CanvasTool.SHAPE)
-                                isShapeMenuOpen = true
-                                isStylusMenuOpen = false
-                            }
-                        }
-                    )
-                }
-
-                // 7. Формула LaTeX
-                if (CanvasTool.LATEX in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.Functions,
-                        label = "Формула LaTeX (X)",
-                        isSelected = activeTool == CanvasTool.LATEX,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.LATEX)
-                        }
-                    )
-                }
-
-                // 8. Физический конструктор
-                if (CanvasTool.PHYSICS_STENCIL in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.Science,
-                        label = "Физический конструктор (B)",
-                        isSelected = activeTool == CanvasTool.PHYSICS_STENCIL,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.PHYSICS_STENCIL)
-                        }
-                    )
-                }
-
-                // 9. Умные коннекторы (Smart Connectors)
-                if (CanvasTool.CONNECTOR in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.AutoMirrored.Filled.AltRoute,
-                        label = "Коннектор (C)",
-                        isSelected = activeTool == CanvasTool.CONNECTOR,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.CONNECTOR)
-                        }
-                    )
-                }
-
-                // 10. Веха дорожной карты (Milestone Card)
-                if (CanvasTool.MILESTONE in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.Flag,
-                        label = "Веха / Roadmap (M)",
-                        isSelected = activeTool == CanvasTool.MILESTONE,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.MILESTONE)
-                        }
-                    )
-                }
-
-                // 11. Канбан-доска (Kanban Board)
-                if (CanvasTool.KANBAN in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.ViewKanban,
-                        label = "Канбан-доска (K)",
-                        isSelected = activeTool == CanvasTool.KANBAN,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.KANBAN)
-                        }
-                    )
-                }
-
-                // 12. График функций (Math Function Plotter)
-                if (CanvasTool.FUNCTION_GRAPH in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.AutoMirrored.Filled.ShowChart,
-                        label = "График функций (G)",
-                        isSelected = activeTool == CanvasTool.FUNCTION_GRAPH,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.FUNCTION_GRAPH)
-                        }
-                    )
-                }
-
-                // 13. Текст
-                if (CanvasTool.TEXT in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.FormatColorText,
-                        label = "Текст (T)",
-                        isSelected = activeTool == CanvasTool.TEXT,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.TEXT)
-                        }
-                    )
-                }
-
-                // 14. Фрейм / Слайды
-                if (CanvasTool.FRAME in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.Slideshow,
-                        label = "Фрейм / Презентация (F)",
-                        isSelected = activeTool == CanvasTool.FRAME,
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.FRAME)
-                        }
-                    )
-                }
-
-                // 15. Лазерная указка
-                if (CanvasTool.LASER_POINTER in enabledTools) {
-                    ToolbarIconButton(
-                        icon = Icons.Default.Highlight,
-                        label = "Лазерная указка (L)",
-                        isSelected = activeTool == CanvasTool.LASER_POINTER,
-                        colorIndicator = Color(0xFFFF2A4B),
-                        onClick = {
-                            isStylusMenuOpen = false
-                            isShapeMenuOpen = false
-                            onToolSelect(CanvasTool.LASER_POINTER)
-                        }
-                    )
-                }
+    // Кнопки всех инструментов
+    val toolsContent: @Composable () -> Unit = {
+        // 1. Выделение
+        ToolbarIconButton(
+            icon = Icons.Default.Navigation,
+            label = "Выделение (1 / V)",
+            isSelected = activeTool == CanvasTool.SELECT,
+            position = position,
+            onClick = {
+                isStylusMenuOpen = false
+                isShapeMenuOpen = false
+                onToolSelect(CanvasTool.SELECT)
             }
+        )
+
+        // 2. Панорама
+        ToolbarIconButton(
+            icon = Icons.Default.PanTool,
+            label = "Панорама (H / Пробел)",
+            isSelected = activeTool == CanvasTool.HAND,
+            position = position,
+            onClick = {
+                isStylusMenuOpen = false
+                isShapeMenuOpen = false
+                onToolSelect(CanvasTool.HAND)
+            }
+        )
+
+        // 3. Перо (стилус) с индикатором цвета
+        if (CanvasTool.PEN in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.Create,
+                label = "Перо (Q / P)",
+                isSelected = activeTool == CanvasTool.PEN,
+                colorIndicator = Color(penSettings.colorHex),
+                position = position,
+                onClick = {
+                    if (activeTool == CanvasTool.PEN) {
+                        isStylusMenuOpen = !isStylusMenuOpen
+                    } else {
+                        onToolSelect(CanvasTool.PEN)
+                        isStylusMenuOpen = true
+                        isShapeMenuOpen = false
+                    }
+                }
+            )
         }
 
+        // 4. Ластик
+        if (CanvasTool.ERASER in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.AutoFixNormal,
+                label = "Ластик (E)",
+                isSelected = activeTool == CanvasTool.ERASER,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.ERASER)
+                }
+            )
+        }
+
+        // 5. Стикер
+        if (CanvasTool.STICKY_NOTE in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.AutoMirrored.Filled.StickyNote2,
+                label = "Стикер (S)",
+                isSelected = activeTool == CanvasTool.STICKY_NOTE,
+                colorIndicator = Color(0xFFFEF08A),
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.STICKY_NOTE)
+                }
+            )
+        }
+
+        // 6. Геометрические фигуры
+        if (CanvasTool.SHAPE in enabledTools) {
+            val effectiveShapeSettings = selectedShapeSettings ?: shapeSettings
+            ToolbarIconButton(
+                icon = Icons.Default.CropLandscape,
+                label = "Фигура (R)",
+                isSelected = activeTool == CanvasTool.SHAPE || hasSelectedShape,
+                colorIndicator = Color(effectiveShapeSettings.strokeColorHex),
+                position = position,
+                onClick = {
+                    if (activeTool == CanvasTool.SHAPE || hasSelectedShape) {
+                        isShapeMenuOpen = !isShapeMenuOpen
+                    } else {
+                        onToolSelect(CanvasTool.SHAPE)
+                        isShapeMenuOpen = true
+                        isStylusMenuOpen = false
+                    }
+                }
+            )
+        }
+
+        // 7. Формула LaTeX
+        if (CanvasTool.LATEX in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.Functions,
+                label = "Формула LaTeX (X)",
+                isSelected = activeTool == CanvasTool.LATEX,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.LATEX)
+                }
+            )
+        }
+
+        // 8. Физический конструктор
+        if (CanvasTool.PHYSICS_STENCIL in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.Science,
+                label = "Физический конструктор (B)",
+                isSelected = activeTool == CanvasTool.PHYSICS_STENCIL,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.PHYSICS_STENCIL)
+                }
+            )
+        }
+
+        // 9. Умные коннекторы (Smart Connectors)
+        if (CanvasTool.CONNECTOR in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.AutoMirrored.Filled.AltRoute,
+                label = "Коннектор (C)",
+                isSelected = activeTool == CanvasTool.CONNECTOR,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.CONNECTOR)
+                }
+            )
+        }
+
+        // 10. Веха дорожной карты (Milestone Card)
+        if (CanvasTool.MILESTONE in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.Flag,
+                label = "Веха / Roadmap (M)",
+                isSelected = activeTool == CanvasTool.MILESTONE,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.MILESTONE)
+                }
+            )
+        }
+
+        // 11. Канбан-доска (Kanban Board)
+        if (CanvasTool.KANBAN in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.ViewKanban,
+                label = "Канбан-доска (K)",
+                isSelected = activeTool == CanvasTool.KANBAN,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.KANBAN)
+                }
+            )
+        }
+
+        // 12. График функций (Math Function Plotter)
+        if (CanvasTool.FUNCTION_GRAPH in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.AutoMirrored.Filled.ShowChart,
+                label = "График функций (G)",
+                isSelected = activeTool == CanvasTool.FUNCTION_GRAPH,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.FUNCTION_GRAPH)
+                }
+            )
+        }
+
+        // 13. Текст
+        if (CanvasTool.TEXT in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.FormatColorText,
+                label = "Текст (T)",
+                isSelected = activeTool == CanvasTool.TEXT,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.TEXT)
+                }
+            )
+        }
+
+        // 14. Фрейм / Слайды
+        if (CanvasTool.FRAME in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.Slideshow,
+                label = "Фрейм / Презентация (F)",
+                isSelected = activeTool == CanvasTool.FRAME,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.FRAME)
+                }
+            )
+        }
+
+        // 15. Лазерная указка
+        if (CanvasTool.LASER_POINTER in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.Highlight,
+                label = "Лазерная указка (L)",
+                isSelected = activeTool == CanvasTool.LASER_POINTER,
+                colorIndicator = Color(0xFFFF2A4B),
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.LASER_POINTER)
+                }
+            )
+        }
+
+        // 16. Быстрое переключение позиции панели (Слева -> Снизу -> Справа)
+        if (onChangePosition != null) {
+            val nextPos = when (position) {
+                ToolbarPosition.LEFT -> ToolbarPosition.BOTTOM
+                ToolbarPosition.BOTTOM -> ToolbarPosition.RIGHT
+                ToolbarPosition.RIGHT -> ToolbarPosition.LEFT
+            }
+            ToolbarIconButton(
+                icon = Icons.Default.SwapHoriz,
+                label = "Переместить панель (${nextPos.title})",
+                isSelected = false,
+                position = position,
+                onClick = { onChangePosition(nextPos) }
+            )
+        }
+    }
+
+    // Блок всплывающих настроек (перо или фигура)
+    val popupsContent: @Composable () -> Unit = {
         // Всплывающее меню настроек пера
         AnimatedVisibility(
             visible = activeTool == CanvasTool.PEN && isStylusMenuOpen,
@@ -394,6 +410,73 @@ fun LeftToolbar(
             )
         }
     }
+
+    // Монолитная стеклянная панель тулбара
+    val toolbarPanel: @Composable () -> Unit = {
+        Box(
+            modifier = Modifier
+                .shadow(
+                    elevation = 18.dp,
+                    shape = RoundedCornerShape(22.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.04f),
+                    spotColor = Color.Black.copy(alpha = 0.08f)
+                )
+                .clip(RoundedCornerShape(22.dp))
+                .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.92f) else Color(0xFFF7F7F9).copy(alpha = 0.92f))
+                .border(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
+        ) {
+            if (isBottom) {
+                Row(
+                    modifier = Modifier
+                        .background(Color.Transparent)
+                        .padding(7.dp),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    toolsContent()
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .background(Color.Transparent)
+                        .padding(7.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    toolsContent()
+                }
+            }
+        }
+    }
+
+    if (isBottom) {
+        Column(
+            modifier = modifier.background(Color.Transparent),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            popupsContent()
+            toolbarPanel()
+        }
+    } else if (isRight) {
+        Row(
+            modifier = modifier.background(Color.Transparent),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            popupsContent()
+            toolbarPanel()
+        }
+    } else {
+        Row(
+            modifier = modifier.background(Color.Transparent),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            toolbarPanel()
+            popupsContent()
+        }
+    }
 }
 
 /**
@@ -401,6 +484,7 @@ fun LeftToolbar(
  * - Активная: мягкая полупрозрачная синяя подсветка Color(0xFF007AFF).copy(alpha = 0.12f).
  * - Наведение: легкое затемнение Color.Black.copy(alpha = 0.05f).
  * - Обычное: полностью прозрачный фон (Color.Transparent).
+ * - Всплывающая подсказка адаптируется к положению тулбара (Слева / Снизу / Справа).
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -409,6 +493,7 @@ private fun ToolbarIconButton(
     label: String,
     isSelected: Boolean,
     colorIndicator: Color? = null,
+    position: ToolbarPosition = ToolbarPosition.LEFT,
     onClick: () -> Unit
 ) {
     val isDark = LocalAppTheme.current.isDark
@@ -435,6 +520,24 @@ private fun ToolbarIconButton(
     }
     val tintColor = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)) else (if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43))
 
+    val tooltipPlacement = when (position) {
+        ToolbarPosition.RIGHT -> TooltipPlacement.ComponentRect(
+            anchor = Alignment.CenterStart,
+            alignment = Alignment.CenterStart,
+            offset = DpOffset((-12).dp, 0.dp)
+        )
+        ToolbarPosition.BOTTOM -> TooltipPlacement.ComponentRect(
+            anchor = Alignment.TopCenter,
+            alignment = Alignment.TopCenter,
+            offset = DpOffset(0.dp, (-10).dp)
+        )
+        ToolbarPosition.LEFT -> TooltipPlacement.ComponentRect(
+            anchor = Alignment.CenterEnd,
+            alignment = Alignment.CenterEnd,
+            offset = DpOffset(12.dp, 0.dp)
+        )
+    }
+
     TooltipArea(
         tooltip = {
             Box(
@@ -453,11 +556,7 @@ private fun ToolbarIconButton(
                 )
             }
         },
-        tooltipPlacement = TooltipPlacement.ComponentRect(
-            anchor = Alignment.CenterEnd,
-            alignment = Alignment.CenterEnd,
-            offset = DpOffset(12.dp, 0.dp)
-        ),
+        tooltipPlacement = tooltipPlacement,
         delayMillis = 350
     ) {
         Box(
