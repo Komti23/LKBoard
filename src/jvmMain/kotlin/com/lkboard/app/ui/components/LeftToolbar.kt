@@ -418,8 +418,7 @@ private fun ToolbarIconButton(
 
     val scale by animateFloatAsState(
         targetValue = when {
-            isPressed -> 0.88f
-            isHovered -> 1.06f
+            isPressed -> 0.90f
             else -> 1.0f
         },
         animationSpec = spring(

@@ -564,7 +564,7 @@ private fun TemplatesSection(
                 val isPressed by interactionSource.collectIsPressedAsState()
                 val isHovered by interactionSource.collectIsHoveredAsState()
                 val scale by animateFloatAsState(
-                    targetValue = if (isPressed) 0.96f else if (isHovered) 1.03f else 1.0f,
+                    targetValue = if (isPressed) 0.97f else 1.0f,
                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
                     label = "templateCardScale"
                 )
@@ -649,7 +649,7 @@ private fun BoardCard(
     val isPressed by interactionSource.collectIsPressedAsState()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else if (isHovered) 1.02f else 1.0f,
+        targetValue = if (isPressed) 0.98f else 1.0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "boardCardScale"
     )
@@ -667,15 +667,16 @@ private fun BoardCard(
                 scaleY = scale
             }
             .shadow(
-                elevation = if (isHovered || isActive) 14.dp else 6.dp,
+                elevation = if (isHovered || isActive) 10.dp else 4.dp,
                 shape = RoundedCornerShape(18.dp),
-                ambientColor = Color.Black.copy(alpha = 0.03f),
-                spotColor = if (isActive) Color(0x332563EB) else Color.Black.copy(alpha = 0.07f)
+                ambientColor = Color.Black.copy(alpha = 0.02f),
+                spotColor = if (isActive) Color(0x282563EB) else Color.Black.copy(alpha = 0.05f)
             )
             .clip(RoundedCornerShape(18.dp))
             .background(if (isDark) Color(0xFF181B20) else Color.White)
             .border(
                 if (isActive) BorderStroke(1.5.dp, if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
+                else if (isHovered) BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1))
                 else BorderStroke(1.dp, if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)),
                 RoundedCornerShape(18.dp)
             )

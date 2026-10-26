@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 @Composable
 fun Modifier.bouncyClickable(
     pressedScale: Float = 0.94f,
-    hoverScale: Float = 1.02f,
+    hoverScale: Float = 1.0f,
     enabled: Boolean = true,
     onClick: () -> Unit
 ): Modifier {
@@ -64,7 +64,7 @@ fun Modifier.bouncyClickable(
 fun Modifier.pressScaleEffect(
     interactionSource: MutableInteractionSource,
     pressedScale: Float = 0.91f,
-    hoverScale: Float = 1.05f
+    hoverScale: Float = 1.0f
 ): Modifier {
     val isPressed by interactionSource.collectIsPressedAsState()
     val isHovered by interactionSource.collectIsHoveredAsState()
