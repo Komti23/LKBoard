@@ -49,6 +49,24 @@ compose.desktop {
             copyright = "© 2026 Lkboard Team"
             vendor = "Lkboard"
 
+            modules(
+                "java.base",
+                "java.desktop",
+                "java.instrument",
+                "java.management",
+                "java.naming",
+                "java.net.http",
+                "java.prefs",
+                "java.rmi",
+                "java.scripting",
+                "java.security.jgss",
+                "java.sql",
+                "java.xml",
+                "java.xml.crypto",
+                "jdk.httpserver",
+                "jdk.unsupported"
+            )
+
             windows {
                 menuGroup = "Lkboard"
                 upgradeUuid = "b86e7a2c-e092-48a5-8dc8-fb3446927d61"
