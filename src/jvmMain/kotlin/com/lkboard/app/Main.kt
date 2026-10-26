@@ -111,7 +111,12 @@ fun main() = application {
         state = windowState,
         icon = logoPainter,
         onKeyEvent = { keyEvent ->
-            if (currentScreen == AppScreen.CANVAS && keyEvent.type == KeyEventType.KeyDown &&
+            if (showVersionDetailsDialog && keyEvent.type == KeyEventType.KeyDown &&
+                (keyEvent.key == Key.Escape || (keyEvent.nativeKeyEvent as? java.awt.event.KeyEvent)?.keyCode == java.awt.event.KeyEvent.VK_ESCAPE)
+            ) {
+                showVersionDetailsDialog = false
+                true
+            } else if (currentScreen == AppScreen.CANVAS && keyEvent.type == KeyEventType.KeyDown &&
                 editingElement == null && editingStickyNote == null && editingMilestone == null && editingFunctionGraph == null
             ) {
                 val isCtrl = keyEvent.isCtrlPressed
@@ -297,7 +302,8 @@ fun main() = application {
         }
     ) {
         LkboardTheme(appTheme = currentTheme) {
-            when (currentScreen) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (currentScreen) {
                 AppScreen.DASHBOARD -> {
                     DashboardScreen(
                         boards = boardsList,
@@ -651,11 +657,12 @@ fun main() = application {
                 )
             }
 
-            if (showVersionDetailsDialog) {
-                VersionDetailsDialog(
-                    onDismiss = { showVersionDetailsDialog = false },
-                    onCheckForUpdates = { viewModel.checkForUpdates(isManual = true) }
-                )
+                if (showVersionDetailsDialog) {
+                    VersionDetailsDialog(
+                        onDismiss = { showVersionDetailsDialog = false },
+                        onCheckForUpdates = { viewModel.checkForUpdates(isManual = true) }
+                    )
+                }
             }
         }
 
