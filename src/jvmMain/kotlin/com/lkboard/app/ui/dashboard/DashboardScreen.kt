@@ -1,10 +1,17 @@
 package com.lkboard.app.ui.dashboard
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import com.lkboard.app.ui.animation.bouncyClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,6 +101,7 @@ fun DashboardScreen(
     onCheckUpdates: () -> Unit = {},
     onOpenUpdateDialog: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenVersionDetails: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -132,6 +140,7 @@ fun DashboardScreen(
                 onCheckUpdates = onCheckUpdates,
                 onOpenUpdateDialog = onOpenUpdateDialog,
                 onOpenSettings = onOpenSettings,
+                onOpenVersionDetails = onOpenVersionDetails,
                 isDark = isDark
             )
 
@@ -270,6 +279,7 @@ private fun DashboardHeader(
     onCheckUpdates: () -> Unit,
     onOpenUpdateDialog: () -> Unit,
     onOpenSettings: () -> Unit = {},
+    onOpenVersionDetails: () -> Unit = {},
     isDark: Boolean = false
 ) {
     Box(
@@ -296,7 +306,7 @@ private fun DashboardHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                AppLogo.LogoIcon(size = 42.dp)
+                AppLogo.LogoIcon(size = 52.dp)
 
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -310,16 +320,29 @@ private fun DashboardHeader(
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
+                                .clip(RoundedCornerShape(8.dp))
                                 .background(if (isDark) Color(0xFF1E293B) else Color(0xFFEFF6FF))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .border(1.dp, if (isDark) Color(0xFF38BDF8).copy(alpha = 0.4f) else Color(0xFFBFDBFE), RoundedCornerShape(8.dp))
+                                .bouncyClickable { onOpenVersionDetails() }
+                                .padding(horizontal = 7.dp, vertical = 3.dp)
                         ) {
-                            Text(
-                                text = "v${AppVersion.VERSION_NAME}",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "v${AppVersion.VERSION_NAME}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
+                                )
+                                Text(
+                                    text = "✨ Что нового",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                )
+                            }
                         }
                     }
                     Text(
@@ -537,11 +560,24 @@ private fun TemplatesSection(
                     BorderStroke(1.dp, if (isDark) Color(0xFF27272A) else Color.White)
                 }
 
+                val interactionSource = remember { MutableInteractionSource() }
+                val isPressed by interactionSource.collectIsPressedAsState()
+                val isHovered by interactionSource.collectIsHoveredAsState()
+                val scale by animateFloatAsState(
+                    targetValue = if (isPressed) 0.96f else if (isHovered) 1.03f else 1.0f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                    label = "templateCardScale"
+                )
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                        }
                         .shadow(
-                            elevation = if (isRoadmap) 10.dp else 4.dp,
+                            elevation = if (isHovered || isRoadmap) 10.dp else 4.dp,
                             shape = RoundedCornerShape(16.dp),
                             ambientColor = Color.Black.copy(alpha = 0.02f),
                             spotColor = if (isRoadmap) Color(0x332563EB) else Color.Black.copy(alpha = 0.05f)
@@ -555,7 +591,7 @@ private fun TemplatesSection(
                             }
                         )
                         .border(cardBorder, RoundedCornerShape(16.dp))
-                        .clickable { onSelectTemplate(template) }
+                        .clickable(interactionSource = interactionSource, indication = null) { onSelectTemplate(template) }
                         .padding(16.dp)
                 ) {
                     Column {
@@ -609,6 +645,14 @@ private fun BoardCard(
 ) {
     val isDark = LocalAppTheme.current.isDark
     var menuOpen by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else if (isHovered) 1.02f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "boardCardScale"
+    )
 
     val formattedDate = remember(board.updatedAt) {
         val sdf = SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.getDefault())
@@ -618,8 +662,12 @@ private fun BoardCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .shadow(
-                elevation = if (isActive) 14.dp else 8.dp,
+                elevation = if (isHovered || isActive) 14.dp else 6.dp,
                 shape = RoundedCornerShape(18.dp),
                 ambientColor = Color.Black.copy(alpha = 0.03f),
                 spotColor = if (isActive) Color(0x332563EB) else Color.Black.copy(alpha = 0.07f)
@@ -631,7 +679,7 @@ private fun BoardCard(
                 else BorderStroke(1.dp, if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)),
                 RoundedCornerShape(18.dp)
             )
-            .clickable { onOpen() }
+            .clickable(interactionSource = interactionSource, indication = null) { onOpen() }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             // Верхнее превью (Preview Banner)

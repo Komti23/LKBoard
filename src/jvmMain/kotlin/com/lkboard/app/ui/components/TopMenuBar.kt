@@ -73,6 +73,7 @@ import com.lkboard.app.model.GridType
 
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Timeline
+import com.lkboard.app.ui.animation.bouncyClickable
 import com.lkboard.app.ui.components.AppLogo
 import com.lkboard.app.ui.theme.LocalAppTheme
 
@@ -127,6 +128,7 @@ fun TopMenuBar(
     onImportDocument: () -> Unit = {},
     onExportSelectionPng: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenVersionDetails: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isDark = LocalAppTheme.current.isDark
@@ -157,15 +159,32 @@ fun TopMenuBar(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onNavigateToDashboard() }
+                    .clip(RoundedCornerShape(10.dp))
+                    .bouncyClickable { onNavigateToDashboard() }
                     .padding(horizontal = 6.dp, vertical = 3.dp)
             ) {
-                AppLogo.LogoIcon(size = 20.dp)
+                AppLogo.LogoIcon(size = 28.dp)
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "Доски",
                     fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
+                )
+            }
+
+            // Бейдж версии LKBoard Pro с переходом к деталям и новым функциям
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (isDark) Color(0xFF1E293B) else Color(0xFFEFF6FF))
+                    .border(1.dp, if (isDark) Color(0xFF38BDF8).copy(alpha = 0.35f) else Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
+                    .bouncyClickable { onOpenVersionDetails() }
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "v${com.lkboard.app.update.AppVersion.VERSION_NAME}",
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
                 )
@@ -668,7 +687,7 @@ fun TopMenuBar(
                         ),
                         RoundedCornerShape(8.dp)
                     )
-                    .clickable { onOpenShareDialog() }
+                    .bouncyClickable { onOpenShareDialog() }
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 if (isCollabActive) {
@@ -714,7 +733,7 @@ fun TopMenuBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { onOpenSettings() }
+                    .bouncyClickable { onOpenSettings() }
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {

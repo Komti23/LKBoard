@@ -129,6 +129,7 @@ fun GlassToolbar(
     onExportPdf: () -> Unit = {},
     onExportSelectionPng: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenVersionDetails: () -> Unit = {},
     enabledTools: Set<CanvasTool> = CanvasTool.entries.toSet(),
     onCopyBoardImage: () -> Unit = {},
     onTogglePresentation: () -> Unit = {},
@@ -197,7 +198,8 @@ fun GlassToolbar(
                 onBackgroundColorChange = onBackgroundColorChange,
                 onImportDocument = onImportDocument,
                 onExportSelectionPng = onExportSelectionPng,
-                onOpenSettings = onOpenSettings
+                onOpenSettings = onOpenSettings,
+                onOpenVersionDetails = onOpenVersionDetails
             )
 
             // Быстрые кнопки истории и буфера обмена

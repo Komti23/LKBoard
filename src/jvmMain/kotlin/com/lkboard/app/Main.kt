@@ -35,6 +35,7 @@ import com.lkboard.app.ui.components.LatexEditDialog
 import com.lkboard.app.ui.components.PhysicsStencilDialog
 import com.lkboard.app.ui.components.FirstRunOnboardingDialog
 import com.lkboard.app.ui.components.SettingsDialog
+import com.lkboard.app.ui.components.VersionDetailsDialog
 import com.lkboard.app.ui.dashboard.DashboardScreen
 import com.lkboard.app.ui.theme.LkboardTheme
 import com.lkboard.app.ui.viewmodel.AppScreen
@@ -77,6 +78,7 @@ fun main() = application {
 
     val logoPainter = AppLogo.rememberLogoPainter()
 
+    var showVersionDetailsDialog by remember { mutableStateOf(false) }
     var currentCursorScreenPos by remember { mutableStateOf<Offset?>(null) }
 
     fun getPasteTargetWorldPos(): Offset {
@@ -314,7 +316,8 @@ fun main() = application {
                         updateState = updateState,
                         onCheckUpdates = { viewModel.checkForUpdates(isManual = true) },
                         onOpenUpdateDialog = viewModel::openUpdateDialog,
-                        onOpenSettings = viewModel::openSettingsDialog
+                        onOpenSettings = viewModel::openSettingsDialog,
+                        onOpenVersionDetails = { showVersionDetailsDialog = true }
                     )
                 }
 
@@ -543,7 +546,8 @@ fun main() = application {
                                     }
                                 }
                             },
-                            onOpenSettings = viewModel::openSettingsDialog
+                            onOpenSettings = viewModel::openSettingsDialog,
+                            onOpenVersionDetails = { showVersionDetailsDialog = true }
                         )
 
                         // 3. Модальный редактор для стикеров (Apple Liquid Glass с палитрой и чекбоксами To-Do)
@@ -644,6 +648,13 @@ fun main() = application {
                 UpdateDialog(
                     state = updateState,
                     onDismiss = viewModel::dismissUpdateDialog
+                )
+            }
+
+            if (showVersionDetailsDialog) {
+                VersionDetailsDialog(
+                    onDismiss = { showVersionDetailsDialog = false },
+                    onCheckForUpdates = { viewModel.checkForUpdates(isManual = true) }
                 )
             }
         }

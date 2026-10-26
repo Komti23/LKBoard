@@ -61,24 +61,25 @@ object AppLogo {
 
     @Composable
     fun LogoIcon(
-        size: Dp = 32.dp,
+        size: Dp = 38.dp,
         modifier: Modifier = Modifier
     ) {
         val painter = rememberLogoPainter()
+        val cornerRadius = (size * 0.22f).coerceIn(6.dp, 16.dp)
         if (painter != null) {
             Image(
                 painter = painter,
                 contentDescription = "LKBoard Logo",
                 modifier = modifier
                     .size(size)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(cornerRadius))
             )
         } else {
             // Элегантный fallback бейдж в цветах бренда
             Box(
                 modifier = modifier
                     .size(size)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(cornerRadius))
                     .background(
                         Brush.linearGradient(
                             listOf(Color(0xFF1E1E1E), Color(0xFFFF7A00))
