@@ -1,6 +1,7 @@
 package com.lkboard.app.ui.dashboard
 
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
@@ -582,9 +583,23 @@ private fun TemplatesSection(
                 val isPressed by interactionSource.collectIsPressedAsState()
                 val isHovered by interactionSource.collectIsHoveredAsState()
                 val scale by animateFloatAsState(
-                    targetValue = if (isPressed) 0.97f else 1.0f,
+                    targetValue = when {
+                        isPressed -> 0.96f
+                        isHovered -> 1.03f
+                        else -> 1.0f
+                    },
                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
                     label = "templateCardScale"
+                )
+                val elevation by animateDpAsState(
+                    targetValue = when {
+                        isPressed -> 2.dp
+                        isHovered -> 12.dp
+                        isRoadmap -> 8.dp
+                        else -> 3.dp
+                    },
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                    label = "templateCardElevation"
                 )
 
                 Box(
@@ -595,7 +610,7 @@ private fun TemplatesSection(
                             scaleY = scale
                         }
                         .shadow(
-                            elevation = if (isHovered || isRoadmap) 10.dp else 4.dp,
+                            elevation = elevation,
                             shape = RoundedCornerShape(16.dp),
                             ambientColor = Color.Black.copy(alpha = 0.02f),
                             spotColor = if (isRoadmap) Color(0x332563EB) else Color.Black.copy(alpha = 0.05f)
@@ -687,9 +702,23 @@ private fun BoardCard(
     val isPressed by interactionSource.collectIsPressedAsState()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1.0f,
+        targetValue = when {
+            isPressed -> 0.97f
+            isHovered -> 1.025f
+            else -> 1.0f
+        },
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "boardCardScale"
+    )
+    val elevation by animateDpAsState(
+        targetValue = when {
+            isPressed -> 2.dp
+            isHovered -> 14.dp
+            isActive -> 10.dp
+            else -> 4.dp
+        },
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "boardCardElevation"
     )
 
     val formattedDate = remember(board.updatedAt) {
@@ -705,7 +734,7 @@ private fun BoardCard(
                 scaleY = scale
             }
             .shadow(
-                elevation = if (isHovered || isActive) 10.dp else 4.dp,
+                elevation = elevation,
                 shape = RoundedCornerShape(18.dp),
                 ambientColor = Color.Black.copy(alpha = 0.02f),
                 spotColor = if (isActive) Color(0x282563EB) else Color.Black.copy(alpha = 0.05f)

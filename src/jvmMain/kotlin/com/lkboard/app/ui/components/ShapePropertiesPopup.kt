@@ -1,7 +1,11 @@
 package com.lkboard.app.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -12,6 +16,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.lkboard.app.ui.animation.bouncyClickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +56,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -419,7 +426,29 @@ fun ShapePropertiesPopup(
                             rowColors.forEach { colorHex ->
                                 val isSelected = settings.strokeColorHex == colorHex
                                 val color = Color(colorHex)
-                                val scale by animateFloatAsState(if (isSelected) 1.06f else 1.0f)
+                                val dotInteraction = remember { MutableInteractionSource() }
+                                val isDotHovered by dotInteraction.collectIsHoveredAsState()
+                                val isDotPressed by dotInteraction.collectIsPressedAsState()
+
+                                val scale by animateFloatAsState(
+                                    targetValue = when {
+                                        isDotPressed -> 0.88f
+                                        isSelected -> 1.12f
+                                        isDotHovered -> 1.08f
+                                        else -> 1.0f
+                                    },
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    ),
+                                    label = "shapeStrokeColorDotScale"
+                                )
+
+                                val ringAlpha by animateFloatAsState(
+                                    targetValue = if (isSelected) 1.0f else if (isDotHovered) 0.35f else 0.0f,
+                                    animationSpec = tween(140),
+                                    label = "shapeStrokeRingAlpha"
+                                )
 
                                 Box(
                                     modifier = Modifier
@@ -428,15 +457,15 @@ fun ShapePropertiesPopup(
                                         .scale(scale),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (isSelected) {
+                                    if (ringAlpha > 0.01f) {
                                         Box(
                                             modifier = Modifier
                                                 .size(32.dp)
                                                 .border(
-                                                width = 2.dp,
-                                                color = if (colorHex == 0xFF1E1E1EL) Color(0xFF1E1E1E) else Color(0xFF007AFF),
-                                                shape = CircleShape
-                                            )
+                                                    width = 2.dp,
+                                                    color = (if (colorHex == 0xFF1E1E1EL) Color(0xFF1E1E1E) else Color(0xFF007AFF)).copy(alpha = ringAlpha),
+                                                    shape = CircleShape
+                                                )
                                         )
                                     }
                                     Box(
@@ -449,7 +478,10 @@ fun ShapePropertiesPopup(
                                                     Modifier.border(0.5.dp, Color.Black.copy(alpha = 0.12f), CircleShape)
                                                 } else Modifier
                                             )
-                                            .clickable {
+                                            .clickable(
+                                                interactionSource = dotInteraction,
+                                                indication = null
+                                            ) {
                                                 onSettingsChange(settings.copy(strokeColorHex = colorHex))
                                             }
                                     )
@@ -545,7 +577,29 @@ fun ShapePropertiesPopup(
                         ) {
                             rowFills.forEach { fillHex ->
                                 val isSelected = settings.fillColorHex == fillHex
-                                val scale by animateFloatAsState(if (isSelected) 1.06f else 1.0f)
+                                val dotInteraction = remember { MutableInteractionSource() }
+                                val isDotHovered by dotInteraction.collectIsHoveredAsState()
+                                val isDotPressed by dotInteraction.collectIsPressedAsState()
+
+                                val scale by animateFloatAsState(
+                                    targetValue = when {
+                                        isDotPressed -> 0.88f
+                                        isSelected -> 1.12f
+                                        isDotHovered -> 1.08f
+                                        else -> 1.0f
+                                    },
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    ),
+                                    label = "shapeFillColorDotScale"
+                                )
+
+                                val ringAlpha by animateFloatAsState(
+                                    targetValue = if (isSelected) 1.0f else if (isDotHovered) 0.35f else 0.0f,
+                                    animationSpec = tween(140),
+                                    label = "shapeFillRingAlpha"
+                                )
 
                                 Box(
                                     modifier = Modifier
@@ -554,13 +608,13 @@ fun ShapePropertiesPopup(
                                         .scale(scale),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (isSelected) {
+                                    if (ringAlpha > 0.01f) {
                                         Box(
                                             modifier = Modifier
                                                 .size(32.dp)
                                                 .border(
                                                     width = 2.dp,
-                                                    color = Color(0xFF007AFF),
+                                                    color = Color(0xFF007AFF).copy(alpha = ringAlpha),
                                                     shape = CircleShape
                                                 )
                                         )
@@ -574,7 +628,10 @@ fun ShapePropertiesPopup(
                                                 .clip(CircleShape)
                                                 .background(Color.Black.copy(alpha = 0.04f))
                                                 .border(1.dp, Color.Black.copy(alpha = 0.15f), CircleShape)
-                                                .clickable {
+                                                .clickable(
+                                                    interactionSource = dotInteraction,
+                                                    indication = null
+                                                ) {
                                                     onSettingsChange(settings.copy(fillColorHex = null))
                                                 },
                                             contentAlignment = Alignment.Center
@@ -594,7 +651,10 @@ fun ShapePropertiesPopup(
                                                 .clip(CircleShape)
                                                 .background(Color(fillHex))
                                                 .border(0.5.dp, Color.Black.copy(alpha = 0.12f), CircleShape)
-                                                .clickable {
+                                                .clickable(
+                                                    interactionSource = dotInteraction,
+                                                    indication = null
+                                                ) {
                                                     onSettingsChange(settings.copy(fillColorHex = fillHex))
                                                 }
                                         )
@@ -787,7 +847,7 @@ fun ShapePropertiesPopup(
                                 .height(32.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color.Black.copy(alpha = 0.06f))
-                                .clickable { onRotateBy(-90f) },
+                                .bouncyClickable(hoverScale = 1.05f, pressedScale = 0.93f) { onRotateBy(-90f) },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -804,7 +864,7 @@ fun ShapePropertiesPopup(
                                 .height(32.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color.Black.copy(alpha = 0.06f))
-                                .clickable { onRotateBy(90f) },
+                                .bouncyClickable(hoverScale = 1.05f, pressedScale = 0.93f) { onRotateBy(90f) },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -821,7 +881,7 @@ fun ShapePropertiesPopup(
                                 .height(32.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color.Black.copy(alpha = 0.06f))
-                                .clickable { onResetRotation?.invoke() ?: onRotateBy(0f) },
+                                .bouncyClickable(hoverScale = 1.05f, pressedScale = 0.93f) { onResetRotation?.invoke() ?: onRotateBy(0f) },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -851,24 +911,51 @@ private fun ShapeTypeButton(
     val isDark = LocalAppTheme.current.isDark
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val isPressed by interactionSource.collectIsPressedAsState()
 
-    val bgColor = when {
+    val scale by animateFloatAsState(
+        targetValue = when {
+            isPressed -> 0.88f
+            isSelected -> 1.05f
+            isHovered -> 1.08f
+            else -> 1.0f
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "shapeBtnScale"
+    )
+
+    val targetBg = when {
         isSelected -> (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)).copy(alpha = 0.16f)
-        isHovered -> if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.09f) else Color.Black.copy(alpha = 0.05f)
         else -> Color.Transparent
     }
-    val iconColor = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)) else (if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43))
+    val animatedBg by animateColorAsState(targetBg, tween(150), label = "shapeBtnBg")
+
+    val targetIconColor = if (isSelected) {
+        if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)
+    } else {
+        if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43)
+    }
+    val iconColor by animateColorAsState(targetIconColor, tween(150), label = "shapeBtnIcon")
+
+    val targetBorder = if (isSelected) {
+        if (isDark) Color(0xFF38BDF8).copy(alpha = 0.5f) else Color(0xFF007AFF).copy(alpha = 0.4f)
+    } else Color.Transparent
+    val animatedBorder by animateColorAsState(targetBorder, tween(150), label = "shapeBtnBorder")
 
     Box(
         modifier = modifier
             .height(36.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(8.dp))
-            .background(bgColor)
-            .then(
-                if (isSelected) {
-                    Modifier.border(1.dp, Color(0xFF007AFF).copy(alpha = 0.35f), RoundedCornerShape(8.dp))
-                } else Modifier
-            )
+            .background(animatedBg)
+            .border(1.dp, animatedBorder, RoundedCornerShape(8.dp))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -1070,19 +1157,50 @@ private fun StrokeStyleSegment(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = when {
+            isPressed -> 0.94f
+            isSelected -> 1.02f
+            isHovered -> 1.04f
+            else -> 1.0f
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "strokeStyleScale"
+    )
+
     val activeColor = Color(0xFF007AFF)
     val inactiveColor = Color(0xFF3C3C43).copy(alpha = 0.65f)
-    val lineColor = if (isSelected) activeColor else inactiveColor
+    val targetLineColor = if (isSelected) activeColor else inactiveColor
+    val lineColor by animateColorAsState(targetLineColor, tween(150), label = "strokeStyleLineColor")
+
+    val targetBg = when {
+        isSelected -> activeColor.copy(alpha = 0.16f)
+        isHovered -> Color.Black.copy(alpha = 0.05f)
+        else -> Color.Transparent
+    }
+    val animatedBg by animateColorAsState(targetBg, tween(150), label = "strokeStyleBg")
 
     Box(
         modifier = modifier
             .fillMaxSize()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(8.dp))
-            .background(
-                if (isSelected) activeColor.copy(alpha = 0.16f)
-                else Color.Transparent
+            .background(animatedBg)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
             )
-            .clickable(onClick = onClick)
             .padding(horizontal = 6.dp),
         contentAlignment = Alignment.Center
     ) {

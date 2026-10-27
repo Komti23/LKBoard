@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.lkboard.app.ui.animation.bouncyClickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -114,7 +115,7 @@ fun TextFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                    .clickable { onUpdateProperties(-2f, null, null, null, null) },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onUpdateProperties(-2f, null, null, null, null) },
                 contentAlignment = Alignment.Center
             ) {
                 Text("A-", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B))
@@ -126,7 +127,7 @@ fun TextFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                    .clickable { onUpdateProperties(+2f, null, null, null, null) },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onUpdateProperties(+2f, null, null, null, null) },
                 contentAlignment = Alignment.Center
             ) {
                 Text("A+", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B))
@@ -141,7 +142,7 @@ fun TextFloatingQuickBar(
                         .clip(RoundedCornerShape(5.dp))
                         .background(if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)))
                         .border(1.dp, if (isSelected) Color(0xFF2563EB) else Color.Transparent, RoundedCornerShape(5.dp))
-                        .clickable { onUpdateProperties(null, sz, null, null, null) },
+                        .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onUpdateProperties(null, sz, null, null, null) },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -161,7 +162,7 @@ fun TextFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (element.isBold) (if (isDark) Color(0xFF1E2638) else Color(0xFFDBEAFE)) else Color.Transparent)
-                    .clickable { onUpdateProperties(null, null, !element.isBold, null, null) },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onUpdateProperties(null, null, !element.isBold, null, null) },
                 contentAlignment = Alignment.Center
             ) {
                 Text("B", fontWeight = FontWeight.ExtraBold, fontSize = 12.sp, color = if (element.isBold) (if (isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)))
@@ -173,7 +174,7 @@ fun TextFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (element.isItalic) (if (isDark) Color(0xFF1E2638) else Color(0xFFDBEAFE)) else Color.Transparent)
-                    .clickable { onUpdateProperties(null, null, null, !element.isItalic, null) },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onUpdateProperties(null, null, null, !element.isItalic, null) },
                 contentAlignment = Alignment.Center
             ) {
                 Text("I", fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (element.isItalic) (if (isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8)) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155)))
@@ -194,7 +195,7 @@ fun TextFloatingQuickBar(
                             color = if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)),
                             shape = CircleShape
                         )
-                        .clickable { onUpdateProperties(null, null, null, null, cHex) }
+                        .bouncyClickable(hoverScale = 1.15f, pressedScale = 0.88f) { onUpdateProperties(null, null, null, null, cHex) }
                 )
             }
 
@@ -207,7 +208,7 @@ fun TextFloatingQuickBar(
                         .clip(CircleShape)
                         .background(Color(element.colorHex))
                         .border(2.dp, Color(0xFF2563EB), CircleShape)
-                        .clickable { isColorDialogOpen = true }
+                        .bouncyClickable(hoverScale = 1.15f, pressedScale = 0.88f) { isColorDialogOpen = true }
                 )
             }
 
@@ -218,7 +219,7 @@ fun TextFloatingQuickBar(
                     .clip(CircleShape)
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
                     .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), CircleShape)
-                    .clickable { isColorDialogOpen = true },
+                    .bouncyClickable(hoverScale = 1.12f, pressedScale = 0.90f) { isColorDialogOpen = true },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -237,7 +238,7 @@ fun TextFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                    .clickable { onStartEditing() },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onStartEditing() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -254,7 +255,7 @@ fun TextFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                    .clickable { onDelete() },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onDelete() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -351,7 +352,7 @@ fun LatexFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                    .clickable { onUpdateProperties(-4f, null, null, false) },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onUpdateProperties(-4f, null, null, false) },
                 contentAlignment = Alignment.Center
             ) {
                 Text("A-", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B))
@@ -363,7 +364,7 @@ fun LatexFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                    .clickable { onUpdateProperties(+4f, null, null, false) },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onUpdateProperties(+4f, null, null, false) },
                 contentAlignment = Alignment.Center
             ) {
                 Text("A+", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isDark) Color(0xFFE2E8F0) else Color(0xFF1E293B))
@@ -378,7 +379,7 @@ fun LatexFloatingQuickBar(
                         .clip(RoundedCornerShape(5.dp))
                         .background(if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9)))
                         .border(1.dp, if (isSelected) Color(0xFF2563EB) else Color.Transparent, RoundedCornerShape(5.dp))
-                        .clickable { onUpdateProperties(null, sz, null, false) }
+                        .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onUpdateProperties(null, sz, null, false) }
                         .padding(horizontal = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -400,7 +401,7 @@ fun LatexFloatingQuickBar(
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (element.hasBackgroundCard) (if (isDark) Color(0xFF1E2638) else Color(0xFFDBEAFE)) else Color.Transparent)
                     .border(1.dp, if (element.hasBackgroundCard) (if (isDark) Color(0xFF2563EB) else Color(0xFF93C5FD)) else Color.Transparent, RoundedCornerShape(5.dp))
-                    .clickable { onUpdateProperties(null, null, null, true) }
+                    .bouncyClickable(hoverScale = 1.08f, pressedScale = 0.92f) { onUpdateProperties(null, null, null, true) }
                     .padding(horizontal = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -427,7 +428,7 @@ fun LatexFloatingQuickBar(
                             color = if (isSelected) Color(0xFF2563EB) else (if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1)),
                             shape = CircleShape
                         )
-                        .clickable { onUpdateProperties(null, null, cHex, false) }
+                        .bouncyClickable(hoverScale = 1.15f, pressedScale = 0.88f) { onUpdateProperties(null, null, cHex, false) }
                 )
             }
 
@@ -440,7 +441,7 @@ fun LatexFloatingQuickBar(
                         .clip(CircleShape)
                         .background(Color(element.colorHex))
                         .border(2.dp, Color(0xFF2563EB), CircleShape)
-                        .clickable { isColorDialogOpen = true }
+                        .bouncyClickable(hoverScale = 1.15f, pressedScale = 0.88f) { isColorDialogOpen = true }
                 )
             }
 
@@ -451,7 +452,7 @@ fun LatexFloatingQuickBar(
                     .clip(CircleShape)
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
                     .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), CircleShape)
-                    .clickable { isColorDialogOpen = true },
+                    .bouncyClickable(hoverScale = 1.12f, pressedScale = 0.90f) { isColorDialogOpen = true },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -470,7 +471,7 @@ fun LatexFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                    .clickable { onEditFormula() },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onEditFormula() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -487,7 +488,7 @@ fun LatexFloatingQuickBar(
                     .size(24.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
-                    .clickable { onDelete() },
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onDelete() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

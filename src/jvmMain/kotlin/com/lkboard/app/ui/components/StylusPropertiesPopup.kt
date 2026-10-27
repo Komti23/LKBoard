@@ -1,7 +1,11 @@
 package com.lkboard.app.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -9,6 +13,9 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -181,7 +188,30 @@ fun StylusPropertiesPopup(
                             val isHighlighterColor = colorHex == PenSettings.COLOR_HIGHLIGHTER
                             val isSelected = settings.colorHex == colorHex && settings.isHighlighter == isHighlighterColor
                             val color = Color(colorHex)
-                            val scale by animateFloatAsState(if (isSelected) 1.06f else 1.0f)
+
+                            val dotInteraction = remember { MutableInteractionSource() }
+                            val isDotHovered by dotInteraction.collectIsHoveredAsState()
+                            val isDotPressed by dotInteraction.collectIsPressedAsState()
+
+                            val scale by animateFloatAsState(
+                                targetValue = when {
+                                    isDotPressed -> 0.88f
+                                    isSelected -> 1.12f
+                                    isDotHovered -> 1.08f
+                                    else -> 1.0f
+                                },
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "stylusColorDotScale"
+                            )
+
+                            val ringAlpha by animateFloatAsState(
+                                targetValue = if (isSelected) 1.0f else if (isDotHovered) 0.35f else 0.0f,
+                                animationSpec = tween(140),
+                                label = "stylusColorRingAlpha"
+                            )
 
                             Box(
                                 modifier = Modifier
@@ -190,14 +220,14 @@ fun StylusPropertiesPopup(
                                     .scale(scale),
                                 contentAlignment = Alignment.Center
                             ) {
-                                // Внешнее кольцо обводки при выборе
-                                if (isSelected) {
+                                // Внешнее кольцо обводки с плавной анимацией появления
+                                if (ringAlpha > 0.01f) {
                                     Box(
                                         modifier = Modifier
                                             .size(32.dp)
                                             .border(
                                                 width = 2.dp,
-                                                color = if (colorHex == 0xFF1E1E1EL) Color(0xFF1E1E1E) else Color(0xFF007AFF),
+                                                color = (if (colorHex == 0xFF1E1E1EL) Color(0xFF1E1E1E) else Color(0xFF007AFF)).copy(alpha = ringAlpha),
                                                 shape = CircleShape
                                             )
                                     )
@@ -214,7 +244,10 @@ fun StylusPropertiesPopup(
                                                 Modifier.border(0.5.dp, Color.Black.copy(alpha = 0.12f), CircleShape)
                                             } else Modifier
                                         )
-                                        .clickable {
+                                        .clickable(
+                                            interactionSource = dotInteraction,
+                                            indication = null
+                                        ) {
                                             onSettingsChange(
                                                 settings.copy(
                                                     colorHex = colorHex,
@@ -329,17 +362,21 @@ fun StylusPropertiesPopup(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Миниатюра штриха слева
+                // Миниатюра штриха слева с плавной анимацией размера
                 Box(
                     modifier = Modifier
                         .size(24.dp)
                         .background(Color.Transparent),
                     contentAlignment = Alignment.Center
                 ) {
-                    val dotSize = (settings.strokeWidth * 0.75f).coerceIn(2.5f, 20f).dp
+                    val animatedDotSize by animateDpAsState(
+                        targetValue = (settings.strokeWidth * 0.75f).coerceIn(2.5f, 20f).dp,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                        label = "stylusDotSize"
+                    )
                     Box(
                         modifier = Modifier
-                            .size(dotSize)
+                            .size(animatedDotSize)
                             .clip(CircleShape)
                             .background(
                                 if (settings.isHighlighter) Color(settings.colorHex).copy(alpha = 0.65f)

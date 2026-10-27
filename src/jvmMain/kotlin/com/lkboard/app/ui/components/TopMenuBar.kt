@@ -1,11 +1,17 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,6 +70,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
@@ -767,22 +774,44 @@ private fun TopMenuCapsuleButton(
     val isDark = LocalAppTheme.current.isDark
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val isPressed by interactionSource.collectIsPressedAsState()
 
-    val backgroundColor = when {
+    val scale by animateFloatAsState(
+        targetValue = when {
+            isPressed -> 0.93f
+            isHovered -> 1.05f
+            else -> 1.0f
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "menuBtnScale"
+    )
+
+    val targetBg = when {
         isOpen -> (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)).copy(alpha = 0.16f)
-        isHovered -> if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.09f) else Color.Black.copy(alpha = 0.05f)
         else -> Color.Transparent
     }
-    val textColor = when {
+    val animatedBg by animateColorAsState(targetBg, tween(150), label = "menuBtnBg")
+
+    val targetTextColor = when {
         isOpen -> if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)
+        isHovered -> if (isDark) Color.White else Color(0xFF0F172A)
         else -> if (isDark) Color(0xFFE4E4E7) else Color(0xFF1E293B)
     }
+    val animatedTextColor by animateColorAsState(targetTextColor, tween(150), label = "menuBtnText")
 
     Box {
         Box(
             modifier = Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
                 .clip(RoundedCornerShape(8.dp))
-                .background(backgroundColor)
+                .background(animatedBg)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -795,7 +824,7 @@ private fun TopMenuCapsuleButton(
                 text = title,
                 fontSize = 12.sp,
                 fontWeight = if (isOpen) FontWeight.SemiBold else FontWeight.Medium,
-                color = textColor
+                color = animatedTextColor
             )
         }
         menuContent()
@@ -820,13 +849,21 @@ private fun StyledMenuItem(
     val isDark = LocalAppTheme.current.isDark
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val isPressed by interactionSource.collectIsPressedAsState()
 
-    val itemBg = when {
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed && enabled) 0.97f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "menuItemScale"
+    )
+
+    val targetItemBg = when {
         !enabled -> Color.Transparent
         isHovered && isDestructive -> Color(0xFFEF4444).copy(alpha = 0.16f)
         isHovered -> if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
         else -> Color.Transparent
     }
+    val animatedItemBg by animateColorAsState(targetItemBg, tween(120), label = "menuItemBg")
 
     val contentColor = when {
         !enabled -> if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)
@@ -845,8 +882,12 @@ private fun StyledMenuItem(
             .fillMaxWidth()
             .height(32.dp)
             .padding(horizontal = 4.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(6.dp))
-            .background(itemBg)
+            .background(animatedItemBg)
             .clickable(
                 enabled = enabled,
                 interactionSource = interactionSource,

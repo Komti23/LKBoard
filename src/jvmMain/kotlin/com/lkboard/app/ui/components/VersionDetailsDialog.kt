@@ -35,6 +35,15 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -466,7 +475,7 @@ private fun FeatureCard(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Иконка бейдж
+            // Векторная иконка-бейдж (строгий премиальный стиль Material)
             Box(
                 modifier = Modifier
                     .size(36.dp)
@@ -475,11 +484,23 @@ private fun FeatureCard(
                     .border(1.dp, if (isDark) Color(0xFF2563EB).copy(alpha = 0.5f) else Color(0xFFBFDBFE), RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = item.icon,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2563EB)
+                val iconVector = when (item.tag) {
+                    "Анимации" -> Icons.Default.AutoAwesome
+                    "Цвет и стиль" -> Icons.Default.Palette
+                    "Дизайн" -> Icons.Default.Tune
+                    "Стабильность" -> Icons.Default.Security
+                    "Интерфейс" -> Icons.Default.Layers
+                    "Совместная работа" -> Icons.Default.Share
+                    "Физика" -> Icons.Default.Science
+                    "Холст" -> Icons.Default.ZoomIn
+                    "Настройки" -> Icons.Default.Settings
+                    else -> Icons.Default.Stars
+                }
+                Icon(
+                    imageVector = iconVector,
+                    contentDescription = null,
+                    tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
+                    modifier = Modifier.size(18.dp)
                 )
             }
 

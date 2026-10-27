@@ -1,9 +1,12 @@
 package com.lkboard.app.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -21,8 +24,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -383,8 +388,8 @@ fun LeftToolbar(
         // Всплывающее меню настроек пера
         AnimatedVisibility(
             visible = activeTool == CanvasTool.PEN && isStylusMenuOpen,
-            enter = fadeIn() + scaleIn(initialScale = 0.94f),
-            exit = fadeOut() + scaleOut(targetScale = 0.94f)
+            enter = fadeIn(animationSpec = tween(180)) + scaleIn(initialScale = 0.90f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)),
+            exit = fadeOut(animationSpec = tween(140)) + scaleOut(targetScale = 0.92f, animationSpec = tween(140))
         ) {
             StylusPropertiesPopup(
                 settings = penSettings,
@@ -398,8 +403,8 @@ fun LeftToolbar(
         val effectiveShape = selectedShapeSettings ?: shapeSettings
         AnimatedVisibility(
             visible = (activeTool == CanvasTool.SHAPE || hasSelectedShape) && isShapeMenuOpen,
-            enter = fadeIn() + scaleIn(initialScale = 0.94f),
-            exit = fadeOut() + scaleOut(targetScale = 0.94f)
+            enter = fadeIn(animationSpec = tween(180)) + scaleIn(initialScale = 0.90f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)),
+            exit = fadeOut(animationSpec = tween(140)) + scaleOut(targetScale = 0.92f, animationSpec = tween(140))
         ) {
             ShapePropertiesPopup(
                 settings = effectiveShape,
@@ -501,9 +506,11 @@ private fun ToolbarIconButton(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isPressed by interactionSource.collectIsPressedAsState()
 
+    // Плавная физическая пружина масштабирования при наведении и нажатии
     val scale by animateFloatAsState(
         targetValue = when {
-            isPressed -> 0.90f
+            isPressed -> 0.88f
+            isHovered -> 1.08f
             else -> 1.0f
         },
         animationSpec = spring(
@@ -513,12 +520,41 @@ private fun ToolbarIconButton(
         label = "toolbarBtnScale"
     )
 
-    val backgroundColor = when {
+    // Плавная цветовая анимация фона
+    val targetBgColor = when {
         isSelected -> (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)).copy(alpha = 0.16f)
-        isHovered -> if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f)
         else -> Color.Transparent
     }
-    val tintColor = if (isSelected) (if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)) else (if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43))
+    val animatedBgColor by animateColorAsState(
+        targetValue = targetBgColor,
+        animationSpec = tween(durationMillis = 180),
+        label = "toolbarBtnBg"
+    )
+
+    // Плавная цветовая анимация иконки
+    val targetTintColor = if (isSelected) {
+        if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)
+    } else {
+        if (isDark) Color(0xFFE4E4E7) else Color(0xFF3C3C43)
+    }
+    val animatedTintColor by animateColorAsState(
+        targetValue = targetTintColor,
+        animationSpec = tween(durationMillis = 180),
+        label = "toolbarBtnTint"
+    )
+
+    // Плавная подсветка контура при активности или наведении
+    val targetBorderColor = when {
+        isSelected -> if (isDark) Color(0xFF38BDF8).copy(alpha = 0.65f) else Color(0xFF007AFF).copy(alpha = 0.55f)
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.14f) else Color.Black.copy(alpha = 0.08f)
+        else -> Color.Transparent
+    }
+    val animatedBorderColor by animateColorAsState(
+        targetValue = targetBorderColor,
+        animationSpec = tween(durationMillis = 180),
+        label = "toolbarBtnBorder"
+    )
 
     val tooltipPlacement = when (position) {
         ToolbarPosition.RIGHT -> TooltipPlacement.ComponentRect(
@@ -542,9 +578,9 @@ private fun ToolbarIconButton(
         tooltip = {
             Box(
                 modifier = Modifier
-                    .shadow(elevation = 6.dp, shape = RoundedCornerShape(8.dp))
+                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(8.dp))
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF1E1E1E).copy(alpha = 0.92f))
+                    .background(Color(0xFF1E1E1E).copy(alpha = 0.94f))
                     .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
                     .padding(horizontal = 9.dp, vertical = 5.dp)
             ) {
@@ -557,7 +593,7 @@ private fun ToolbarIconButton(
             }
         },
         tooltipPlacement = tooltipPlacement,
-        delayMillis = 350
+        delayMillis = 300
     ) {
         Box(
             modifier = Modifier
@@ -567,7 +603,8 @@ private fun ToolbarIconButton(
                     scaleY = scale
                 }
                 .clip(RoundedCornerShape(12.dp))
-                .background(backgroundColor)
+                .background(animatedBgColor)
+                .border(1.dp, animatedBorderColor, RoundedCornerShape(12.dp))
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -578,9 +615,46 @@ private fun ToolbarIconButton(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = tintColor,
+                tint = animatedTintColor,
                 modifier = Modifier.size(22.dp)
             )
+
+            // Активный боковой акцентный индикатор (Apple / Fluent Active Pill)
+            if (isSelected) {
+                val accentColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)
+                when (position) {
+                    ToolbarPosition.LEFT -> {
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(16.dp)
+                                .align(Alignment.CenterStart)
+                                .clip(RoundedCornerShape(topEnd = 2.dp, bottomEnd = 2.dp))
+                                .background(accentColor)
+                        )
+                    }
+                    ToolbarPosition.RIGHT -> {
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(16.dp)
+                                .align(Alignment.CenterEnd)
+                                .clip(RoundedCornerShape(topStart = 2.dp, bottomStart = 2.dp))
+                                .background(accentColor)
+                        )
+                    }
+                    ToolbarPosition.BOTTOM -> {
+                        Box(
+                            modifier = Modifier
+                                .width(16.dp)
+                                .height(3.dp)
+                                .align(Alignment.BottomCenter)
+                                .clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
+                                .background(accentColor)
+                        )
+                    }
+                }
+            }
 
             // Индикатор активного цвета в правом нижнем углу кнопки
             if (colorIndicator != null && !isSelected) {

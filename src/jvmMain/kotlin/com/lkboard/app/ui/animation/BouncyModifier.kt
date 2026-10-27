@@ -14,15 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 
 /**
- * Модификатор тактильной упругой анимации при нажатии (Spring Press Bounce):
- * - При наведении слегка приподнимает элемент (1.02x).
- * - При нажатии плавно сжимает (0.94x), обеспечивая осязаемый тактильный отклик.
- * - При отпускании создает мягкий физический отскок (Spring bounce).
+ * Модификатор тактильной упругой анимации при нажатии и наведении (Spring Press & Hover Bounce):
+ * - При наведении плавно приподнимает элемент (1.04x) с мягкой физикой пружины Apple Spring.
+ * - При нажатии плавно сжимает (0.93x), обеспечивая четкий физический отклик.
+ * - При отпускании создает мягкий физический отскок (Medium Bouncy).
  */
 @Composable
 fun Modifier.bouncyClickable(
-    pressedScale: Float = 0.94f,
-    hoverScale: Float = 1.0f,
+    pressedScale: Float = 0.93f,
+    hoverScale: Float = 1.04f,
     enabled: Boolean = true,
     onClick: () -> Unit
 ): Modifier {
@@ -39,7 +39,7 @@ fun Modifier.bouncyClickable(
         },
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
+            stiffness = Spring.StiffnessMedium
         ),
         label = "bouncyScale"
     )
@@ -58,13 +58,13 @@ fun Modifier.bouncyClickable(
 }
 
 /**
- * Модификатор анимации нажатия для элементов, у которых уже используется существующий interactionSource.
+ * Модификатор анимации нажатия и наведения для элементов, у которых уже используется существующий interactionSource.
  */
 @Composable
 fun Modifier.pressScaleEffect(
     interactionSource: MutableInteractionSource,
-    pressedScale: Float = 0.91f,
-    hoverScale: Float = 1.0f
+    pressedScale: Float = 0.92f,
+    hoverScale: Float = 1.06f
 ): Modifier {
     val isPressed by interactionSource.collectIsPressedAsState()
     val isHovered by interactionSource.collectIsHoveredAsState()

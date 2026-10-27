@@ -1,9 +1,22 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -30,19 +43,24 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.lkboard.app.ui.theme.LocalAppTheme
 import androidx.compose.ui.unit.sp
 import com.lkboard.app.data.ToolbarPosition
 import com.lkboard.app.model.CanvasTool
 import com.lkboard.app.model.GridType
+import com.lkboard.app.ui.animation.bouncyClickable
+import com.lkboard.app.ui.theme.LocalAppTheme
 import com.lkboard.app.model.PenSettings
 import kotlin.math.roundToInt
 
@@ -214,31 +232,19 @@ fun GlassToolbar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    IconButton(
-                        onClick = onUndo,
+                    GlassAnimatedActionButton(
+                        icon = Icons.AutoMirrored.Filled.Undo,
+                        label = "Отменить (Ctrl+Z)",
                         enabled = canUndo,
-                        modifier = Modifier.size(34.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Undo,
-                            contentDescription = "Отменить (Ctrl+Z)",
-                            tint = if (canUndo) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B)) else (if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)),
-                            modifier = Modifier.size(17.dp)
-                        )
-                    }
+                        onClick = onUndo
+                    )
 
-                    IconButton(
-                        onClick = onRedo,
+                    GlassAnimatedActionButton(
+                        icon = Icons.AutoMirrored.Filled.Redo,
+                        label = "Повторить (Ctrl+Y)",
                         enabled = canRedo,
-                        modifier = Modifier.size(34.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Redo,
-                            contentDescription = "Повторить (Ctrl+Y)",
-                            tint = if (canRedo) (if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B)) else (if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)),
-                            modifier = Modifier.size(17.dp)
-                        )
-                    }
+                        onClick = onRedo
+                    )
 
                     Spacer(
                         modifier = Modifier
@@ -247,40 +253,33 @@ fun GlassToolbar(
                             .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f))
                     )
 
-                    IconButton(
-                        onClick = onPaste,
-                        modifier = Modifier.size(34.dp)
+                    GlassAnimatedActionButton(
+                        icon = Icons.Default.ContentPaste,
+                        label = "Вставить (Ctrl+V)",
+                        tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
+                        onClick = onPaste
+                    )
+
+                    AnimatedVisibility(
+                        visible = hasSelection,
+                        enter = fadeIn(tween(180)) + expandHorizontally(spring(dampingRatio = Spring.DampingRatioMediumBouncy)),
+                        exit = fadeOut(tween(140)) + shrinkHorizontally(tween(140))
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentPaste,
-                            contentDescription = "Вставить (Ctrl+V)",
-                            tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
-                            modifier = Modifier.size(17.dp)
-                        )
-                    }
-
-                    if (hasSelection) {
-                        IconButton(
-                            onClick = onCopy,
-                            modifier = Modifier.size(34.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = "Копировать (Ctrl+C)",
-                                tint = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
-                                modifier = Modifier.size(17.dp)
+                            GlassAnimatedActionButton(
+                                icon = Icons.Default.ContentCopy,
+                                label = "Копировать (Ctrl+C)",
+                                onClick = onCopy
                             )
-                        }
 
-                        IconButton(
-                            onClick = onDeleteSelected,
-                            modifier = Modifier.size(34.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = "Удалить (Del)",
+                            GlassAnimatedActionButton(
+                                icon = Icons.Default.DeleteOutline,
+                                label = "Удалить (Del)",
                                 tint = Color(0xFFEF4444),
-                                modifier = Modifier.size(17.dp)
+                                onClick = onDeleteSelected
                             )
                         }
                     }
@@ -326,43 +325,40 @@ fun GlassToolbar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                IconButton(onClick = onZoomOut, modifier = Modifier.size(32.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = "Отдалить",
-                        tint = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                GlassAnimatedActionButton(
+                    icon = Icons.Default.Remove,
+                    label = "Отдалить",
+                    size = 32.dp,
+                    iconSize = 16.dp,
+                    onClick = onZoomOut
+                )
 
                 Text(
                     text = "${(scale * 100).roundToInt()}%",
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .clickable { onResetZoom() }
+                        .bouncyClickable(hoverScale = 1.08f, pressedScale = 0.92f) { onResetZoom() }
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
                 )
 
-                IconButton(onClick = onZoomIn, modifier = Modifier.size(32.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Приблизить",
-                        tint = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                GlassAnimatedActionButton(
+                    icon = Icons.Default.Add,
+                    label = "Приблизить",
+                    size = 32.dp,
+                    iconSize = 16.dp,
+                    onClick = onZoomIn
+                )
 
-                IconButton(onClick = onZoomToFit, modifier = Modifier.size(32.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.FitScreen,
-                        contentDescription = "По размеру контента",
-                        tint = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                GlassAnimatedActionButton(
+                    icon = Icons.Default.FitScreen,
+                    label = "По размеру контента",
+                    size = 32.dp,
+                    iconSize = 16.dp,
+                    onClick = onZoomToFit
+                )
 
                 Spacer(
                     modifier = Modifier
@@ -378,15 +374,88 @@ fun GlassToolbar(
                     GridType.NONE -> Pair(Icons.Default.GridOff, "Сетка: Отключена (нажмите для смены)")
                 }
 
-                IconButton(onClick = onCycleGridType, modifier = Modifier.size(32.dp)) {
-                    Icon(
-                        imageVector = gridIcon,
-                        contentDescription = gridDesc,
-                        tint = if (gridType == GridType.NONE) (if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)) else (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                GlassAnimatedActionButton(
+                    icon = gridIcon,
+                    label = gridDesc,
+                    size = 32.dp,
+                    iconSize = 16.dp,
+                    tint = if (gridType == GridType.NONE) (if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)) else (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)),
+                    onClick = onCycleGridType
+                )
             }
         }
+    }
+}
+
+/**
+ * Анимированная стеклянная кнопка быстрого действия с тактильным откликом при наведении и нажатии.
+ */
+@Composable
+private fun GlassAnimatedActionButton(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean = true,
+    tint: Color? = null,
+    size: androidx.compose.ui.unit.Dp = 34.dp,
+    iconSize: androidx.compose.ui.unit.Dp = 17.dp,
+    onClick: () -> Unit
+) {
+    val isDark = LocalAppTheme.current.isDark
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = when {
+            !enabled -> 1.0f
+            isPressed -> 0.88f
+            isHovered -> 1.10f
+            else -> 1.0f
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "glassActionScale"
+    )
+
+    val targetBg = when {
+        !enabled -> Color.Transparent
+        isHovered -> if (isDark) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f)
+        else -> Color.Transparent
+    }
+    val animatedBg by animateColorAsState(targetBg, tween(150), label = "glassActionBg")
+
+    val defaultTint = if (enabled) {
+        if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B)
+    } else {
+        if (isDark) Color(0xFF52525B) else Color(0xFF94A3B8)
+    }
+    val targetTint = tint ?: defaultTint
+    val animatedTint by animateColorAsState(targetTint, tween(150), label = "glassActionTint")
+
+    Box(
+        modifier = Modifier
+            .size(size)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(8.dp))
+            .background(animatedBg)
+            .clickable(
+                enabled = enabled,
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = animatedTint,
+            modifier = Modifier.size(iconSize)
+        )
     }
 }
