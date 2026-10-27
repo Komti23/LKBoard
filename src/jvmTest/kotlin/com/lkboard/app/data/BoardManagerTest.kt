@@ -16,15 +16,14 @@ class BoardManagerTest {
     val tempFolder = TemporaryFolder()
 
     @Test
-    fun testInitDefaultBoardsCreatesRoadmapDemo() {
+    fun testInitDefaultBoardsCreatesInitialBoard() {
         val root = tempFolder.newFolder("lkboard_appdata")
         val manager = BoardManager(root)
 
         val boards = manager.listBoards()
-        assertTrue(boards.isNotEmpty(), "Должна быть создана хотя бы одна демонстрационная доска")
-        val roadmap = boards.find { it.templateType == BoardTemplate.ROADMAP.name }
-        assertNotNull(roadmap, "Демонстрационная дорожная карта должна присутствовать в списке")
-        assertTrue(roadmap.elementCount > 0, "Дорожная карта должна содержать предзаполненные элементы")
+        assertTrue(boards.isNotEmpty(), "Должна быть создана хотя бы одна стартовая доска")
+        val initial = boards.firstOrNull()
+        assertNotNull(initial, "Стартовая доска должна присутствовать в списке")
     }
 
     @Test

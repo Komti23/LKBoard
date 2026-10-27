@@ -326,14 +326,20 @@ class BoardViewModel {
     }
 
     fun openBoard(id: String) {
-        autoSaveSync()
+        if (_currentScreen.value == AppScreen.CANVAS) {
+            autoSaveSync()
+        }
+        autoSaveJob?.cancel()
         val pair = boardManager.loadBoard(id)
         if (pair != null) {
             val (info, loadedState) = pair
             _activeBoardId.value = info.id
             _currentFile.value = boardManager.getBoardFile(info)
             historyManager.clear()
-            _state.value = loadedState
+            _state.value = loadedState.copy(
+                selectedElementIds = emptySet(),
+                enabledTools = AppPreferences.loadEnabledTools()
+            )
             updateHistoryFlags()
             _currentScreen.value = AppScreen.CANVAS
         }
@@ -1768,78 +1774,9 @@ class BoardViewModel {
     }
 
     private fun createInitialState(): BoardState {
-        val sampleSticky = BoardElement.StickyNote(
-            id = "note-welcome",
-            x = 80f,
-            y = 100f,
-            width = 240f,
-            height = 200f,
-            text = "Добро пожаловать в Lkboard! 🚀\n\n• Двойной клик — редактировать текст.\n• Перетаскивайте и меняйте размер за маркеры.\n• Ctrl+Z/Ctrl+Y — Undo/Redo.\n• Ctrl+D — дублировать.",
-            colorHex = 0xFFFFF59D
-        )
-
-        val sampleShape = BoardElement.Shape(
-            id = "shape-arch",
-            x = 380f,
-            y = 100f,
-            width = 220f,
-            height = 140f,
-            shapeType = ShapeType.ROUNDED_RECTANGLE,
-            strokeColorHex = 0xFF2563EB,
-            fillColorHex = 0x223B82F6,
-            cornerRadius = 16f,
-            strokeWidth = 2.5f
-        )
-
-        val sampleText = BoardElement.Text(
-            id = "text-arch",
-            x = 400f,
-            y = 150f,
-            width = 180f,
-            height = 40f,
-            text = "Skia Infinite Canvas",
-            colorHex = 0xFF1E3A8A,
-            fontSize = 17f,
-            isBold = true
-        )
-
-        val sampleDiamond = BoardElement.Shape(
-            id = "shape-decision",
-            x = 660f,
-            y = 100f,
-            width = 150f,
-            height = 140f,
-            shapeType = ShapeType.DIAMOND,
-            strokeColorHex = 0xFF10B981,
-            fillColorHex = 0x2210B981,
-            strokeWidth = 2.5f
-        )
-
-        val samplePath = BoardElement.DrawingPath(
-            id = "path-signature",
-            x = 100f,
-            y = 360f,
-            points = listOf(
-                CanvasPoint(100f, 380f),
-                CanvasPoint(140f, 370f),
-                CanvasPoint(180f, 410f),
-                CanvasPoint(220f, 360f),
-                CanvasPoint(270f, 390f),
-                CanvasPoint(320f, 350f)
-            ),
-            strokeColorHex = 0xFFEF4444,
-            strokeWidth = 4f
-        )
-
         return BoardState(
-            title = "Архитектурная доска Lkboard",
-            elements = mapOf(
-                sampleSticky.id to sampleSticky,
-                sampleShape.id to sampleShape,
-                sampleText.id to sampleText,
-                sampleDiamond.id to sampleDiamond,
-                samplePath.id to samplePath
-            ),
+            title = "Новая доска",
+            elements = emptyMap(),
             penSettings = AppPreferences.loadPenSettings(),
             shapeSettings = AppPreferences.loadShapeSettings(),
             gridType = AppPreferences.loadGridType(),

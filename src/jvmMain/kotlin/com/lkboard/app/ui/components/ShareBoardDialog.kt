@@ -18,6 +18,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -100,8 +103,8 @@ fun ShareBoardDialog(
                 .width(580.dp)
                 .clip(RoundedCornerShape(24.dp))
                 .shadow(28.dp, RoundedCornerShape(24.dp))
-                .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.94f))
-                .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.90f)), RoundedCornerShape(24.dp))
+                .background(if (isDark) Color(0xFF14171D) else Color.White)
+                .border(BorderStroke(1.dp, if (isDark) Color(0xFF262A34) else Color(0xFFE2E8F0)), RoundedCornerShape(24.dp))
                 .clickable(enabled = false) {}
                 .padding(26.dp)
         ) {
@@ -312,7 +315,12 @@ fun ShareBoardDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Text("🌐", fontSize = 14.sp)
+                                        Icon(
+                                            imageVector = Icons.Default.Public,
+                                            contentDescription = null,
+                                            tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
+                                            modifier = Modifier.size(15.dp)
+                                        )
                                         Text("Интернет-ссылка (для участников в любой точке мира)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))
                                     }
                                     if (copiedPublicFeedback) {
@@ -366,7 +374,12 @@ fun ShareBoardDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text("🏠", fontSize = 14.sp)
+                                    Icon(
+                                        imageVector = Icons.Default.Home,
+                                        contentDescription = null,
+                                        tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                        modifier = Modifier.size(15.dp)
+                                    )
                                     Text("Локальная ссылка (для одной Wi-Fi сети)", fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp, color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155))
                                 }
                                 if (copiedWebFeedback) {
@@ -463,11 +476,22 @@ fun ShareBoardDialog(
                                 .border(BorderStroke(1.dp, if (isDark) Color(0xFF059669) else Color(0xFFBBF7D0)), RoundedCornerShape(10.dp))
                                 .padding(10.dp)
                         ) {
-                            Text(
-                                text = "🚀 Облачный сервер LKBoard (164.37.224.219) активен: участники могут мгновенно подключиться по интернет-ссылке из любого браузера или смартфона без дополнительных настроек!",
-                                fontSize = 11.sp,
-                                color = if (isDark) Color(0xFF6EE7B7) else Color(0xFF166534)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CloudDone,
+                                    contentDescription = null,
+                                    tint = if (isDark) Color(0xFF34D399) else Color(0xFF16A34A),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Облачный сервер LKBoard (164.37.224.219) активен: участники могут мгновенно подключиться по интернет-ссылке из любого браузера или смартфона без дополнительных настроек.",
+                                    fontSize = 11.sp,
+                                    color = if (isDark) Color(0xFF6EE7B7) else Color(0xFF166534)
+                                )
+                            }
                         }
                     }
 

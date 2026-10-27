@@ -60,7 +60,38 @@ class BoardManager(
         return try {
             if (indexFile.exists()) {
                 val content = indexFile.readText(Charsets.UTF_8)
-                json.decodeFromString<BoardsIndex>(content)
+                val idx = json.decodeFromString<BoardsIndex>(content)
+                // Самовосстановление: проверяем, нет ли на диске .lkboard файлов, отсутствующих в индексе
+                val diskFiles = boardsDir.listFiles { _, name -> name.endsWith(".lkboard") } ?: emptyArray()
+                val knownFileNames = idx.boards.map { it.fileName }.toSet()
+                val missingFiles = diskFiles.filter { it.name !in knownFileNames }
+                if (missingFiles.isNotEmpty()) {
+                    val recovered = missingFiles.mapNotNull { f ->
+                        try {
+                            val state = BoardSerializer.load(f)
+                            val id = f.nameWithoutExtension.removePrefix("board_")
+                            BoardItemInfo(
+                                id = id,
+                                title = state.title.ifBlank { "Моя доска" },
+                                fileName = f.name,
+                                elementCount = state.elements.size,
+                                updatedAt = f.lastModified(),
+                                createdAt = f.lastModified(),
+                                backgroundColorHex = state.backgroundColorHex,
+                                gridType = state.gridType,
+                                templateType = "BLANK"
+                            )
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    val updatedList = (idx.boards + recovered).sortedByDescending { it.updatedAt }
+                    val updated = idx.copy(boards = updatedList)
+                    saveIndex(updated)
+                    updated
+                } else {
+                    idx
+                }
             } else {
                 initDefaultBoards()
             }
@@ -81,69 +112,76 @@ class BoardManager(
     }
 
     /**
-     * Инициализация при первом запуске: миграция старого autosave_board или создание стартовых досок.
+     * Инициализация при первом запуске: восстановление существующих файлов, миграция autosave или чистая доска.
      */
     private fun initDefaultBoards(): BoardsIndex {
         val list = mutableListOf<BoardItemInfo>()
-        val autoSaveFile = AppPreferences.getAutoSaveFile()
 
-        var initialActiveId: String? = null
-
-        // 1. Проверяем наличие существующего autosave файла
-        if (autoSaveFile.exists() && autoSaveFile.length() > 0) {
+        // 1. Проверяем наличие существующих .lkboard файлов на диске (чтобы никогда не потерять доски пользователя)
+        val diskFiles = boardsDir.listFiles { _, name -> name.endsWith(".lkboard") } ?: emptyArray()
+        for (f in diskFiles) {
             try {
-                val state = BoardSerializer.load(autoSaveFile)
-                val id = UUID.randomUUID().toString()
-                val fileName = "board_$id.lkboard"
-                val targetFile = File(boardsDir, fileName)
-                BoardSerializer.save(targetFile, state)
-
-                val item = BoardItemInfo(
-                    id = id,
-                    title = state.title.ifBlank { "Моя доска" },
-                    fileName = fileName,
-                    elementCount = state.elements.size,
-                    updatedAt = System.currentTimeMillis(),
-                    createdAt = System.currentTimeMillis(),
-                    backgroundColorHex = state.backgroundColorHex,
-                    gridType = state.gridType,
-                    templateType = "BLANK"
+                val state = BoardSerializer.load(f)
+                val id = f.nameWithoutExtension.removePrefix("board_")
+                list.add(
+                    BoardItemInfo(
+                        id = id,
+                        title = state.title.ifBlank { "Моя доска" },
+                        fileName = f.name,
+                        elementCount = state.elements.size,
+                        updatedAt = f.lastModified(),
+                        createdAt = f.lastModified(),
+                        backgroundColorHex = state.backgroundColorHex,
+                        gridType = state.gridType,
+                        templateType = "BLANK"
+                    )
                 )
-                list.add(item)
-                initialActiveId = id
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
 
-        // 2. Создаем демонстрационную дорожную карту (Roadmap), если досок нет или для наглядности
-        val roadmapState = BoardTemplateGenerator.generate(
-            BoardTemplate.ROADMAP,
-            "Дорожная карта проекта: LKBoard 2026"
-        )
-        val roadmapId = UUID.randomUUID().toString()
-        val roadmapFileName = "board_$roadmapId.lkboard"
-        val roadmapFile = File(boardsDir, roadmapFileName)
-        BoardSerializer.save(roadmapFile, roadmapState)
+        var initialActiveId: String? = list.maxByOrNull { it.updatedAt }?.id
 
-        val roadmapItem = BoardItemInfo(
-            id = roadmapId,
-            title = roadmapState.title,
-            fileName = roadmapFileName,
-            elementCount = roadmapState.elements.size,
-            updatedAt = System.currentTimeMillis() - 1000,
-            createdAt = System.currentTimeMillis() - 1000,
-            backgroundColorHex = roadmapState.backgroundColorHex,
-            gridType = roadmapState.gridType,
-            templateType = BoardTemplate.ROADMAP.name
-        )
-        list.add(roadmapItem)
+        // 2. Если досок на диске нет, проверяем autosave_board
+        if (list.isEmpty()) {
+            val autoSaveFile = AppPreferences.getAutoSaveFile()
+            if (autoSaveFile.exists() && autoSaveFile.length() > 0) {
+                try {
+                    val state = BoardSerializer.load(autoSaveFile)
+                    val id = UUID.randomUUID().toString()
+                    val fileName = "board_$id.lkboard"
+                    val targetFile = File(boardsDir, fileName)
+                    BoardSerializer.save(targetFile, state)
 
-        if (initialActiveId == null) {
-            initialActiveId = roadmapId
+                    val item = BoardItemInfo(
+                        id = id,
+                        title = state.title.ifBlank { "Моя доска" },
+                        fileName = fileName,
+                        elementCount = state.elements.size,
+                        updatedAt = System.currentTimeMillis(),
+                        createdAt = System.currentTimeMillis(),
+                        backgroundColorHex = state.backgroundColorHex,
+                        gridType = state.gridType,
+                        templateType = "BLANK"
+                    )
+                    list.add(item)
+                    initialActiveId = id
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
 
-        val newIndex = BoardsIndex(boards = list, lastActiveBoardId = initialActiveId)
+        // 3. Если всё еще пусто — создаем одну чистую пустую доску (без навязчивых демо-элементов)
+        if (list.isEmpty()) {
+            val (blankItem, _) = createBoard("Моя первая доска", BoardTemplate.BLANK)
+            list.add(blankItem)
+            initialActiveId = blankItem.id
+        }
+
+        val sortedList = list.sortedByDescending { it.updatedAt }
+        val newIndex = BoardsIndex(boards = sortedList, lastActiveBoardId = initialActiveId ?: sortedList.firstOrNull()?.id)
         saveIndex(newIndex)
         return newIndex
     }

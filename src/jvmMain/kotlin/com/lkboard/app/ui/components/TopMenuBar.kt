@@ -145,8 +145,8 @@ fun TopMenuBar(
                 spotColor = Color.Black.copy(alpha = 0.08f)
             )
             .clip(RoundedCornerShape(14.dp))
-            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.90f) else Color.White.copy(alpha = 0.75f))
-            .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.60f)), RoundedCornerShape(14.dp))
+            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.90f) else Color.White.copy(alpha = 0.95f))
+            .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D).copy(alpha = 0.85f) else Color(0xFFE2E8F0)), RoundedCornerShape(14.dp))
     ) {
         Row(
             modifier = Modifier
@@ -221,7 +221,7 @@ fun TopMenuBar(
                         )
                         .clip(RoundedCornerShape(12.dp))
                         .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.96f))
-                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
+                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)), RoundedCornerShape(12.dp))
                         .padding(vertical = 4.dp)
                 ) {
                     StyledMenuItem(
@@ -390,7 +390,7 @@ fun TopMenuBar(
                         )
                         .clip(RoundedCornerShape(12.dp))
                         .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.96f))
-                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
+                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)), RoundedCornerShape(12.dp))
                         .padding(vertical = 4.dp)
                 ) {
                     StyledMenuItem(
@@ -499,7 +499,7 @@ fun TopMenuBar(
                         )
                         .clip(RoundedCornerShape(12.dp))
                         .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.96f))
-                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.70f)), RoundedCornerShape(12.dp))
+                        .border(BorderStroke(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)), RoundedCornerShape(12.dp))
                         .padding(vertical = 4.dp)
                 ) {
                     StyledMenuItem(

@@ -30,6 +30,14 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.ViewColumn
+import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -379,7 +387,12 @@ private fun DashboardHeader(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Проверка...", fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     } else if (hasUpdate) {
-                        Text("🚀", fontSize = 13.sp)
+                        Icon(
+                            imageVector = Icons.Default.RocketLaunch,
+                            contentDescription = null,
+                            tint = Color(0xFF16A34A),
+                            modifier = Modifier.size(14.dp)
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             "Доступно v${updateState.updateInfo!!.version}!",
@@ -387,7 +400,12 @@ private fun DashboardHeader(
                             fontWeight = FontWeight.Bold
                         )
                     } else {
-                        Text("🔄", fontSize = 12.sp)
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = null,
+                            tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                            modifier = Modifier.size(13.dp)
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Обновления", fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     }
@@ -600,10 +618,30 @@ private fun TemplatesSection(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = template.icon,
-                                fontSize = 24.sp
-                            )
+                            val templateVector = when (template) {
+                                BoardTemplate.BLANK -> Icons.Default.Article
+                                BoardTemplate.ROADMAP -> Icons.Default.Timeline
+                                BoardTemplate.KANBAN -> Icons.Default.ViewColumn
+                                BoardTemplate.BRAINSTORM -> Icons.Default.Psychology
+                                BoardTemplate.MATH_STUDIO -> Icons.Default.ShowChart
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        if (isRoadmap) (if (isDark) Color(0xFF202A3C) else Color(0xFFDBEAFE))
+                                        else (if (isDark) Color(0xFF222630) else Color(0xFFF1F5F9))
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = templateVector,
+                                    contentDescription = null,
+                                    tint = if (isRoadmap) (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)) else (if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -697,12 +735,12 @@ private fun BoardCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Top
                 ) {
-                    val templateIcon = when (board.templateType) {
-                        BoardTemplate.ROADMAP.name -> "🗺️ Дорожная карта"
-                        BoardTemplate.KANBAN.name -> "📊 Канбан"
-                        BoardTemplate.BRAINSTORM.name -> "💡 Mindmap"
-                        BoardTemplate.MATH_STUDIO.name -> "📈 Графики"
-                        else -> "📄 Доска"
+                    val (templateIconVector, templateTitle) = when (board.templateType) {
+                        BoardTemplate.ROADMAP.name -> Icons.Default.Timeline to "Дорожная карта"
+                        BoardTemplate.KANBAN.name -> Icons.Default.ViewColumn to "Канбан"
+                        BoardTemplate.BRAINSTORM.name -> Icons.Default.Psychology to "Mindmap"
+                        BoardTemplate.MATH_STUDIO.name -> Icons.Default.ShowChart to "Графики"
+                        else -> Icons.Default.Article to "Доска"
                     }
 
                     Box(
@@ -711,12 +749,23 @@ private fun BoardCard(
                             .background(if (isDark) Color.Black.copy(alpha = 0.40f) else Color.Black.copy(alpha = 0.06f))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        Text(
-                            text = templateIcon,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = templateIconVector,
+                                contentDescription = null,
+                                tint = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = templateTitle,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
+                            )
+                        }
                     }
 
                     if (isActive) {
@@ -913,9 +962,11 @@ private fun EmptyBoardsState(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = if (isSearch) "🔍" else "🎨",
-                fontSize = 42.sp
+            Icon(
+                imageVector = if (isSearch) Icons.Default.Search else Icons.Default.Palette,
+                contentDescription = null,
+                tint = if (isDark) Color(0xFF52525B) else Color(0xFFCBD5E1),
+                modifier = Modifier.size(48.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(

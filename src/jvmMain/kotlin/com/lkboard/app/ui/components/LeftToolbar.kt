@@ -423,7 +423,7 @@ fun LeftToolbar(
                 )
                 .clip(RoundedCornerShape(22.dp))
                 .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.92f) else Color(0xFFF7F7F9).copy(alpha = 0.92f))
-                .border(1.dp, if (isDark) Color(0xFF2E333D) else Color.White.copy(alpha = 0.85f), RoundedCornerShape(22.dp))
+                .border(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0), RoundedCornerShape(22.dp))
         ) {
             if (isBottom) {
                 Row(
