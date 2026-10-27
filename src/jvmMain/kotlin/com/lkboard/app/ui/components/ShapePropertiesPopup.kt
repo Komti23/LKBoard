@@ -1,6 +1,11 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,13 +19,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
@@ -28,7 +37,9 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,10 +54,12 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lkboard.app.data.AppPreferences
 import com.lkboard.app.model.ShapeSettings
 import com.lkboard.app.model.ShapeType
 import com.lkboard.app.model.StrokeStyle
@@ -100,6 +113,12 @@ fun ShapePropertiesPopup(
 
     val isDark = LocalAppTheme.current.isDark
 
+    val isStrokePreset = ShapeSettings.PRESET_STROKE_COLORS.contains(settings.strokeColorHex)
+    val isFillPreset = settings.fillColorHex == null || ShapeSettings.PRESET_FILL_COLORS.contains(settings.fillColorHex)
+
+    var isStrokePickerOpen by remember { mutableStateOf(!isStrokePreset) }
+    var isFillPickerOpen by remember { mutableStateOf(!isFillPreset) }
+
     // ЕДИНСТВЕННЫЙ внешний фоновый слой
     Box(
         modifier = modifier
@@ -118,6 +137,8 @@ fun ShapePropertiesPopup(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = 600.dp)
+                .verticalScroll(rememberScrollState())
                 .background(Color.Transparent),
             verticalArrangement = Arrangement.spacedBy(11.dp)
         ) {
@@ -335,12 +356,50 @@ fun ShapePropertiesPopup(
                     .background(Color.Transparent),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = "Контур",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF6E6E73)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Контур",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF6E6E73)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isStrokePickerOpen) Color(0xFF007AFF).copy(alpha = 0.15f) else (if (isDark) Color(0xFF262A34) else Color(0xFFE5E7EB)))
+                            .border(
+                                1.dp,
+                                if (isStrokePickerOpen) Color(0xFF007AFF).copy(alpha = 0.4f) else Color.Transparent,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .clickable { isStrokePickerOpen = !isStrokePickerOpen }
+                            .padding(horizontal = 7.dp, vertical = 3.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Palette,
+                                contentDescription = "Палитра контура",
+                                tint = if (isStrokePickerOpen) Color(0xFF007AFF) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569)),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = if (isStrokePickerOpen) "Скрыть HEX" else "HEX / Палитра",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isStrokePickerOpen) Color(0xFF007AFF) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
+                            )
+                        }
+                    }
+                }
 
                 Column(
                     modifier = Modifier
@@ -399,6 +458,22 @@ fun ShapePropertiesPopup(
                         }
                     }
                 }
+
+                // Интерактивная палитра и поле ввода HEX для контура
+                AnimatedVisibility(
+                    visible = isStrokePickerOpen,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    HexColorPicker(
+                        currentColorHex = settings.strokeColorHex,
+                        showAlpha = false,
+                        onColorChanged = { newHex ->
+                            onSettingsChange(settings.copy(strokeColorHex = newHex))
+                            AppPreferences.saveRecentColor(newHex)
+                        }
+                    )
+                }
             }
 
             // 4. Палитра цвета заливки (2 ряда по 7 вариантов)
@@ -408,12 +483,50 @@ fun ShapePropertiesPopup(
                     .background(Color.Transparent),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = "Заливка",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF6E6E73)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Заливка",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF6E6E73)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isFillPickerOpen) Color(0xFF007AFF).copy(alpha = 0.15f) else (if (isDark) Color(0xFF262A34) else Color(0xFFE5E7EB)))
+                            .border(
+                                1.dp,
+                                if (isFillPickerOpen) Color(0xFF007AFF).copy(alpha = 0.4f) else Color.Transparent,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .clickable { isFillPickerOpen = !isFillPickerOpen }
+                            .padding(horizontal = 7.dp, vertical = 3.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Palette,
+                                contentDescription = "Палитра заливки",
+                                tint = if (isFillPickerOpen) Color(0xFF007AFF) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569)),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = if (isFillPickerOpen) "Скрыть HEX" else "HEX / Заливка",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isFillPickerOpen) Color(0xFF007AFF) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
+                            )
+                        }
+                    }
+                }
 
                 Column(
                     modifier = Modifier
@@ -490,6 +603,22 @@ fun ShapePropertiesPopup(
                             }
                         }
                     }
+                }
+
+                // Интерактивная палитра и поле ввода HEX для заливки (с поддержкой Alpha)
+                AnimatedVisibility(
+                    visible = isFillPickerOpen,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    HexColorPicker(
+                        currentColorHex = settings.fillColorHex ?: 0x402563EBL,
+                        showAlpha = true,
+                        onColorChanged = { newHex ->
+                            onSettingsChange(settings.copy(fillColorHex = newHex))
+                            AppPreferences.saveRecentColor(newHex)
+                        }
+                    )
                 }
             }
 

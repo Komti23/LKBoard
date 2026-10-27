@@ -1,6 +1,11 @@
 package com.lkboard.app.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,12 +16,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,16 +36,21 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lkboard.app.data.AppPreferences
 import com.lkboard.app.model.GridType
 import com.lkboard.app.model.PenSettings
 import com.lkboard.app.ui.theme.LocalAppTheme
@@ -62,16 +76,21 @@ fun StylusPropertiesPopup(
     onGridTypeChange: ((GridType) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val isPresetColor = PenSettings.PRESET_COLORS.contains(settings.colorHex)
     val colorTitle = when (settings.colorHex) {
         0xFF1E1E1EL -> "Черный"
         0xFF2563EBL -> "Синий"
         0xFFDC2626L -> "Красный"
         0xFF16A34AL -> "Зеленый"
         0xFFFACC15L -> "Желтый"
-        else -> "Перо"
+        0xFF9333EAL -> "Фиолетовый"
+        0xFFEA580CL -> "Оранжевый"
+        else -> String.format(Locale.US, "#%06X", settings.colorHex and 0xFFFFFFL)
     }
     val titleText = if (settings.isHighlighter) "Маркер" else colorTitle
     val formattedWidth = String.format(Locale.US, "%.1f px", settings.strokeWidth)
+
+    var isHexPickerExpanded by remember { mutableStateOf(!isPresetColor) }
 
     val isDark = LocalAppTheme.current.isDark
 
@@ -93,6 +112,8 @@ fun StylusPropertiesPopup(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = 560.dp)
+                .verticalScroll(rememberScrollState())
                 .background(Color.Transparent),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -140,7 +161,7 @@ fun StylusPropertiesPopup(
                 }
             }
 
-            // 2. Расширенная палитра цветов (2 ряда по 7 оттенков)
+            // 2. Расширенная палитра цветов (2 ряда по 7 оттенков) + кастомный HEX
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -206,6 +227,97 @@ fun StylusPropertiesPopup(
                             }
                         }
                     }
+                }
+
+                // Переключатель произвольной палитры / ввода HEX
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!isPresetColor) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(settings.colorHex))
+                                    .border(1.5.dp, Color(0xFF007AFF), CircleShape)
+                            )
+                            Text(
+                                text = String.format(Locale.US, "#%06X", settings.colorHex and 0xFFFFFFL),
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isDark) Color(0xFF38BDF8) else Color(0xFF007AFF)
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "Свой оттенок",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isHexPickerExpanded) Color(0xFF007AFF).copy(alpha = 0.15f) else (if (isDark) Color(0xFF262A34) else Color(0xFFE5E7EB)))
+                            .border(
+                                1.dp,
+                                if (isHexPickerExpanded) Color(0xFF007AFF).copy(alpha = 0.4f) else Color.Transparent,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .clickable { isHexPickerExpanded = !isHexPickerExpanded }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Palette,
+                                contentDescription = "Палитра HEX",
+                                tint = if (isHexPickerExpanded) Color(0xFF007AFF) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569)),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = if (isHexPickerExpanded) "Скрыть HEX" else "HEX / Палитра",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isHexPickerExpanded) Color(0xFF007AFF) else (if (isDark) Color(0xFFCBD5E1) else Color(0xFF475569))
+                            )
+                        }
+                    }
+                }
+
+                // Интерактивная палитра и поле ввода HEX (раскрывается с плавной анимацией)
+                AnimatedVisibility(
+                    visible = isHexPickerExpanded,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    HexColorPicker(
+                        currentColorHex = settings.colorHex,
+                        showAlpha = false,
+                        onColorChanged = { newHex ->
+                            onSettingsChange(
+                                settings.copy(
+                                    colorHex = newHex,
+                                    isHighlighter = false
+                                )
+                            )
+                            AppPreferences.saveRecentColor(newHex)
+                        }
+                    )
                 }
             }
 

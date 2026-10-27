@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -58,6 +59,17 @@ fun StickyNoteEditDialog(
     val isDark = LocalAppTheme.current.isDark
     var text by remember { mutableStateOf(note.text) }
     var selectedColorHex by remember { mutableStateOf(note.colorHex) }
+    var isColorPickerOpen by remember { mutableStateOf(false) }
+
+    if (isColorPickerOpen) {
+        HexColorPickerDialog(
+            title = "Свой цвет стикера (HEX)",
+            initialColorHex = selectedColorHex,
+            showAlpha = false,
+            onDismiss = { isColorPickerOpen = false },
+            onColorSelected = { selectedColorHex = it }
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -212,7 +224,8 @@ fun StickyNoteEditDialog(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         BoardElement.StickyNote.PRESET_COLORS.forEach { hex ->
                             val isSelected = selectedColorHex == hex
@@ -238,6 +251,45 @@ fun StickyNoteEditDialog(
                                     )
                                 }
                             }
+                        }
+
+                        // Если выбран произвольный кастомный цвет
+                        val isPreset = BoardElement.StickyNote.PRESET_COLORS.contains(selectedColorHex)
+                        if (!isPreset) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(selectedColorHex))
+                                    .border(2.5.dp, Color(0xFF007AFF), CircleShape)
+                                    .clickable { isColorPickerOpen = true },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        // Кнопка палитры произвольного цвета
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                                .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), CircleShape)
+                                .clickable { isColorPickerOpen = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Palette,
+                                contentDescription = "Выбрать HEX цвет",
+                                tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
                 }

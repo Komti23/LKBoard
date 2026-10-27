@@ -17,10 +17,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +75,18 @@ fun TextFloatingQuickBar(
         0xFF9333EAL, // Purple
         0xFFD97706L  // Amber
     )
+
+    var isColorDialogOpen by remember { mutableStateOf(false) }
+
+    if (isColorDialogOpen) {
+        HexColorPickerDialog(
+            title = "Цвет текста (HEX)",
+            initialColorHex = element.colorHex,
+            showAlpha = false,
+            onDismiss = { isColorDialogOpen = false },
+            onColorSelected = { onUpdateProperties(null, null, null, null, it) }
+        )
+    }
 
     Box(
         modifier = modifier
@@ -182,6 +198,37 @@ fun TextFloatingQuickBar(
                 )
             }
 
+            // Кастомный цвет, если выбран не из палитры
+            val isPreset = palette.contains(element.colorHex)
+            if (!isPreset) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(Color(element.colorHex))
+                        .border(2.dp, Color(0xFF2563EB), CircleShape)
+                        .clickable { isColorDialogOpen = true }
+                )
+            }
+
+            // Кнопка палитры HEX
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                    .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), CircleShape)
+                    .clickable { isColorDialogOpen = true },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Palette,
+                    contentDescription = "Выбрать HEX",
+                    tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                    modifier = Modifier.size(11.dp)
+                )
+            }
+
             Box(modifier = Modifier.width(1.dp).height(16.dp).background(if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0)))
 
             // Редактировать текст
@@ -256,6 +303,18 @@ fun LatexFloatingQuickBar(
         0xFF9333EAL, // Purple
         0xFFEA580CL  // Orange
     )
+
+    var isColorDialogOpen by remember { mutableStateOf(false) }
+
+    if (isColorDialogOpen) {
+        HexColorPickerDialog(
+            title = "Цвет формулы LaTeX (HEX)",
+            initialColorHex = element.colorHex,
+            showAlpha = false,
+            onDismiss = { isColorDialogOpen = false },
+            onColorSelected = { onUpdateProperties(null, null, it, false) }
+        )
+    }
 
     Box(
         modifier = modifier
@@ -369,6 +428,37 @@ fun LatexFloatingQuickBar(
                             shape = CircleShape
                         )
                         .clickable { onUpdateProperties(null, null, cHex, false) }
+                )
+            }
+
+            // Кастомный выбранный цвет
+            val isPreset = palette.contains(element.colorHex)
+            if (!isPreset) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(Color(element.colorHex))
+                        .border(2.dp, Color(0xFF2563EB), CircleShape)
+                        .clickable { isColorDialogOpen = true }
+                )
+            }
+
+            // Кнопка палитры HEX
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                    .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), CircleShape)
+                    .clickable { isColorDialogOpen = true },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Palette,
+                    contentDescription = "Выбрать HEX",
+                    tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                    modifier = Modifier.size(11.dp)
                 )
             }
 

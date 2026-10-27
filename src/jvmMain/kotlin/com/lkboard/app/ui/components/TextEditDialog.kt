@@ -16,8 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -90,6 +93,17 @@ fun TextEditDialog(
     }
     var colorHex by remember {
         mutableStateOf(if (element is BoardElement.Text) element.colorHex else (if (isDark) 0xFFF4F4F5L else 0xFF1E1E1EL))
+    }
+    var isColorPickerOpen by remember { mutableStateOf(false) }
+
+    if (isColorPickerOpen) {
+        HexColorPickerDialog(
+            title = "Свой цвет текста (HEX)",
+            initialColorHex = colorHex,
+            showAlpha = false,
+            onDismiss = { isColorPickerOpen = false },
+            onColorSelected = { colorHex = it }
+        )
     }
 
     val palette = listOf(
@@ -233,6 +247,37 @@ fun TextEditDialog(
                                             shape = CircleShape
                                         )
                                         .clickable { colorHex = cHex }
+                                )
+                            }
+
+                            // Кастомный выбранный цвет
+                            val isPreset = palette.contains(colorHex)
+                            if (!isPreset) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(colorHex))
+                                        .border(2.dp, Color(0xFF2563EB), CircleShape)
+                                        .clickable { isColorPickerOpen = true }
+                                )
+                            }
+
+                            // Кнопка палитры HEX
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isDark) Color(0xFF242830) else Color(0xFFF1F5F9))
+                                    .border(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1), CircleShape)
+                                    .clickable { isColorPickerOpen = true },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Palette,
+                                    contentDescription = "Выбрать HEX",
+                                    tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                    modifier = Modifier.size(13.dp)
                                 )
                             }
                         }

@@ -126,6 +126,7 @@ object AppPreferences {
     private const val KEY_FIRST_RUN_DONE = "first_run_onboarding_completed"
     private const val KEY_ENABLED_TOOLS = "enabled_tools_csv"
     private const val KEY_TOOLBAR_POSITION = "toolbar_dock_position"
+    private const val KEY_RECENT_COLORS = "recent_custom_colors_hex"
 
     private val prefs: Preferences by lazy {
         Preferences.userNodeForPackage(AppPreferences::class.java)
@@ -337,6 +338,44 @@ object AppPreferences {
     fun saveToolbarPosition(position: ToolbarPosition) {
         try {
             prefs.put(KEY_TOOLBAR_POSITION, position.id)
+            prefs.flush()
+        } catch (_: Exception) {}
+    }
+
+    // --- Недавние пользовательские цвета палитры (HEX) ---
+
+    val DEFAULT_RECENT_COLORS = listOf(
+        0xFF2563EBL, // Royal Blue
+        0xFF0D9488L, // Teal
+        0xFF16A34AL, // Green
+        0xFFF59E0BL, // Amber
+        0xFFDC2626L, // Red
+        0xFF9333EAL, // Purple
+        0xFFEC4899L, // Pink
+        0xFF0284C7L  // Cyan
+    )
+
+    fun loadRecentColors(): List<Long> {
+        return try {
+            val csv = prefs.get(KEY_RECENT_COLORS, null) ?: return DEFAULT_RECENT_COLORS
+            if (csv.isBlank()) return DEFAULT_RECENT_COLORS
+            val list = csv.split(",").mapNotNull { hexStr ->
+                hexStr.trim().toLongOrNull(16)
+            }
+            if (list.isEmpty()) DEFAULT_RECENT_COLORS else list.take(8)
+        } catch (_: Exception) {
+            DEFAULT_RECENT_COLORS
+        }
+    }
+
+    fun saveRecentColor(colorHex: Long) {
+        try {
+            val current = loadRecentColors().toMutableList()
+            current.remove(colorHex)
+            current.add(0, colorHex)
+            val updated = current.take(8)
+            val csv = updated.joinToString(",") { (it and 0xFFFFFFFFL).toString(16) }
+            prefs.put(KEY_RECENT_COLORS, csv)
             prefs.flush()
         } catch (_: Exception) {}
     }
