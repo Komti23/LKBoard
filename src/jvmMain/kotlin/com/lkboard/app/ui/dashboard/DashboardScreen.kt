@@ -220,7 +220,7 @@ fun DashboardScreen(
                     columns = GridCells.Adaptive(minSize = 270.dp),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(bottom = 32.dp),
+                    contentPadding = PaddingValues(top = 10.dp, bottom = 32.dp, start = 6.dp, end = 6.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filteredBoards, key = { it.id }) { board ->
@@ -583,13 +583,18 @@ private fun TemplatesSection(
                 val isPressed by interactionSource.collectIsPressedAsState()
                 val isHovered by interactionSource.collectIsHoveredAsState()
                 val scale by animateFloatAsState(
-                    targetValue = when {
-                        isPressed -> 0.96f
-                        isHovered -> 1.03f
-                        else -> 1.0f
-                    },
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                    targetValue = if (isPressed) 0.98f else 1.0f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
                     label = "templateCardScale"
+                )
+                val translateY by animateFloatAsState(
+                    targetValue = when {
+                        isPressed -> 2f
+                        isHovered -> -4f
+                        else -> 0f
+                    },
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                    label = "templateCardTranslateY"
                 )
                 val elevation by animateDpAsState(
                     targetValue = when {
@@ -598,16 +603,18 @@ private fun TemplatesSection(
                         isRoadmap -> 8.dp
                         else -> 3.dp
                     },
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
                     label = "templateCardElevation"
                 )
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .padding(vertical = 4.dp, horizontal = 2.dp)
                         .graphicsLayer {
                             scaleX = scale
                             scaleY = scale
+                            translationY = translateY.dp.toPx()
                         }
                         .shadow(
                             elevation = elevation,
@@ -702,13 +709,18 @@ private fun BoardCard(
     val isPressed by interactionSource.collectIsPressedAsState()
     val isHovered by interactionSource.collectIsHoveredAsState()
     val scale by animateFloatAsState(
-        targetValue = when {
-            isPressed -> 0.97f
-            isHovered -> 1.025f
-            else -> 1.0f
-        },
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        targetValue = if (isPressed) 0.98f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "boardCardScale"
+    )
+    val translateY by animateFloatAsState(
+        targetValue = when {
+            isPressed -> 2f
+            isHovered -> -4f
+            else -> 0f
+        },
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "boardCardTranslateY"
     )
     val elevation by animateDpAsState(
         targetValue = when {
@@ -717,7 +729,7 @@ private fun BoardCard(
             isActive -> 10.dp
             else -> 4.dp
         },
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "boardCardElevation"
     )
 
@@ -729,9 +741,11 @@ private fun BoardCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(vertical = 4.dp, horizontal = 2.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
+                translationY = translateY.dp.toPx()
             }
             .shadow(
                 elevation = elevation,

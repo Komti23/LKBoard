@@ -119,12 +119,7 @@ fun main() = application {
         state = windowState,
         icon = logoPainter,
         onKeyEvent = { keyEvent ->
-            if (isSettingsDialogOpen && keyEvent.type == KeyEventType.KeyDown &&
-                (keyEvent.key == Key.Escape || (keyEvent.nativeKeyEvent as? java.awt.event.KeyEvent)?.keyCode == java.awt.event.KeyEvent.VK_ESCAPE)
-            ) {
-                viewModel.closeSettingsDialog()
-                true
-            } else if (showVersionDetailsDialog && keyEvent.type == KeyEventType.KeyDown &&
+            if (showVersionDetailsDialog && keyEvent.type == KeyEventType.KeyDown &&
                 (keyEvent.key == Key.Escape || (keyEvent.nativeKeyEvent as? java.awt.event.KeyEvent)?.keyCode == java.awt.event.KeyEvent.VK_ESCAPE)
             ) {
                 showVersionDetailsDialog = false

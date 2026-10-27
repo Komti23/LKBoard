@@ -1,10 +1,24 @@
 package com.lkboard.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -171,11 +185,76 @@ fun SettingsDialog(
     val cardBorder = if (isDark) Color(0xFF262A34) else Color(0xFFE2E8F0)
     val sectionHeaderColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
 
-    Dialog(onDismissRequest = onDismiss) {
+    val coroutineScope = rememberCoroutineScope()
+    val animProgress = remember { Animatable(0f) }
+    var isClosing by remember { mutableStateOf(false) }
+
+    fun collapseAndDismiss(onAfterClose: (() -> Unit)? = null) {
+        if (isClosing) return
+        isClosing = true
+        coroutineScope.launch {
+            animProgress.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 150, easing = FastOutLinearInEasing)
+            )
+            onAfterClose?.invoke()
+            onDismiss()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        animProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
+    }
+
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .focusRequester(focusRequester)
+            .focusable()
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Escape) {
+                    collapseAndDismiss()
+                    true
+                } else false
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        val progress = animProgress.value.coerceIn(0f, 1f)
+
+        // Затемняющий фон (scrim), плавно закрывающийся при клике
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.50f * progress))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    collapseAndDismiss()
+                }
+        )
+
         Card(
             modifier = Modifier
                 .width(640.dp)
                 .heightIn(max = 760.dp)
+                .graphicsLayer {
+                    scaleX = 0.90f + 0.10f * progress
+                    scaleY = 0.90f + 0.10f * progress
+                    alpha = progress
+                    translationY = (1f - progress) * -28.dp.toPx()
+                }
                 .shadow(elevation = 28.dp, shape = RoundedCornerShape(22.dp)),
             shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(
@@ -228,7 +307,7 @@ fun SettingsDialog(
                             .size(32.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (isDark) Color(0xFF242832) else Color(0xFFE2E8F0))
-                            .clickable(onClick = onDismiss),
+                            .bouncyClickable(hoverScale = 1.08f, pressedScale = 0.90f) { collapseAndDismiss() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -1270,24 +1349,31 @@ fun SettingsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
-                        onClick = onDismiss,
+                        onClick = { collapseAndDismiss() },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF3F3F46) else Color(0xFFCBD5E1))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isDark) Color(0xFF3F3F46) else Color(0xFFCBD5E1)),
+                        modifier = Modifier.bouncyClickable(hoverScale = 1.05f, pressedScale = 0.94f) { collapseAndDismiss() }
                     ) {
                         Text("Закрыть", fontSize = 12.sp)
                     }
 
                     Button(
                         onClick = {
-                            onSaveSettings(theme, role, tools, selectedPosition)
-                            onDismiss()
+                            collapseAndDismiss {
+                                onSaveSettings(theme, role, tools, selectedPosition)
+                            }
                         },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF2563EB),
                             contentColor = Color.White
-                        )
+                        ),
+                        modifier = Modifier.bouncyClickable(hoverScale = 1.05f, pressedScale = 0.94f) {
+                            collapseAndDismiss {
+                                onSaveSettings(theme, role, tools, selectedPosition)
+                            }
+                        }
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
