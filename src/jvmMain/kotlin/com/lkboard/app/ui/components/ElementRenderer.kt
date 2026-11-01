@@ -56,6 +56,7 @@ object ElementRenderer {
                 is BoardElement.LatexFormula -> com.lkboard.app.util.LatexRenderer.drawLatex(drawScope, element, textMeasurer)
                 is BoardElement.PhysicsStencil -> com.lkboard.app.util.PhysicsStencilRenderer.draw(drawScope, element, textMeasurer)
                 is BoardElement.KanbanBoard -> drawKanbanBoard(drawScope, element, allElements, textMeasurer)
+                is BoardElement.FipiTask -> drawFipiTask(drawScope, element, textMeasurer)
             }
         }
 
@@ -1221,6 +1222,191 @@ object ElementRenderer {
                     style = Stroke(width = 2.4f * gScale.coerceAtLeast(1f), cap = StrokeCap.Round, join = StrokeJoin.Round)
                 )
             }
+        }
+    }
+
+    private fun drawFipiTask(
+        drawScope: DrawScope,
+        task: BoardElement.FipiTask,
+        textMeasurer: TextMeasurer
+    ) {
+        val cr = CornerRadius(16f, 16f)
+        val pad = 18f
+        val contentW = (task.width - pad * 2f).coerceAtLeast(100f)
+
+        // 1. Мягкая внешняя тень карточки
+        drawScope.drawRoundRect(
+            color = Color.Black.copy(alpha = 0.08f),
+            topLeft = Offset(task.x + 3f, task.y + 6f),
+            size = Size(task.width, task.height),
+            cornerRadius = cr
+        )
+
+        // 2. Фон карточки (чистый белый)
+        drawScope.drawRoundRect(
+            color = Color(task.cardColorHex),
+            topLeft = Offset(task.x, task.y),
+            size = Size(task.width, task.height),
+            cornerRadius = cr
+        )
+
+        // 3. Граница карточки (премиальный контур Slate)
+        drawScope.drawRoundRect(
+            color = Color(0xFFCBD5E1),
+            topLeft = Offset(task.x, task.y),
+            size = Size(task.width, task.height),
+            cornerRadius = cr,
+            style = Stroke(width = 1.4f)
+        )
+
+        // 4. Верхний колонтитул с бейджами (Exam badge, Task Number, Points, Answer status)
+        var curY = task.y + pad
+
+        // Бейдж экзамена (например, [ЕГЭ (Профиль)])
+        val isOge = task.examType.contains("ОГЭ")
+        val examBgColor = if (isOge) Color(0xFF7C3AED) else Color(0xFF2563EB)
+        val examText = "${task.examType} · ${task.subject}"
+        val examLayout = textMeasurer.measure(
+            text = examText,
+            style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = examBgColor)
+        )
+        val examBadgeW = examLayout.size.width + 16f
+        val examBadgeH = examLayout.size.height + 8f
+
+        drawScope.drawRoundRect(
+            color = examBgColor.copy(alpha = 0.12f),
+            topLeft = Offset(task.x + pad, curY),
+            size = Size(examBadgeW, examBadgeH),
+            cornerRadius = CornerRadius(8f, 8f)
+        )
+        drawScope.drawText(examLayout, topLeft = Offset(task.x + pad + 8f, curY + 4f))
+
+        // Бейдж номера задания (например, [№13])
+        val numLayout = textMeasurer.measure(
+            text = task.taskNumber,
+            style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFD97706))
+        )
+        val numBadgeW = numLayout.size.width + 14f
+        val numBadgeX = task.x + pad + examBadgeW + 8f
+        drawScope.drawRoundRect(
+            color = Color(0xFFD97706).copy(alpha = 0.12f),
+            topLeft = Offset(numBadgeX, curY),
+            size = Size(numBadgeW, examBadgeH),
+            cornerRadius = CornerRadius(8f, 8f)
+        )
+        drawScope.drawText(numLayout, topLeft = Offset(numBadgeX + 7f, curY + 4f))
+
+        // Правый бейдж статуса ответа (Шторка)
+        val answerStatusText = if (task.isAnswerRevealed) "✓ Ответ открыт" else "🔒 Ответ скрыт"
+        val answerStatusColor = if (task.isAnswerRevealed) Color(0xFF16A34A) else Color(0xFF475569)
+        val answerStatusLayout = textMeasurer.measure(
+            text = answerStatusText,
+            style = TextStyle(fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold, color = answerStatusColor)
+        )
+        val answerBadgeW = answerStatusLayout.size.width + 14f
+        val answerBadgeX = task.x + task.width - pad - answerBadgeW
+        drawScope.drawRoundRect(
+            color = if (task.isAnswerRevealed) Color(0xFF16A34A).copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f),
+            topLeft = Offset(answerBadgeX, curY),
+            size = Size(answerBadgeW, examBadgeH),
+            cornerRadius = CornerRadius(8f, 8f)
+        )
+        drawScope.drawText(answerStatusLayout, topLeft = Offset(answerBadgeX + 7f, curY + 4f))
+
+        curY += examBadgeH + 10f
+
+        // 5. Тема задания (подзаголовок)
+        if (task.topic.isNotBlank()) {
+            val topicLayout = textMeasurer.measure(
+                text = task.topic,
+                style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
+            )
+            drawScope.drawText(topicLayout, topLeft = Offset(task.x + pad, curY))
+            curY += topicLayout.size.height + 8f
+        }
+
+        // Тонкий горизонтальный разделитель
+        drawScope.drawLine(
+            color = Color(0xFFE2E8F0),
+            start = Offset(task.x + pad, curY),
+            end = Offset(task.x + task.width - pad, curY),
+            strokeWidth = 1f
+        )
+        curY += 10f
+
+        // 6. Текст условия задачи
+        val conditionLayout = textMeasurer.measure(
+            text = task.condition,
+            style = TextStyle(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFF1E293B),
+                lineHeight = 18.sp
+            ),
+            constraints = androidx.compose.ui.unit.Constraints(maxWidth = contentW.roundToInt())
+        )
+        drawScope.drawText(conditionLayout, topLeft = Offset(task.x + pad, curY))
+        curY += conditionLayout.size.height + 14f
+
+        // 7. Секция ответа (Шторка / Спойлер для ученика и учителя)
+        val boxH = if (task.isAnswerRevealed) 64f else 36f
+        val boxY = curY.coerceAtMost(task.y + task.height - boxH - pad)
+
+        if (task.isAnswerRevealed) {
+            // Зеленый раскрытый контейнер с ответом
+            drawScope.drawRoundRect(
+                color = Color(0xFFF0FDF4),
+                topLeft = Offset(task.x + pad, boxY),
+                size = Size(contentW, boxH),
+                cornerRadius = CornerRadius(10f, 10f)
+            )
+            drawScope.drawRoundRect(
+                color = Color(0xFF86EFAC),
+                topLeft = Offset(task.x + pad, boxY),
+                size = Size(contentW, boxH),
+                cornerRadius = CornerRadius(10f, 10f),
+                style = Stroke(width = 1.2f)
+            )
+
+            val ansHeadLayout = textMeasurer.measure(
+                text = "✓ Ответ ФИПИ (максимум ${task.maxScore} б.):",
+                style = TextStyle(fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF15803D))
+            )
+            drawScope.drawText(ansHeadLayout, topLeft = Offset(task.x + pad + 10f, boxY + 6f))
+
+            val ansValLayout = textMeasurer.measure(
+                text = task.answer,
+                style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF166534)),
+                constraints = androidx.compose.ui.unit.Constraints(maxWidth = (contentW - 20f).roundToInt())
+            )
+            drawScope.drawText(ansValLayout, topLeft = Offset(task.x + pad + 10f, boxY + 24f))
+        } else {
+            // Заблокированная шторка
+            drawScope.drawRoundRect(
+                color = Color(0xFFF8FAFC),
+                topLeft = Offset(task.x + pad, boxY),
+                size = Size(contentW, boxH),
+                cornerRadius = CornerRadius(10f, 10f)
+            )
+            drawScope.drawRoundRect(
+                color = Color(0xFFCBD5E1),
+                topLeft = Offset(task.x + pad, boxY),
+                size = Size(contentW, boxH),
+                cornerRadius = CornerRadius(10f, 10f),
+                style = Stroke(width = 1f)
+            )
+
+            val hiddenLayout = textMeasurer.measure(
+                text = "🔒 Ответ и критерии скрыты (двойной клик, чтобы открыть)",
+                style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Medium, color = Color(0xFF64748B))
+            )
+            drawScope.drawText(
+                hiddenLayout,
+                topLeft = Offset(
+                    task.x + pad + (contentW - hiddenLayout.size.width) / 2f,
+                    boxY + (boxH - hiddenLayout.size.height) / 2f
+                )
+            )
         }
     }
 }

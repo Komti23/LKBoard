@@ -233,6 +233,15 @@ object SvgExporter {
                     sb.appendLine("""  </g>""")
                 }
 
+                is BoardElement.FipiTask -> {
+                    sb.appendLine("""  <g id="${el.id}">""")
+                    sb.appendLine("""    <rect x="${el.x}" y="${el.y}" width="${el.width}" height="${el.height}" rx="14" ry="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.4"/>""")
+                    sb.appendLine("""    <text x="${el.x + 18f}" y="${el.y + 24f}" font-family="sans-serif" font-size="12" font-weight="bold" fill="#2563EB">${escapeXml(el.examType)} · ${escapeXml(el.subject)} ${escapeXml(el.taskNumber)}</text>""")
+                    sb.appendLine("""    <text x="${el.x + 18f}" y="${el.y + 44f}" font-family="sans-serif" font-size="11" font-weight="bold" fill="#0F172A">${escapeXml(el.topic)}</text>""")
+                    sb.appendLine("""    <text x="${el.x + 18f}" y="${el.y + 70f}" font-family="sans-serif" font-size="12" fill="#1E293B">${escapeXml(el.condition.take(120))}...</text>""")
+                    sb.appendLine("""  </g>""")
+                }
+
                 else -> {}
             }
             if (hasRotation) {

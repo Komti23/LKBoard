@@ -109,6 +109,8 @@ data class CanvasGestureCallbacks(
     val onCreateFunctionGraph: (Offset) -> Unit = {},
     val onCreateLatexFormula: (Offset) -> Unit = {},
     val onCreatePhysicsStencil: (Offset) -> Unit = {},
+    val onOpenFipiDrawer: (Offset) -> Unit = {},
+    val onToggleFipiTaskAnswer: (String) -> Unit = {},
     val onCreateKanbanBoard: (Offset) -> Unit = {},
     val onToggleStickyTodo: (noteId: String, lineIndex: Int) -> Unit = { _, _ -> },
     val onCreateConnector: (BoardElement.Connector) -> Unit = {},
@@ -237,6 +239,23 @@ class CanvasGestureHandler(
                                         }
                                     }
                                     curY += lineH
+                                }
+                            }
+
+                            // Клик по шторке/бейджу ответа в карточке задания ФИПИ
+                            if (hitElement is BoardElement.FipiTask) {
+                                val pad = 18f
+                                val boxH = if (hitElement.isAnswerRevealed) 64f else 36f
+                                val inAnswerBox = worldPos.y >= (hitElement.y + hitElement.height - boxH - pad - 12f) &&
+                                                  worldPos.y <= (hitElement.y + hitElement.height)
+                                val inHeaderBadge = worldPos.y >= hitElement.y && worldPos.y <= (hitElement.y + 45f) &&
+                                                    worldPos.x >= (hitElement.x + hitElement.width - 150f)
+                                if (inAnswerBox || inHeaderBadge) {
+                                    callbacks.onToggleFipiTaskAnswer(hitElement.id)
+                                    callbacks.onSelectElement(hitElement.id, false)
+                                    interactionMode = InteractionMode.Idle
+                                    change.consume()
+                                    return
                                 }
                             }
 
@@ -382,6 +401,12 @@ class CanvasGestureHandler(
 
                         CanvasTool.PHYSICS_STENCIL -> {
                             callbacks.onCreatePhysicsStencil(worldPos)
+                            interactionMode = InteractionMode.Idle
+                            change.consume()
+                        }
+
+                        CanvasTool.EXAM_TASK_BANK -> {
+                            callbacks.onOpenFipiDrawer(worldPos)
                             interactionMode = InteractionMode.Idle
                             change.consume()
                         }

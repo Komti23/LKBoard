@@ -117,6 +117,8 @@ fun InfiniteCanvas(
     onCreateFunctionGraph: (Offset) -> Unit = {},
     onCreateLatexFormula: (Offset) -> Unit = {},
     onCreatePhysicsStencil: (Offset) -> Unit = {},
+    onOpenFipiDrawer: (Offset) -> Unit = {},
+    onToggleFipiTaskAnswer: (String) -> Unit = {},
     onCreateKanbanBoard: (Offset) -> Unit = {},
     onToggleStickyTodo: (String, Int) -> Unit = { _, _ -> },
     onCreateConnector: (BoardElement.Connector) -> Unit = {},
@@ -199,6 +201,8 @@ fun InfiniteCanvas(
     val currentOnCreateFunctionGraph by rememberUpdatedState(onCreateFunctionGraph)
     val currentOnCreateLatexFormula by rememberUpdatedState(onCreateLatexFormula)
     val currentOnCreatePhysicsStencil by rememberUpdatedState(onCreatePhysicsStencil)
+    val currentOnOpenFipiDrawer by rememberUpdatedState(onOpenFipiDrawer)
+    val currentOnToggleFipiTaskAnswer by rememberUpdatedState(onToggleFipiTaskAnswer)
     val currentOnCreateKanbanBoard by rememberUpdatedState(onCreateKanbanBoard)
     val currentOnToggleStickyTodo by rememberUpdatedState(onToggleStickyTodo)
     val currentOnCreateConnector by rememberUpdatedState(onCreateConnector)
@@ -257,6 +261,8 @@ fun InfiniteCanvas(
             onCreateFunctionGraph = currentOnCreateFunctionGraph,
             onCreateLatexFormula = currentOnCreateLatexFormula,
             onCreatePhysicsStencil = currentOnCreatePhysicsStencil,
+            onOpenFipiDrawer = currentOnOpenFipiDrawer,
+            onToggleFipiTaskAnswer = currentOnToggleFipiTaskAnswer,
             onCreateKanbanBoard = currentOnCreateKanbanBoard,
             onToggleStickyTodo = currentOnToggleStickyTodo,
             onCreateConnector = currentOnCreateConnector,
@@ -302,7 +308,7 @@ fun InfiniteCanvas(
                 PointerIcon(Cursor.getPredefinedCursor(hoveredHandle.cursorType))
             mode is InteractionMode.Resizing -> PointerIcon(Cursor.getPredefinedCursor(mode.handle.cursorType))
             mode is InteractionMode.DraggingElements -> PointerIcon(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR))
-            state.activeTool in listOf(CanvasTool.STICKY_NOTE, CanvasTool.SHAPE, CanvasTool.TEXT, CanvasTool.LATEX, CanvasTool.PHYSICS_STENCIL) ->
+            state.activeTool in listOf(CanvasTool.STICKY_NOTE, CanvasTool.SHAPE, CanvasTool.TEXT, CanvasTool.LATEX, CanvasTool.PHYSICS_STENCIL, CanvasTool.EXAM_TASK_BANK) ->
                 PointerIcon(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR))
             else -> PointerIcon.Default
         }

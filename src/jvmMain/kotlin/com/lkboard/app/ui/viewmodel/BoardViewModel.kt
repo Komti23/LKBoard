@@ -11,6 +11,8 @@ import com.lkboard.app.history.MoveElementsCommand
 import com.lkboard.app.history.ResizeElementCommand
 import com.lkboard.app.history.RotateElementsCommand
 import com.lkboard.app.history.UpdateTextCommand
+import com.lkboard.app.history.UpdateElementCommand
+import com.lkboard.app.data.FipiTaskItem
 import com.lkboard.app.model.BoardElement
 import com.lkboard.app.model.BoardState
 import com.lkboard.app.model.CanvasPoint
@@ -175,6 +177,11 @@ class BoardViewModel {
     val isPhysicsStencilDialogOpen: StateFlow<Boolean> = _isPhysicsStencilDialogOpen.asStateFlow()
 
     private var pendingPhysicsStencilPosition: Offset = Offset(200f, 200f)
+
+    private val _isFipiDrawerOpen = MutableStateFlow(false)
+    val isFipiDrawerOpen: StateFlow<Boolean> = _isFipiDrawerOpen.asStateFlow()
+
+    private var pendingFipiTaskPosition: Offset = Offset(200f, 200f)
 
     val collabManager: CollabManager = CollabManager(
         snapshotProvider = { BoardSerializer.stateToDocument(_state.value) },
@@ -611,6 +618,7 @@ class BoardViewModel {
                                 is BoardElement.KanbanBoard -> it.copy(id = newId, zIndex = nextZIndex())
                                 is BoardElement.LatexFormula -> it.copy(id = newId, zIndex = nextZIndex())
                                 is BoardElement.PhysicsStencil -> it.copy(id = newId, zIndex = nextZIndex())
+                                is BoardElement.FipiTask -> it.copy(id = newId, zIndex = nextZIndex())
                             }
                         }
                 }
@@ -1230,6 +1238,7 @@ class BoardViewModel {
                         is BoardElement.KanbanBoard -> it.copy(id = newId, zIndex = nextZIndex())
                         is BoardElement.LatexFormula -> it.copy(id = newId, zIndex = nextZIndex())
                         is BoardElement.PhysicsStencil -> it.copy(id = newId, zIndex = nextZIndex())
+                        is BoardElement.FipiTask -> it.copy(id = newId, zIndex = nextZIndex())
                     }
                 }
         }
@@ -1695,6 +1704,48 @@ class BoardViewModel {
         executeCommand(AddElementCommand(newElement))
         _state.update { it.copy(selectedElementIds = setOf(newElement.id)) }
         closePhysicsStencilDialog()
+    }
+
+    // --- Банк заданий ФИПИ (ОГЭ / ЕГЭ) ---
+
+    fun openFipiDrawer(position: Offset? = null) {
+        if (position != null) {
+            pendingFipiTaskPosition = position
+        }
+        _isFipiDrawerOpen.value = true
+    }
+
+    fun closeFipiDrawer() {
+        _isFipiDrawerOpen.value = false
+    }
+
+    fun addFipiTask(taskItem: FipiTaskItem, position: Offset? = null) {
+        val targetPos = position ?: pendingFipiTaskPosition
+        val newElement = BoardElement.FipiTask(
+            id = java.util.UUID.randomUUID().toString(),
+            x = targetPos.x - 240f,
+            y = targetPos.y - 160f,
+            width = 480f,
+            height = 320f,
+            examType = taskItem.examType,
+            subject = taskItem.subject,
+            taskNumber = taskItem.taskNumber,
+            topic = taskItem.topic,
+            condition = taskItem.condition,
+            answer = taskItem.answer,
+            solutionCriteria = taskItem.solutionCriteria,
+            maxScore = taskItem.maxScore,
+            zIndex = nextZIndex()
+        )
+        executeCommand(AddElementCommand(newElement))
+        _state.update { it.copy(selectedElementIds = setOf(newElement.id)) }
+        closeFipiDrawer()
+    }
+
+    fun toggleFipiTaskAnswer(elementId: String) {
+        val el = _state.value.elements[elementId] as? BoardElement.FipiTask ?: return
+        val updated = el.copy(isAnswerRevealed = !el.isAnswerRevealed)
+        executeCommand(UpdateElementCommand(el, updated))
     }
 
     // --- Настройки, темы и профили онбординга ---

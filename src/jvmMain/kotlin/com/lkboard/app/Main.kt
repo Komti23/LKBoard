@@ -38,6 +38,7 @@ import com.lkboard.app.ui.components.LatexEditDialog
 import com.lkboard.app.ui.components.LatexSidePanel
 import com.lkboard.app.ui.components.PhysicsStencilDialog
 import com.lkboard.app.ui.components.PhysicsLabSidePanel
+import com.lkboard.app.ui.components.FipiTaskBankSidePanel
 import com.lkboard.app.ui.components.FirstRunOnboardingDialog
 import com.lkboard.app.ui.components.SettingsDialog
 import com.lkboard.app.ui.components.SettingsSidePanel
@@ -82,6 +83,7 @@ fun main() = application {
     val isLatexDialogOpen by viewModel.isLatexDialogOpen.collectAsState()
     val editingLatexFormula by viewModel.editingLatexFormula.collectAsState()
     val isPhysicsStencilDialogOpen by viewModel.isPhysicsStencilDialogOpen.collectAsState()
+    val isFipiDrawerOpen by viewModel.isFipiDrawerOpen.collectAsState()
     val isTabletModeActive by viewModel.isTabletModeEnabled.collectAsState()
 
     val logoPainter = AppLogo.rememberLogoPainter()
@@ -158,13 +160,14 @@ fun main() = application {
 
                     // Закрытие открытых боковых панелей или диалогов по нажатию Escape
                     (keyEvent.key == Key.Escape || rawKeyCode == java.awt.event.KeyEvent.VK_ESCAPE) && (
-                        isSettingsDialogOpen || isLatexDialogOpen || isPhysicsStencilDialogOpen ||
+                        isSettingsDialogOpen || isLatexDialogOpen || isPhysicsStencilDialogOpen || isFipiDrawerOpen ||
                         isShareDialogOpen || editingMilestone != null || editingFunctionGraph != null ||
                         editingStickyNote != null || editingElement != null || showVersionDetailsDialog
                     ) -> {
                         if (isSettingsDialogOpen) viewModel.closeSettingsDialog()
                         if (isLatexDialogOpen) viewModel.closeLatexDialog()
                         if (isPhysicsStencilDialogOpen) viewModel.closePhysicsStencilDialog()
+                        if (isFipiDrawerOpen) viewModel.closeFipiDrawer()
                         if (isShareDialogOpen) viewModel.closeShareDialog()
                         if (editingMilestone != null) viewModel.closeMilestoneDialog()
                         if (editingFunctionGraph != null) viewModel.closeFunctionGraphDialog()
@@ -245,7 +248,12 @@ fun main() = application {
                         viewModel.selectTool(CanvasTool.SELECT)
                         true
                     }
-                    !isCtrl && (keyEvent.key == Key.Q || rawKeyCode == java.awt.event.KeyEvent.VK_Q || keyEvent.key == Key.P || rawKeyCode == java.awt.event.KeyEvent.VK_P) -> {
+                    !isCtrl && (keyEvent.key == Key.Q || rawKeyCode == java.awt.event.KeyEvent.VK_Q) -> {
+                        viewModel.selectTool(CanvasTool.EXAM_TASK_BANK)
+                        viewModel.openFipiDrawer(getPasteTargetWorldPos())
+                        true
+                    }
+                    !isCtrl && (keyEvent.key == Key.P || rawKeyCode == java.awt.event.KeyEvent.VK_P) -> {
                         viewModel.selectTool(CanvasTool.PEN)
                         true
                     }
@@ -395,6 +403,9 @@ fun main() = application {
                                     is BoardElement.LatexFormula -> {
                                         viewModel.openLatexDialog(element)
                                     }
+                                    is BoardElement.FipiTask -> {
+                                        viewModel.toggleFipiTaskAnswer(element.id)
+                                    }
                                     else -> {
                                         viewModel.startEditingElement(element)
                                     }
@@ -408,6 +419,8 @@ fun main() = application {
                             onCreateFunctionGraph = viewModel::createFunctionGraph,
                             onCreateLatexFormula = { pos -> viewModel.openLatexDialog(position = pos) },
                             onCreatePhysicsStencil = { pos -> viewModel.openPhysicsStencilDialog(position = pos) },
+                            onOpenFipiDrawer = { pos -> viewModel.openFipiDrawer(position = pos) },
+                            onToggleFipiTaskAnswer = viewModel::toggleFipiTaskAnswer,
                             onCreateKanbanBoard = viewModel::createKanbanBoard,
                             onToggleStickyTodo = viewModel::toggleStickyTodo,
                             onCreateConnector = viewModel::createConnector,
@@ -587,6 +600,7 @@ fun main() = application {
                                 }
                             },
                             onOpenSettings = viewModel::openSettingsDialog,
+                            onOpenFipiDrawer = { viewModel.openFipiDrawer(getPasteTargetWorldPos()) },
                             onOpenVersionDetails = { showVersionDetailsDialog = true }
                         )
 
@@ -656,6 +670,15 @@ fun main() = application {
                             isOpen = isPhysicsStencilDialogOpen,
                             onDismiss = viewModel::closePhysicsStencilDialog,
                             onSelectStencil = viewModel::addPhysicsStencil
+                        )
+
+                        // 9. Боковая панель Открытого банка заданий ФИПИ (ОГЭ / ЕГЭ)
+                        FipiTaskBankSidePanel(
+                            isOpen = isFipiDrawerOpen,
+                            onDismiss = viewModel::closeFipiDrawer,
+                            onInsertTask = { task ->
+                                viewModel.addFipiTask(task, getPasteTargetWorldPos())
+                            }
                         )
                     }
                 }

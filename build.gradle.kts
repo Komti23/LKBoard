@@ -49,7 +49,7 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi
             )
             packageName = "Lkboard"
-            packageVersion = "1.9.5"
+            packageVersion = "1.10.0"
             description = "Lkboard - Infinite Canvas Collaborative Workspace"
             copyright = "© 2026 Lkboard Team"
             vendor = "Lkboard"

@@ -18,5 +18,6 @@ enum class CanvasTool(val displayName: String) {
     LATEX("Формула LaTeX (X)"),
     PHYSICS_STENCIL("Конструктор физики (B)"),
     KANBAN("Канбан-доска (K)"),
-    LASER_POINTER("Лазерная указка (L)")
+    LASER_POINTER("Лазерная указка (L)"),
+    EXAM_TASK_BANK("Банк заданий ФИПИ (Q)")
 }

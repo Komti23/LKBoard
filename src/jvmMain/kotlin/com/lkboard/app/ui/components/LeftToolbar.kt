@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.Functions
 import androidx.compose.material.icons.filled.Highlight
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.PanTool
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.automirrored.filled.StickyNote2
@@ -100,6 +101,7 @@ fun LeftToolbar(
     enabledTools: Set<CanvasTool> = CanvasTool.entries.toSet(),
     position: ToolbarPosition = ToolbarPosition.LEFT,
     onChangePosition: ((ToolbarPosition) -> Unit)? = null,
+    onOpenFipiDrawer: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var isStylusMenuOpen by remember { mutableStateOf(activeTool == CanvasTool.PEN) }
@@ -256,6 +258,22 @@ fun LeftToolbar(
                     isStylusMenuOpen = false
                     isShapeMenuOpen = false
                     onToolSelect(CanvasTool.PHYSICS_STENCIL)
+                }
+            )
+        }
+
+        // 8.1. Банк заданий ФИПИ (ОГЭ / ЕГЭ)
+        if (CanvasTool.EXAM_TASK_BANK in enabledTools) {
+            ToolbarIconButton(
+                icon = Icons.Default.School,
+                label = "Банк заданий ФИПИ (Q)",
+                isSelected = activeTool == CanvasTool.EXAM_TASK_BANK,
+                position = position,
+                onClick = {
+                    isStylusMenuOpen = false
+                    isShapeMenuOpen = false
+                    onToolSelect(CanvasTool.EXAM_TASK_BANK)
+                    onOpenFipiDrawer?.invoke()
                 }
             )
         }

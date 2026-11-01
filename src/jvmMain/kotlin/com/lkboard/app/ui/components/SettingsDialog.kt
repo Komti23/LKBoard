@@ -1243,8 +1243,9 @@ fun SettingsDialog(
                                 CanvasTool.entries.filter { it != CanvasTool.SELECT && it != CanvasTool.HAND }.forEach { tool ->
                                     val isEnabled = tool in tools
                                     val (toolIcon, toolShortcut) = when (tool) {
-                                        CanvasTool.PEN -> Icons.Default.Edit to "Q / P · Рисование стилусом и пером"
+                                        CanvasTool.PEN -> Icons.Default.Edit to "P · Рисование стилусом и пером"
                                         CanvasTool.ERASER -> Icons.Default.AutoFixNormal to "E · Стирание штрихов"
+                                        CanvasTool.EXAM_TASK_BANK -> Icons.Default.School to "Q · Банк заданий ФИПИ (ОГЭ / ЕГЭ)"
                                         CanvasTool.STICKY_NOTE -> Icons.Default.Description to "S · Заметки и списки задач To-Do"
                                         CanvasTool.SHAPE -> Icons.Default.Category to "R · Прямоугольники, круги, стрелки"
                                         CanvasTool.LATEX -> Icons.Default.Functions to "X · Математические уравнения и формулы"

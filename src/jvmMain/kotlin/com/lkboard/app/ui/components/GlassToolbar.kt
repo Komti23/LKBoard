@@ -152,6 +152,7 @@ fun GlassToolbar(
     enabledTools: Set<CanvasTool> = CanvasTool.entries.toSet(),
     toolbarPosition: ToolbarPosition = ToolbarPosition.LEFT,
     onChangeToolbarPosition: ((ToolbarPosition) -> Unit)? = null,
+    onOpenFipiDrawer: (() -> Unit)? = null,
     onCopyBoardImage: () -> Unit = {},
     onTogglePresentation: () -> Unit = {},
     onToggleLaser: () -> Unit = {},
@@ -310,6 +311,7 @@ fun GlassToolbar(
             enabledTools = enabledTools,
             position = toolbarPosition,
             onChangePosition = onChangeToolbarPosition,
+            onOpenFipiDrawer = onOpenFipiDrawer,
             modifier = Modifier.align(toolbarAlignment)
         )
 

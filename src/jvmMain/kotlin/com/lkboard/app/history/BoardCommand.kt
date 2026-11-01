@@ -180,6 +180,24 @@ class UpdateTextCommand(
 }
 
 /**
+ * Команда изменения элемента на доске (например, переключение отображения ответа задачи ФИПИ).
+ */
+class UpdateElementCommand(
+    val oldElement: BoardElement,
+    val newElement: BoardElement
+) : BoardCommand {
+    override val description: String = "Обновление элемента"
+
+    override fun execute(state: BoardState): BoardState {
+        return state.withElement(newElement)
+    }
+
+    override fun undo(state: BoardState): BoardState {
+        return state.withElement(oldElement)
+    }
+}
+
+/**
  * Команда дублирования выделенных элементов.
  */
 class DuplicateElementsCommand(

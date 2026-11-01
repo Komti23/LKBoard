@@ -71,6 +71,7 @@ object PngExporter {
                 is BoardElement.LatexFormula -> com.lkboard.app.util.LatexRenderer.renderSkia(canvas, element, defaultTypeface)
                 is BoardElement.PhysicsStencil -> com.lkboard.app.util.PhysicsStencilRenderer.renderSkia(canvas, element, defaultTypeface)
                 is BoardElement.KanbanBoard -> renderKanbanBoard(canvas, element, defaultTypeface, state)
+                is BoardElement.FipiTask -> renderFipiTask(canvas, element, defaultTypeface)
             }
             if (hasRotation) {
                 canvas.restore()
@@ -924,5 +925,129 @@ object PngExporter {
             }
             canvas.drawString(cols[i], cx + 14f * kScale, cy + colHeadH * 0.65f, colFont, colTextPaint)
         }
+    }
+
+    private fun renderFipiTask(
+        canvas: org.jetbrains.skia.Canvas,
+        task: BoardElement.FipiTask,
+        typeface: Typeface
+    ) {
+        val rrect = RRect.makeXYWH(task.x, task.y, task.width, task.height, 16f)
+
+        // Тень
+        val shadow = Paint().apply {
+            color = 0x14000000.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(RRect.makeXYWH(task.x + 3f, task.y + 6f, task.width, task.height, 16f), shadow)
+
+        // Фон
+        val bgPaint = Paint().apply {
+            color = task.cardColorHex.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRRect(rrect, bgPaint)
+
+        // Граница
+        val borderPaint = Paint().apply {
+            color = 0xFFCBD5E1.toInt()
+            mode = PaintMode.STROKE
+            strokeWidth = 1.4f
+            isAntiAlias = true
+        }
+        canvas.drawRRect(rrect, borderPaint)
+
+        // Бейдж экзамена
+        val isOge = task.examType.contains("ОГЭ")
+        val examBgColor = if (isOge) 0x227C3AED.toInt() else 0x222563EB.toInt()
+        val examTextColor = if (isOge) 0xFF7C3AED.toInt() else 0xFF2563EB.toInt()
+        val pad = 18f
+        var curY = task.y + pad
+
+        val examBadge = RRect.makeXYWH(task.x + pad, curY, 130f, 22f, 6f)
+        val examBgPaint = Paint().apply { color = examBgColor; mode = PaintMode.FILL; isAntiAlias = true }
+        canvas.drawRRect(examBadge, examBgPaint)
+
+        val fontBadge = Font(typeface, 11f)
+        val textPaint = Paint().apply { color = examTextColor; isAntiAlias = true }
+        canvas.drawString("${task.examType} · ${task.subject}", task.x + pad + 8f, curY + 15f, fontBadge, textPaint)
+
+        // Номер задания
+        val numBadge = RRect.makeXYWH(task.x + pad + 138f, curY, 48f, 22f, 6f)
+        val numBgPaint = Paint().apply { color = 0x22D97706.toInt(); mode = PaintMode.FILL; isAntiAlias = true }
+        canvas.drawRRect(numBadge, numBgPaint)
+        val numTextPaint = Paint().apply { color = 0xFFD97706.toInt(); isAntiAlias = true }
+        canvas.drawString(task.taskNumber, task.x + pad + 146f, curY + 15f, fontBadge, numTextPaint)
+
+        // Статус ответа
+        val statusText = if (task.isAnswerRevealed) "✓ Ответ открыт" else "🔒 Ответ скрыт"
+        val statusColor = if (task.isAnswerRevealed) 0xFF16A34A.toInt() else 0xFF64748B.toInt()
+        val statusPaint = Paint().apply { color = statusColor; isAntiAlias = true }
+        canvas.drawString(statusText, task.x + task.width - pad - 95f, curY + 15f, fontBadge, statusPaint)
+
+        curY += 34f
+
+        // Тема
+        if (task.topic.isNotBlank()) {
+            val topicFont = Font(typeface, 12f)
+            val topicPaint = Paint().apply { color = 0xFF0F172A.toInt(); isAntiAlias = true }
+            canvas.drawString(task.topic, task.x + pad, curY + 12f, topicFont, topicPaint)
+            curY += 20f
+        }
+
+        // Разделитель
+        val linePaint = Paint().apply { color = 0xFFE2E8F0.toInt(); strokeWidth = 1f; isAntiAlias = true }
+        canvas.drawLine(task.x + pad, curY + 4f, task.x + task.width - pad, curY + 4f, linePaint)
+        curY += 16f
+
+        // Условие (с переносом строк по словам)
+        val condFont = Font(typeface, 12.5f)
+        val condPaint = Paint().apply { color = 0xFF1E293B.toInt(); isAntiAlias = true }
+        val maxW = task.width - pad * 2f
+        val words = task.condition.split(" ")
+        var lineBuf = StringBuilder()
+        for (w in words) {
+            val test = if (lineBuf.isEmpty()) w else "$lineBuf $w"
+            if (test.length * 7.5f > maxW && lineBuf.isNotEmpty()) {
+                canvas.drawString(lineBuf.toString(), task.x + pad, curY + 12f, condFont, condPaint)
+                curY += 18f
+                lineBuf = StringBuilder(w)
+            } else {
+                lineBuf = StringBuilder(test)
+            }
+            if (curY > task.y + task.height - 70f) break
+        }
+        if (lineBuf.isNotEmpty() && curY <= task.y + task.height - 70f) {
+            canvas.drawString(lineBuf.toString(), task.x + pad, curY + 12f, condFont, condPaint)
+            curY += 22f
+        }
+
+        // Блок ответа внизу
+        val boxH = if (task.isAnswerRevealed) 44f else 32f
+        val boxY = task.y + task.height - boxH - pad
+        val ansBox = RRect.makeXYWH(task.x + pad, boxY, maxW, boxH, 8f)
+        val ansBgPaint = Paint().apply {
+            color = if (task.isAnswerRevealed) 0xFFF0FDF4.toInt() else 0xFFF8FAFC.toInt()
+            mode = PaintMode.FILL
+            isAntiAlias = true
+        }
+        val ansBorderPaint = Paint().apply {
+            color = if (task.isAnswerRevealed) 0xFF86EFAC.toInt() else 0xFFCBD5E1.toInt()
+            mode = PaintMode.STROKE
+            strokeWidth = 1.2f
+            isAntiAlias = true
+        }
+        canvas.drawRRect(ansBox, ansBgPaint)
+        canvas.drawRRect(ansBox, ansBorderPaint)
+
+        val ansFont = Font(typeface, 11.5f)
+        val ansTxtPaint = Paint().apply {
+            color = if (task.isAnswerRevealed) 0xFF15803D.toInt() else 0xFF64748B.toInt()
+            isAntiAlias = true
+        }
+        val ansText = if (task.isAnswerRevealed) "✓ Ответ (${task.maxScore} б.): ${task.answer}" else "🔒 Ответ и критерии скрыты"
+        canvas.drawString(ansText, task.x + pad + 10f, boxY + 20f, ansFont, ansTxtPaint)
     }
 }

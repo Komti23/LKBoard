@@ -73,7 +73,7 @@ enum class UserRole(
         tools = setOf(
             CanvasTool.SELECT, CanvasTool.PEN, CanvasTool.ERASER, CanvasTool.TEXT,
             CanvasTool.LATEX, CanvasTool.PHYSICS_STENCIL, CanvasTool.FUNCTION_GRAPH,
-            CanvasTool.STICKY_NOTE, CanvasTool.SHAPE
+            CanvasTool.EXAM_TASK_BANK, CanvasTool.STICKY_NOTE, CanvasTool.SHAPE
         )
     ),
     TEAM_COLLAB(

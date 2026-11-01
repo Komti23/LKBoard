@@ -526,6 +526,39 @@ sealed interface BoardElement {
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
         override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
     }
+
+    /**
+     * Карточка экзаменационного задания ФИПИ (ОГЭ / ЕГЭ).
+     * Включает условие, тему, номер задания, скрываемый спойлер с ответом и критериями проверки.
+     */
+    @Serializable
+    @SerialName("fipi_task")
+    data class FipiTask(
+        override val id: String,
+        override val x: Float,
+        override val y: Float,
+        override val width: Float = 480f,
+        override val height: Float = 320f,
+        override val zIndex: Int = 0,
+        override val isLocked: Boolean = false,
+        override val rotation: Float = 0f,
+        val examType: String = "ЕГЭ (Профиль)",
+        val subject: String = "Математика",
+        val taskNumber: String = "№13",
+        val topic: String = "Тригонометрические уравнения",
+        val condition: String = "",
+        val answer: String = "",
+        val solutionCriteria: String = "",
+        val isAnswerRevealed: Boolean = false,
+        val primaryScore: Int = 0,
+        val maxScore: Int = 2,
+        val cardColorHex: Long = 0xFFFFFFFFL
+    ) : BoardElement {
+        override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
+        override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
+        override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
+        override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
+    }
 }
 
 /**
