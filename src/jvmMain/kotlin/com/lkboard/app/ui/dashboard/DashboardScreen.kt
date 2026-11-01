@@ -45,10 +45,38 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import com.lkboard.app.data.AppPreferences
+import com.lkboard.app.model.GridType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.skia.Image as SkiaImage
+import java.io.File
+import java.util.Calendar
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -122,8 +150,9 @@ fun DashboardScreen(
     val isDark = LocalAppTheme.current.isDark
 
     val filteredBoards = remember(boards, searchQuery) {
-        if (searchQuery.isBlank()) boards
+        val list = if (searchQuery.isBlank()) boards
         else boards.filter { it.title.contains(searchQuery.trim(), ignoreCase = true) }
+        list.distinctBy { it.id }
     }
 
     Box(
@@ -220,7 +249,7 @@ fun DashboardScreen(
                     columns = GridCells.Adaptive(minSize = 270.dp),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(top = 10.dp, bottom = 32.dp, start = 6.dp, end = 6.dp),
+                    contentPadding = PaddingValues(top = 14.dp, bottom = 36.dp, start = 8.dp, end = 8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filteredBoards, key = { it.id }) { board ->
@@ -692,7 +721,11 @@ private fun TemplatesSection(
 }
 
 /**
- * Карточка сохраненной доски.
+ * Премиальная карточка сохраненной доски в стиле Apple Liquid Glass:
+ * - Отображает живую миниатюру сцены (thumbnail) или стилизованную сетку холста (dots, lines, grid)
+ * - Стеклянные бейджи шаблона и количества элементов
+ * - Плавные hover-эффекты с подъемом карточки, подсветкой границ и быстрой кнопкой перехода
+ * - Человекопонятное форматирование даты изменения
  */
 @Composable
 private fun BoardCard(
@@ -708,15 +741,16 @@ private fun BoardCard(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val isHovered by interactionSource.collectIsHoveredAsState()
+
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1.0f,
+        targetValue = if (isPressed) 0.99f else if (isHovered) 1.006f else 1.0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "boardCardScale"
     )
     val translateY by animateFloatAsState(
         targetValue = when {
-            isPressed -> 2f
-            isHovered -> -4f
+            isPressed -> 1.5f
+            isHovered -> -3f
             else -> 0f
         },
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
@@ -725,23 +759,60 @@ private fun BoardCard(
     val elevation by animateDpAsState(
         targetValue = when {
             isPressed -> 2.dp
-            isHovered -> 14.dp
-            isActive -> 10.dp
-            else -> 4.dp
+            isHovered -> 10.dp
+            isActive -> 8.dp
+            else -> 3.dp
         },
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "boardCardElevation"
     )
 
+    // Асинхронная подгрузка миниатюры доски с генерацией на лету при необходимости
+    val thumbnailBitmap by produceState<ImageBitmap?>(
+        initialValue = null,
+        key1 = board.id,
+        key2 = board.updatedAt
+    ) {
+        value = withContext(Dispatchers.IO) {
+            val thumbFile = File(AppPreferences.getAppDataDir(), "boards/thumbnails/thumb_${board.id}.png")
+            if (!thumbFile.exists() || thumbFile.length() == 0L) {
+                if (board.elementCount > 0) {
+                    try {
+                        val boardFile = File(AppPreferences.getAppDataDir(), "boards/${board.fileName}")
+                        if (boardFile.exists()) {
+                            val state = com.lkboard.app.data.BoardSerializer.load(boardFile)
+                            com.lkboard.app.export.PngExporter.renderThumbnailToPng(thumbFile, state)
+                        }
+                    } catch (_: Exception) {}
+                }
+            }
+            if (thumbFile.exists() && thumbFile.length() > 0) {
+                try {
+                    val bytes = thumbFile.readBytes()
+                    SkiaImage.makeFromEncoded(bytes).toComposeImageBitmap()
+                } catch (_: Exception) {
+                    null
+                }
+            } else {
+                null
+            }
+        }
+    }
+
     val formattedDate = remember(board.updatedAt) {
-        val sdf = SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.getDefault())
-        sdf.format(Date(board.updatedAt))
+        formatRelativeBoardDate(board.updatedAt)
+    }
+
+    val borderColor = when {
+        isActive -> if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)
+        isHovered -> if (isDark) Color(0xFF475569) else Color(0xFF93C5FD)
+        else -> if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)
     }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 2.dp)
+            .padding(vertical = 6.dp, horizontal = 4.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -750,106 +821,252 @@ private fun BoardCard(
             .shadow(
                 elevation = elevation,
                 shape = RoundedCornerShape(18.dp),
-                ambientColor = Color.Black.copy(alpha = 0.02f),
-                spotColor = if (isActive) Color(0x282563EB) else Color.Black.copy(alpha = 0.05f)
+                ambientColor = Color.Black.copy(alpha = 0.03f),
+                spotColor = if (isActive) Color(0x332563EB) else if (isHovered) Color(0x22000000) else Color.Black.copy(alpha = 0.05f)
             )
             .clip(RoundedCornerShape(18.dp))
             .background(if (isDark) Color(0xFF181B20) else Color.White)
             .border(
-                if (isActive) BorderStroke(1.5.dp, if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
-                else if (isHovered) BorderStroke(1.dp, if (isDark) Color(0xFF3F4554) else Color(0xFFCBD5E1))
-                else BorderStroke(1.dp, if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)),
+                BorderStroke(if (isActive) 1.5.dp else 1.dp, borderColor),
                 RoundedCornerShape(18.dp)
             )
             .clickable(interactionSource = interactionSource, indication = null) { onOpen() }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // Верхнее превью (Preview Banner)
+            // 1. Верхнее превью (Preview Banner с миниатюрой или сеткой)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(110.dp)
+                    .height(134.dp)
                     .background(Color(board.backgroundColorHex))
-                    .padding(12.dp)
             ) {
-                // Бейдж шаблона или элементов
+                // Фоновая сетка холста (DOTS, LINES, GRID)
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val isLightBg = Color(board.backgroundColorHex).luminance() > 0.5f
+                    val gridColor = if (isLightBg) Color(0xFF475569).copy(alpha = 0.12f) else Color.White.copy(alpha = 0.12f)
+                    val step = 16.dp.toPx()
+
+                    when (board.gridType) {
+                        GridType.DOTS -> {
+                            var x = step / 2f
+                            while (x < size.width) {
+                                var y = step / 2f
+                                while (y < size.height) {
+                                    drawCircle(gridColor, radius = 1.3.dp.toPx(), center = Offset(x, y))
+                                    y += step
+                                }
+                                x += step
+                            }
+                        }
+                        GridType.LINES -> {
+                            var y = step
+                            while (y < size.height) {
+                                drawLine(gridColor, start = Offset(0f, y), end = Offset(size.width, y), strokeWidth = 1.dp.toPx())
+                                y += step
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+
+                // Отображение реальной миниатюры содержимого
+                if (thumbnailBitmap != null) {
+                    Image(
+                        bitmap = thumbnailBitmap!!,
+                        contentDescription = board.title,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    )
+                } else if (board.elementCount == 0) {
+                    // Индикатор чистого холста
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (isDark) Color(0xFF1E222A).copy(alpha = 0.75f) else Color.White.copy(alpha = 0.80f))
+                            .border(1.dp, if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.EditNote,
+                                contentDescription = null,
+                                tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = "Чистый холст",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+                            )
+                        }
+                    }
+                }
+
+                // Мягкий нижний градиент для перехода к карточке
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    if (isDark) Color(0xFF181B20).copy(alpha = 0.35f) else Color.Black.copy(alpha = 0.05f)
+                                )
+                            )
+                        )
+                )
+
+                // Верхняя плашка с бейджами (Шаблон + Статус / Hover кнопка)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Top
                 ) {
                     val (templateIconVector, templateTitle) = when (board.templateType) {
-                        BoardTemplate.ROADMAP.name -> Icons.Default.Timeline to "Дорожная карта"
+                        BoardTemplate.ROADMAP.name -> Icons.Default.Timeline to "Roadmap"
                         BoardTemplate.KANBAN.name -> Icons.Default.ViewColumn to "Канбан"
                         BoardTemplate.BRAINSTORM.name -> Icons.Default.Psychology to "Mindmap"
-                        BoardTemplate.MATH_STUDIO.name -> Icons.Default.ShowChart to "Графики"
+                        BoardTemplate.MATH_STUDIO.name -> Icons.Default.ShowChart to "Графика"
                         else -> Icons.Default.Article to "Доска"
                     }
 
+                    // Стеклянный бейдж типа шаблона
                     Box(
                         modifier = Modifier
+                            .shadow(2.dp, RoundedCornerShape(8.dp), ambientColor = Color.Black.copy(alpha = 0.04f))
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if (isDark) Color.Black.copy(alpha = 0.40f) else Color.Black.copy(alpha = 0.06f))
+                            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.88f) else Color.White.copy(alpha = 0.90f))
+                            .border(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                imageVector = templateIconVector,
+                                contentDescription = null,
+                                tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = templateTitle,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B)
+                            )
+                        }
+                    }
+
+                    // Индикатор "Открыта" или кнопка быстрого открытия при Hover
+                    if (isActive) {
+                        Box(
+                            modifier = Modifier
+                                .shadow(2.dp, RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isDark) Color(0xFF0F291E) else Color(0xFFDCFCE7))
+                                .border(1.dp, if (isDark) Color(0xFF15803D) else Color(0xFF86EFAC), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF16A34A))
+                                )
+                                Text(
+                                    text = "Открыта",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) Color(0xFF4ADE80) else Color(0xFF15803D)
+                                )
+                            }
+                        }
+                    } else {
+                        AnimatedVisibility(
+                            visible = isHovered,
+                            enter = fadeIn(tween(140)) + scaleIn(tween(140)),
+                            exit = fadeOut(tween(90)) + scaleOut(tween(90))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isDark) Color(0xFF222630).copy(alpha = 0.95f) else Color.White.copy(alpha = 0.95f))
+                                    .border(1.dp, if (isDark) Color(0xFF38BDF8).copy(alpha = 0.4f) else Color(0xFF93C5FD), CircleShape)
+                                    .padding(4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = "Открыть",
+                                    tint = if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Нижний бейдж количества элементов
+                if (board.elementCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(10.dp)
+                            .shadow(2.dp, RoundedCornerShape(6.dp))
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.90f) else Color.White.copy(alpha = 0.92f))
+                            .border(1.dp, if (isDark) Color(0xFF2E333D) else Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 7.dp, vertical = 3.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Icon(
-                                imageVector = templateIconVector,
+                                imageVector = Icons.Default.Layers,
                                 contentDescription = null,
-                                tint = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155),
-                                modifier = Modifier.size(13.dp)
+                                tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                modifier = Modifier.size(12.dp)
                             )
                             Text(
-                                text = templateTitle,
-                                fontSize = 11.sp,
+                                text = pluralObjectsCount(board.elementCount),
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = if (isDark) Color(0xFFE4E4E7) else Color(0xFF334155)
                             )
                         }
                     }
-
-                    if (isActive) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "Открыта сейчас",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color(0xFF0F1115) else Color.White
-                            )
-                        }
-                    }
-                }
-
-                // Индикатор количества элементов
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(if (isDark) Color(0xFF181B20).copy(alpha = 0.88f) else Color.White.copy(alpha = 0.85f))
-                        .padding(horizontal = 7.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = if (board.elementCount > 0) "${board.elementCount} объектов" else "Пустая",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
-                    )
                 }
             }
 
-            // Нижняя часть карточки (Заголовок, дата, действия)
+            // Тонкий разделитель превью и панели метаданных
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = if (isDark) Color(0xFF232730) else Color(0xFFF1F5F9)
+            )
+
+            // 2. Нижняя панель (Заголовок, дата и действия)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(14.dp)
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -862,6 +1079,7 @@ private fun BoardCard(
                         fontWeight = FontWeight.Bold,
                         color = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A),
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -869,7 +1087,10 @@ private fun BoardCard(
                     Box {
                         IconButton(
                             onClick = { menuOpen = true },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (menuOpen) (if (isDark) Color(0xFF262A34) else Color(0xFFF1F5F9)) else Color.Transparent)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
@@ -894,10 +1115,6 @@ private fun BoardCard(
                                 leadingIcon = {
                                     Icon(Icons.AutoMirrored.Filled.OpenInNew, null, tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
-                                colors = MenuDefaults.itemColors(
-                                    textColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
-                                    leadingIconColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
-                                ),
                                 onClick = {
                                     menuOpen = false
                                     onOpen()
@@ -908,10 +1125,6 @@ private fun BoardCard(
                                 leadingIcon = {
                                     Icon(Icons.Default.Edit, null, tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
-                                colors = MenuDefaults.itemColors(
-                                    textColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
-                                    leadingIconColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
-                                ),
                                 onClick = {
                                     menuOpen = false
                                     onRename()
@@ -922,10 +1135,6 @@ private fun BoardCard(
                                 leadingIcon = {
                                     Icon(Icons.Default.ContentCopy, null, tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569), modifier = Modifier.size(16.dp))
                                 },
-                                colors = MenuDefaults.itemColors(
-                                    textColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF1E293B),
-                                    leadingIconColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
-                                ),
                                 onClick = {
                                     menuOpen = false
                                     onDuplicate()
@@ -936,10 +1145,6 @@ private fun BoardCard(
                                 leadingIcon = {
                                     Icon(Icons.Default.DeleteOutline, null, tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
                                 },
-                                colors = MenuDefaults.itemColors(
-                                    textColor = Color(0xFFEF4444),
-                                    leadingIconColor = Color(0xFFEF4444)
-                                ),
                                 onClick = {
                                     menuOpen = false
                                     onDelete()
@@ -949,20 +1154,31 @@ private fun BoardCard(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "Изменено: $formattedDate",
-                        fontSize = 11.sp,
-                        color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = formattedDate,
+                            fontSize = 11.sp,
+                            color = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
+                        )
+                    }
 
-                    // Кнопка открыть
+                    // Кнопка продолжить / открыть
                     Button(
                         onClick = onOpen,
                         shape = RoundedCornerShape(8.dp),
@@ -973,15 +1189,60 @@ private fun BoardCard(
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         modifier = Modifier.height(28.dp)
                     ) {
-                        Text(
-                            text = if (isActive) "Продолжить" else "Открыть",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = if (isActive) "Продолжить" else "Открыть",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Icon(
+                                imageVector = if (isActive) Icons.Default.PlayArrow else Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                modifier = Modifier.size(12.dp)
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+private fun formatRelativeBoardDate(timestamp: Long): String {
+    val date = Date(timestamp)
+    val now = Calendar.getInstance()
+    val then = Calendar.getInstance().apply { time = date }
+    val timeFormat = SimpleDateFormat("HH:mm", Locale("ru"))
+    val timeStr = timeFormat.format(date)
+
+    val isToday = now.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
+            now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
+    if (isToday) return "Сегодня, $timeStr"
+
+    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+    val isYesterday = yesterday.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
+            yesterday.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
+    if (isYesterday) return "Вчера, $timeStr"
+
+    val sameYear = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
+    return if (sameYear) {
+        SimpleDateFormat("d MMM, HH:mm", Locale("ru")).format(date)
+    } else {
+        SimpleDateFormat("d MMM yyyy, HH:mm", Locale("ru")).format(date)
+    }
+}
+
+private fun pluralObjectsCount(count: Int): String {
+    val mod100 = count % 100
+    val mod10 = count % 10
+    return when {
+        mod100 in 11..19 -> "$count объектов"
+        mod10 == 1 -> "$count объект"
+        mod10 in 2..4 -> "$count объекта"
+        else -> "$count объектов"
     }
 }
 

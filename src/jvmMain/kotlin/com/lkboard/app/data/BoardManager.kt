@@ -47,6 +47,14 @@ class BoardManager(
         if (!exists()) mkdirs()
     }
 
+    val thumbnailsDir: File = File(boardsDir, "thumbnails").apply {
+        if (!exists()) mkdirs()
+    }
+
+    fun getThumbnailFile(boardId: String): File {
+        return File(thumbnailsDir, "thumb_$boardId.png")
+    }
+
     private val indexFile = File(boardsDir, "boards_index.json")
 
     private val json = Json {
@@ -61,15 +69,21 @@ class BoardManager(
             if (indexFile.exists()) {
                 val content = indexFile.readText(Charsets.UTF_8)
                 val idx = json.decodeFromString<BoardsIndex>(content)
+                // Дедупликация досок по id
+                val uniqueBoards = idx.boards.distinctBy { it.id }
+                val hasDuplicates = uniqueBoards.size != idx.boards.size
+
                 // Самовосстановление: проверяем, нет ли на диске .lkboard файлов, отсутствующих в индексе
                 val diskFiles = boardsDir.listFiles { _, name -> name.endsWith(".lkboard") } ?: emptyArray()
-                val knownFileNames = idx.boards.map { it.fileName }.toSet()
+                val knownFileNames = uniqueBoards.map { it.fileName }.toSet()
+                val knownIds = uniqueBoards.map { it.id }.toSet()
                 val missingFiles = diskFiles.filter { it.name !in knownFileNames }
-                if (missingFiles.isNotEmpty()) {
+                if (missingFiles.isNotEmpty() || hasDuplicates) {
                     val recovered = missingFiles.mapNotNull { f ->
                         try {
                             val state = BoardSerializer.load(f)
                             val id = f.nameWithoutExtension.removePrefix("board_")
+                            if (id in knownIds) return@mapNotNull null
                             BoardItemInfo(
                                 id = id,
                                 title = state.title.ifBlank { "Моя доска" },
@@ -85,12 +99,12 @@ class BoardManager(
                             null
                         }
                     }
-                    val updatedList = (idx.boards + recovered).sortedByDescending { it.updatedAt }
+                    val updatedList = (uniqueBoards + recovered).distinctBy { it.id }.sortedByDescending { it.updatedAt }
                     val updated = idx.copy(boards = updatedList)
                     saveIndex(updated)
                     updated
                 } else {
-                    idx
+                    idx.copy(boards = uniqueBoards)
                 }
             } else {
                 initDefaultBoards()
@@ -221,6 +235,12 @@ class BoardManager(
         val state = BoardTemplateGenerator.generate(template, cleanTitle)
         BoardSerializer.save(file, state)
 
+        if (state.elements.isNotEmpty()) {
+            try {
+                com.lkboard.app.export.PngExporter.renderThumbnailToPng(getThumbnailFile(id), state)
+            } catch (_: Exception) {}
+        }
+
         val now = System.currentTimeMillis()
         val item = BoardItemInfo(
             id = id,
@@ -260,6 +280,16 @@ class BoardManager(
         val file = File(boardsDir, info.fileName)
 
         BoardSerializer.save(file, state)
+
+        // Асинхронное/фоновое обновление миниатюры доски
+        try {
+            val thumb = getThumbnailFile(id)
+            if (state.elements.isNotEmpty()) {
+                com.lkboard.app.export.PngExporter.renderThumbnailToPng(thumb, state)
+            } else if (thumb.exists()) {
+                thumb.delete()
+            }
+        } catch (_: Exception) {}
 
         val now = System.currentTimeMillis()
         val updatedInfo = info.copy(
@@ -330,6 +360,13 @@ class BoardManager(
             templateType = sourceInfo.templateType
         )
 
+        try {
+            val srcThumb = getThumbnailFile(id)
+            if (srcThumb.exists()) {
+                srcThumb.copyTo(getThumbnailFile(newId), overwrite = true)
+            }
+        } catch (_: Exception) {}
+
         val updatedList = listOf(newItem) + index.boards
         saveIndex(index.copy(boards = updatedList))
         return newItem
@@ -343,6 +380,10 @@ class BoardManager(
         if (file.exists()) {
             file.delete()
         }
+
+        try {
+            getThumbnailFile(id).delete()
+        } catch (_: Exception) {}
 
         val updatedList = index.boards.filterNot { it.id == id }
         val newActiveId = if (index.lastActiveBoardId == id) {
@@ -380,10 +421,43 @@ class BoardManager(
             val updatedList = listOf(item) + index.boards
             saveIndex(index.copy(boards = updatedList, lastActiveBoardId = id))
 
+            if (state.elements.isNotEmpty()) {
+                try {
+                    com.lkboard.app.export.PngExporter.renderThumbnailToPng(getThumbnailFile(id), state)
+                } catch (_: Exception) {}
+            }
+
             item to state
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    /**
+     * Фоновая генерация миниатюр для существующих досок, у которых есть элементы, но еще нет файла превью.
+     */
+    fun preloadMissingThumbnails() {
+        try {
+            val current = getIndex()
+            for (board in current.boards) {
+                if (board.elementCount > 0) {
+                    val thumb = getThumbnailFile(board.id)
+                    if (!thumb.exists() || thumb.length() == 0L) {
+                        val file = File(boardsDir, board.fileName)
+                        if (file.exists()) {
+                            try {
+                                val state = BoardSerializer.load(file)
+                                com.lkboard.app.export.PngExporter.renderThumbnailToPng(thumb, state)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

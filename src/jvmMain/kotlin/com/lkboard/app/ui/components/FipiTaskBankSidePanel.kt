@@ -240,6 +240,42 @@ fun FipiTaskBankSidePanel(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
+                            // Кнопка глобального показа/скрытия всех ответов
+                            val areAllOpen = filteredTasks.isNotEmpty() && previewAnswerIds.size == filteredTasks.size
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (areAllOpen) Color(0xFF16A34A).copy(alpha = 0.16f) else (if (isDark) Color(0xFF242832) else Color(0xFFF1F5F9)))
+                                    .border(1.dp, if (areAllOpen) Color(0xFF16A34A) else (if (isDark) Color(0xFF363C4A) else Color(0xFFCBD5E1)), RoundedCornerShape(8.dp))
+                                    .bouncyClickable(hoverScale = 1.05f, pressedScale = 0.92f) {
+                                        previewAnswerIds = if (areAllOpen) {
+                                            emptySet()
+                                        } else {
+                                            filteredTasks.map { it.id }.toSet()
+                                        }
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (areAllOpen) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = null,
+                                        tint = if (areAllOpen) Color(0xFF16A34A) else (if (isDark) Color(0xFF38BDF8) else Color(0xFF2563EB)),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Text(
+                                        text = if (areAllOpen) "Скрыть ответы" else "Все ответы",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (areAllOpen) Color(0xFF16A34A) else (if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A))
+                                    )
+                                }
+                            }
+
                             // Кнопка случайной задачи
                             Box(
                                 modifier = Modifier

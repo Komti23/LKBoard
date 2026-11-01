@@ -97,6 +97,9 @@ class BoardViewModel {
     private val _activeBoardId = MutableStateFlow<String?>(null)
     val activeBoardId: StateFlow<String?> = _activeBoardId.asStateFlow()
 
+    private val _currentFile = MutableStateFlow<java.io.File?>(null)
+    val currentFile: StateFlow<java.io.File?> = _currentFile.asStateFlow()
+
     private val _state = MutableStateFlow(loadOrCreateInitialState())
     val state: StateFlow<BoardState> = _state.asStateFlow()
 
@@ -108,9 +111,6 @@ class BoardViewModel {
 
     private val _editingElement = MutableStateFlow<BoardElement?>(null)
     val editingElement: StateFlow<BoardElement?> = _editingElement.asStateFlow()
-
-    private val _currentFile = MutableStateFlow<java.io.File?>(null)
-    val currentFile: StateFlow<java.io.File?> = _currentFile.asStateFlow()
 
     private val _isPresentationMode = MutableStateFlow(false)
     val isPresentationMode: StateFlow<Boolean> = _isPresentationMode.asStateFlow()
@@ -250,6 +250,7 @@ class BoardViewModel {
         // Фоновая быстрая загрузка списка досок без блокировки первого кадра UI
         ioScope.launch {
             refreshBoardsList()
+            boardManager.preloadMissingThumbnails()
         }
 
         // Фоновый тикер для плавающего таймера воркшопов
@@ -1683,13 +1684,22 @@ class BoardViewModel {
             PhysicsStencilType.INCLINED_PLANE -> 220f to 150f
             PhysicsStencilType.PULLEY_BLOCK -> 140f to 180f
             PhysicsStencilType.SPRING -> 120f to 170f
+            PhysicsStencilType.MATHEMATICAL_PENDULUM -> 150f to 200f
+            PhysicsStencilType.LEVER_BALANCE -> 260f to 140f
+            PhysicsStencilType.THERMO_CYLINDER -> 220f to 140f
+            PhysicsStencilType.THERMO_PV_CYCLE -> 220f to 180f
             PhysicsStencilType.OPTICAL_LENS -> 260f to 160f
+            PhysicsStencilType.OPTICAL_PRISM -> 180f to 160f
             PhysicsStencilType.CIRCUIT_RESISTOR -> 140f to 70f
             PhysicsStencilType.CIRCUIT_BATTERY -> 110f to 70f
             PhysicsStencilType.CIRCUIT_CAPACITOR -> 100f to 70f
             PhysicsStencilType.CIRCUIT_INDUCTOR -> 140f to 70f
             PhysicsStencilType.CIRCUIT_SWITCH -> 120f to 70f
             PhysicsStencilType.CIRCUIT_LAMP -> 90f to 90f
+            PhysicsStencilType.CIRCUIT_AMMETER -> 100f to 70f
+            PhysicsStencilType.CIRCUIT_VOLTMETER -> 100f to 70f
+            PhysicsStencilType.CIRCUIT_RHEOSTAT -> 160f to 80f
+            PhysicsStencilType.MAGNET_FIELD -> 200f to 150f
         }
         val newElement = BoardElement.PhysicsStencil(
             id = UUID.randomUUID().toString(),
@@ -1744,7 +1754,9 @@ class BoardViewModel {
 
     fun toggleFipiTaskAnswer(elementId: String) {
         val el = _state.value.elements[elementId] as? BoardElement.FipiTask ?: return
-        val updated = el.copy(isAnswerRevealed = !el.isAnswerRevealed)
+        val willReveal = !el.isAnswerRevealed
+        val newHeight = if (willReveal) maxOf(el.height, 450f) else if (el.height >= 440f) 320f else el.height
+        val updated = el.copy(isAnswerRevealed = willReveal, height = newHeight)
         executeCommand(UpdateElementCommand(el, updated))
     }
 
@@ -1802,8 +1814,8 @@ class BoardViewModel {
                 val pair = boardManager.loadBoard(targetId)
                 if (pair != null) {
                     val (info, loadedState) = pair
-                    _activeBoardId.value = info.id
-                    _currentFile.value = boardManager.getBoardFile(info)
+                    _activeBoardId?.value = info.id
+                    _currentFile?.value = boardManager.getBoardFile(info)
                     return loadedState.copy(
                         selectedElementIds = emptySet(),
                         enabledTools = AppPreferences.loadEnabledTools()

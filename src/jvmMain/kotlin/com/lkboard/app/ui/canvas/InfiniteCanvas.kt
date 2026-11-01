@@ -86,6 +86,7 @@ import com.lkboard.app.ui.components.InlineTextEditorOverlay
 import com.lkboard.app.ui.components.SelectionRenderer
 import com.lkboard.app.ui.components.TextFloatingQuickBar
 import com.lkboard.app.ui.components.LatexFloatingQuickBar
+import com.lkboard.app.ui.components.FipiTaskFloatingQuickBar
 import com.lkboard.app.util.FileDialogs
 import java.awt.Cursor
 import java.util.UUID
@@ -772,6 +773,13 @@ fun InfiniteCanvas(
                     transform = state.transform,
                     onUpdateProperties = onUpdateSelectedLatexProperties,
                     onEditFormula = { onEditSelectedLatex?.invoke() ?: onDoubleTapElement(selectedEl) },
+                    onDelete = { onDeleteElements(listOf(selectedEl)) }
+                )
+            } else if (selectedEl is BoardElement.FipiTask) {
+                FipiTaskFloatingQuickBar(
+                    element = selectedEl,
+                    transform = state.transform,
+                    onToggleAnswer = { onToggleFipiTaskAnswer(selectedEl.id) },
                     onDelete = { onDeleteElements(listOf(selectedEl)) }
                 )
             }

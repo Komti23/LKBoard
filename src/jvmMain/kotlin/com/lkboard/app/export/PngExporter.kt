@@ -95,6 +95,69 @@ object PngExporter {
         return javax.imageio.ImageIO.write(bufferedImage, "PNG", targetFile)
     }
 
+    /**
+     * Рендерит компактную миниатюру холста доски для карточек в Dashboard.
+     * Быстро масштабирует в нативном Skia-контексте с ограничением размера до [maxDim] px.
+     */
+    fun renderThumbnailToPng(
+        targetFile: File,
+        state: BoardState,
+        maxDim: Int = 480
+    ): Boolean {
+        val elementsToRender = state.sortedElements
+        if (elementsToRender.isEmpty()) return false
+
+        val contentBounds = GeometryUtils.computeBounds(elementsToRender) ?: return false
+        val contentWidth = max(1f, contentBounds.width + PADDING * 2)
+        val contentHeight = max(1f, contentBounds.height + PADDING * 2)
+
+        val scale = minOf(1f, maxDim.toFloat() / maxOf(contentWidth, contentHeight))
+        val thumbWidth = maxOf(60, (contentWidth * scale).toInt())
+        val thumbHeight = maxOf(40, (contentHeight * scale).toInt())
+
+        val surface = Surface.makeRasterN32Premul(thumbWidth, thumbHeight)
+        val canvas = surface.canvas
+        canvas.clear(state.backgroundColorHex.toInt())
+        canvas.scale(scale, scale)
+        canvas.translate(-contentBounds.left + PADDING, -contentBounds.top + PADDING)
+
+        val defaultTypeface = Typeface.makeDefault()
+
+        for (element in elementsToRender) {
+            val hasRotation = element.rotation != 0f
+            if (hasRotation) {
+                canvas.save()
+                canvas.rotate(element.rotation, element.x + element.width / 2f, element.y + element.height / 2f)
+            }
+            try {
+                when (element) {
+                    is BoardElement.StickyNote -> renderStickyNote(canvas, element, defaultTypeface)
+                    is BoardElement.Shape -> renderShape(canvas, element)
+                    is BoardElement.Text -> renderText(canvas, element, defaultTypeface)
+                    is BoardElement.DrawingPath -> renderDrawingPath(canvas, element)
+                    is BoardElement.ImageElement -> renderImageElement(canvas, element)
+                    is BoardElement.DocumentFrame -> renderDocumentFrame(canvas, element, defaultTypeface)
+                    is BoardElement.Connector -> renderConnector(canvas, element, state)
+                    is BoardElement.MilestoneCard -> renderMilestoneCard(canvas, element, defaultTypeface)
+                    is BoardElement.FunctionGraph -> renderFunctionGraph(canvas, element, defaultTypeface)
+                    is BoardElement.LatexFormula -> com.lkboard.app.util.LatexRenderer.renderSkia(canvas, element, defaultTypeface)
+                    is BoardElement.PhysicsStencil -> com.lkboard.app.util.PhysicsStencilRenderer.renderSkia(canvas, element, defaultTypeface)
+                    is BoardElement.KanbanBoard -> renderKanbanBoard(canvas, element, defaultTypeface, state)
+                    is BoardElement.FipiTask -> renderFipiTask(canvas, element, defaultTypeface)
+                }
+            } catch (_: Exception) {}
+            if (hasRotation) {
+                canvas.restore()
+            }
+        }
+
+        val image = surface.makeImageSnapshot()
+        val data = image.encodeToData(EncodedImageFormat.PNG, 85) ?: return false
+        targetFile.parentFile?.mkdirs()
+        targetFile.writeBytes(data.bytes)
+        return true
+    }
+
     private fun renderStickyNote(
         canvas: org.jetbrains.skia.Canvas,
         note: BoardElement.StickyNote,

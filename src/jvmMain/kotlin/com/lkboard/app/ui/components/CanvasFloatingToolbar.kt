@@ -18,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -496,6 +498,92 @@ fun LatexFloatingQuickBar(
                     contentDescription = "Удалить",
                     tint = Color(0xFFDC2626),
                     modifier = Modifier.size(15.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Плавающая панель быстрого управления заданием ФИПИ на холсте.
+ * Позволяет учителю в 1 клик показать или скрыть ответ/решение.
+ */
+@Composable
+fun FipiTaskFloatingQuickBar(
+    element: BoardElement.FipiTask,
+    transform: CanvasTransform,
+    onToggleAnswer: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isDark = com.lkboard.app.ui.theme.LocalAppTheme.current.isDark
+    val screenCenterX = (element.x + element.width / 2f) * transform.scale + transform.panX
+    val screenTopY = element.y * transform.scale + transform.panY
+
+    val barWidth = 320
+    val targetX = (screenCenterX - barWidth / 2f).coerceAtLeast(16f).roundToInt()
+    val targetY = if (screenTopY - 50f >= 55f) {
+        (screenTopY - 48f).roundToInt()
+    } else {
+        ((element.y + element.height) * transform.scale + transform.panY + 12f).roundToInt()
+    }
+
+    Box(
+        modifier = modifier
+            .offset { IntOffset(targetX, targetY) }
+            .shadow(12.dp, RoundedCornerShape(12.dp), ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.20f))
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isDark) Color(0xFF1E222A).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.96f))
+            .border(1.dp, if (isDark) Color(0xFF333844) else Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val isOpen = element.isAnswerRevealed
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(7.dp))
+                    .background(if (isOpen) Color(0xFF16A34A).copy(alpha = 0.16f) else Color(0xFF2563EB).copy(alpha = 0.14f))
+                    .border(1.dp, if (isOpen) Color(0xFF16A34A) else Color(0xFF2563EB), RoundedCornerShape(7.dp))
+                    .bouncyClickable(hoverScale = 1.05f, pressedScale = 0.92f) { onToggleAnswer() }
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isOpen) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = null,
+                        tint = if (isOpen) Color(0xFF16A34A) else Color(0xFF2563EB),
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Text(
+                        text = if (isOpen) "Скрыть ответ для ученика" else "Показать ответ и критерии",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isOpen) Color(0xFF16A34A) else Color(0xFF2563EB)
+                    )
+                }
+            }
+
+            Box(modifier = Modifier.width(1.dp).height(20.dp).background(if (isDark) Color(0xFF333844) else Color(0xFFE2E8F0)))
+
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (isDark) Color(0xFF262A34) else Color(0xFFF1F5F9))
+                    .bouncyClickable(hoverScale = 1.10f, pressedScale = 0.90f) { onDelete() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DeleteOutline,
+                    contentDescription = "Удалить",
+                    tint = Color(0xFFDC2626),
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
