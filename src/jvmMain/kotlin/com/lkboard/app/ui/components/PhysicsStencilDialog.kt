@@ -79,7 +79,7 @@ import kotlin.math.sqrt
 fun PhysicsLabSidePanel(
     isOpen: Boolean,
     onDismiss: () -> Unit,
-    onSelectStencil: (type: PhysicsStencilType, label: String) -> Unit
+    onSelectStencil: (type: PhysicsStencilType, label: String, initialParams: Map<String, Float>) -> Unit
 ) {
     val isDark = LocalAppTheme.current.isDark
     var selectedCategory by remember { mutableStateOf("Механика") }
@@ -727,7 +727,28 @@ fun PhysicsLabSidePanel(
 
                         Button(
                             onClick = {
-                                onSelectStencil(selectedType, computedLabel)
+                                val currentParams = when (selectedType) {
+                                    PhysicsStencilType.INCLINED_PLANE -> mapOf("m" to massKg, "angle" to angleDeg, "mu" to frictionCoeff)
+                                    PhysicsStencilType.PULLEY_BLOCK -> mapOf("m1" to pulleyMass1, "m2" to pulleyMass2)
+                                    PhysicsStencilType.SPRING -> mapOf("m" to massKg, "k" to springConstant)
+                                    PhysicsStencilType.MATHEMATICAL_PENDULUM -> mapOf("L" to pendulumLengthM, "g" to pendulumGravity)
+                                    PhysicsStencilType.LEVER_BALANCE -> mapOf("d1" to leverArm1Cm, "d2" to leverArm2Cm, "m1" to leverMass1Kg)
+                                    PhysicsStencilType.THERMO_CYLINDER -> mapOf("p" to thermoPressureKPa, "V" to thermoVol2L, "nu" to thermoMoles)
+                                    PhysicsStencilType.THERMO_PV_CYCLE -> mapOf("p1" to pvP1KPa, "p2" to pvP2KPa, "V1" to pvV1L, "V2" to pvV2L)
+                                    PhysicsStencilType.CIRCUIT_RESISTOR -> mapOf("R" to resistanceOhms, "U" to voltageVolts)
+                                    PhysicsStencilType.CIRCUIT_BATTERY -> mapOf("U" to voltageVolts)
+                                    PhysicsStencilType.CIRCUIT_CAPACITOR -> mapOf("C" to capacitanceMicroFarad, "U" to voltageVolts)
+                                    PhysicsStencilType.CIRCUIT_INDUCTOR -> mapOf("L" to inductanceMilliHenry)
+                                    PhysicsStencilType.CIRCUIT_SWITCH -> emptyMap()
+                                    PhysicsStencilType.CIRCUIT_LAMP -> mapOf("R" to resistanceOhms, "U" to voltageVolts)
+                                    PhysicsStencilType.CIRCUIT_AMMETER -> mapOf("I" to 2.4f, "Imax" to 5.0f)
+                                    PhysicsStencilType.CIRCUIT_VOLTMETER -> mapOf("U" to voltageVolts, "Umax" to 24.0f)
+                                    PhysicsStencilType.CIRCUIT_RHEOSTAT -> mapOf("Rcur" to rheostatCurR, "Rmax" to rheostatMaxR, "U" to voltageVolts)
+                                    PhysicsStencilType.MAGNET_FIELD -> mapOf("B" to magnetFieldTesla, "q" to 10f, "v" to 1000f, "I" to 3f)
+                                    PhysicsStencilType.OPTICAL_LENS -> mapOf("F" to 20f, "d" to 30f)
+                                    PhysicsStencilType.OPTICAL_PRISM -> mapOf("A" to 60f, "n" to 1.50f)
+                                }
+                                onSelectStencil(selectedType, computedLabel, currentParams)
                                 onDismiss()
                             },
                             shape = RoundedCornerShape(8.dp),
@@ -826,7 +847,7 @@ private fun MetricRow(
 @Composable
 fun PhysicsStencilDialog(
     onDismiss: () -> Unit,
-    onSelectStencil: (type: PhysicsStencilType, label: String) -> Unit
+    onSelectStencil: (type: PhysicsStencilType, label: String, initialParams: Map<String, Float>) -> Unit
 ) {
     PhysicsLabSidePanel(
         isOpen = true,

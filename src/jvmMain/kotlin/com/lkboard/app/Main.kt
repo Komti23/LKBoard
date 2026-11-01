@@ -455,6 +455,8 @@ fun main() = application {
                             onCancelTextEdit = viewModel::cancelTextEdit,
                             onUpdateSelectedTextProperties = viewModel::updateSelectedTextProperties,
                             onUpdateSelectedLatexProperties = viewModel::updateSelectedLatexProperties,
+                            onUpdatePhysicsStencilParams = viewModel::updatePhysicsStencilParams,
+                            onUpdatePhysicsStencilStyle = viewModel::updatePhysicsStencilStyle,
                             onEditSelectedLatex = { (boardState.selectedElements.singleOrNull() as? BoardElement.LatexFormula)?.let { viewModel.openLatexDialog(it) } },
                             onStartEditingSelectedText = { (boardState.selectedElements.singleOrNull() as? BoardElement.Text)?.let { viewModel.startEditingElement(it) } },
                             onCursorPositionChange = { currentCursorScreenPos = it },

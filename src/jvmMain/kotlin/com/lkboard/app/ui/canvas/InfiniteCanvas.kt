@@ -87,6 +87,7 @@ import com.lkboard.app.ui.components.SelectionRenderer
 import com.lkboard.app.ui.components.TextFloatingQuickBar
 import com.lkboard.app.ui.components.LatexFloatingQuickBar
 import com.lkboard.app.ui.components.FipiTaskFloatingQuickBar
+import com.lkboard.app.ui.components.PhysicsStencilFloatingQuickBar
 import com.lkboard.app.util.FileDialogs
 import java.awt.Cursor
 import java.util.UUID
@@ -154,6 +155,8 @@ fun InfiniteCanvas(
     onCancelTextEdit: () -> Unit = {},
     onUpdateSelectedTextProperties: ((fontSizeDelta: Float?, targetFontSize: Float?, isBold: Boolean?, isItalic: Boolean?, colorHex: Long?) -> Unit)? = null,
     onUpdateSelectedLatexProperties: ((fontSizeDelta: Float?, targetFontSize: Float?, colorHex: Long?, toggleBackground: Boolean) -> Unit)? = null,
+    onUpdatePhysicsStencilParams: ((id: String, params: Map<String, Float>) -> Unit)? = null,
+    onUpdatePhysicsStencilStyle: ((id: String, strokeColorHex: Long?, strokeWidth: Float?) -> Unit)? = null,
     onEditSelectedLatex: (() -> Unit)? = null,
     onStartEditingSelectedText: (() -> Unit)? = null,
     onCursorPositionChange: (Offset) -> Unit = {},
@@ -780,6 +783,18 @@ fun InfiniteCanvas(
                     element = selectedEl,
                     transform = state.transform,
                     onToggleAnswer = { onToggleFipiTaskAnswer(selectedEl.id) },
+                    onDelete = { onDeleteElements(listOf(selectedEl)) }
+                )
+            } else if (selectedEl is BoardElement.PhysicsStencil && onUpdatePhysicsStencilParams != null) {
+                PhysicsStencilFloatingQuickBar(
+                    element = selectedEl,
+                    transform = state.transform,
+                    onUpdateParams = { newParams -> onUpdatePhysicsStencilParams(selectedEl.id, newParams) },
+                    onUpdateStyle = { colorHex, strokeWidth -> onUpdatePhysicsStencilStyle?.invoke(selectedEl.id, colorHex, strokeWidth) },
+                    onResetParams = {
+                        val defaults = com.lkboard.app.model.PhysicsStencilDefaults.defaultParams(selectedEl.stencilType)
+                        onUpdatePhysicsStencilParams(selectedEl.id, defaults)
+                    },
                     onDelete = { onDeleteElements(listOf(selectedEl)) }
                 )
             }

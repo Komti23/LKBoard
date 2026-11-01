@@ -1679,7 +1679,11 @@ class BoardViewModel {
         _isPhysicsStencilDialogOpen.value = false
     }
 
-    fun addPhysicsStencil(type: PhysicsStencilType, label: String = "") {
+    fun addPhysicsStencil(
+        type: PhysicsStencilType,
+        label: String = "",
+        initialParams: Map<String, Float> = emptyMap()
+    ) {
         val (defW, defH) = when (type) {
             PhysicsStencilType.INCLINED_PLANE -> 220f to 150f
             PhysicsStencilType.PULLEY_BLOCK -> 140f to 180f
@@ -1701,6 +1705,8 @@ class BoardViewModel {
             PhysicsStencilType.CIRCUIT_RHEOSTAT -> 160f to 80f
             PhysicsStencilType.MAGNET_FIELD -> 200f to 150f
         }
+        val effectiveParams = if (initialParams.isNotEmpty()) initialParams else com.lkboard.app.model.PhysicsStencilDefaults.defaultParams(type)
+        val computedLabel = if (label.isNotBlank()) label else com.lkboard.app.model.PhysicsStencilDefaults.computeLabel(type, effectiveParams)
         val newElement = BoardElement.PhysicsStencil(
             id = UUID.randomUUID().toString(),
             x = pendingPhysicsStencilPosition.x,
@@ -1708,12 +1714,33 @@ class BoardViewModel {
             width = defW,
             height = defH,
             stencilType = type,
-            label = if (label.isNotBlank()) label else type.displayName,
+            label = computedLabel,
+            params = effectiveParams,
             zIndex = nextZIndex()
         )
         executeCommand(AddElementCommand(newElement))
         _state.update { it.copy(selectedElementIds = setOf(newElement.id)) }
         closePhysicsStencilDialog()
+    }
+
+    fun updatePhysicsStencilParams(id: String, newParams: Map<String, Float>) {
+        val current = _state.value.elements[id] as? BoardElement.PhysicsStencil ?: return
+        val newLabel = com.lkboard.app.model.PhysicsStencilDefaults.computeLabel(current.stencilType, newParams)
+        val updated = current.copy(params = newParams, label = newLabel)
+        _state.update { s ->
+            s.copy(elements = s.elements + (id to updated))
+        }
+        triggerAutoSave()
+    }
+
+    fun updatePhysicsStencilStyle(id: String, strokeColorHex: Long? = null, strokeWidth: Float? = null) {
+        val current = _state.value.elements[id] as? BoardElement.PhysicsStencil ?: return
+        val updated = current.copy(
+            strokeColorHex = strokeColorHex ?: current.strokeColorHex,
+            strokeWidth = strokeWidth ?: current.strokeWidth
+        )
+        executeCommand(UpdateElementCommand(current, updated))
+        triggerAutoSave(immediate = true)
     }
 
     // --- Банк заданий ФИПИ (ОГЭ / ЕГЭ) ---

@@ -502,7 +502,7 @@ sealed interface BoardElement {
     }
 
     /**
-     * Инженерный и физический примитив (стенсил) с привязкой к сетке.
+     * Инженерный и физический примитив (стенсил) с привязкой к сетке и живой физической моделью.
      */
     @Serializable
     @SerialName("physics_stencil")
@@ -519,12 +519,17 @@ sealed interface BoardElement {
         val label: String = "",
         val strokeColorHex: Long = 0xFF2563EB,
         val fillColorHex: Long? = 0x1A2563EB,
-        val strokeWidth: Float = 2.5f
+        val strokeWidth: Float = 2.5f,
+        val params: Map<String, Float> = emptyMap()
     ) : BoardElement {
         override fun translate(deltaX: Float, deltaY: Float) = copy(x = x + deltaX, y = y + deltaY)
         override fun copyWithPosition(newX: Float, newY: Float) = copy(x = newX, y = newY)
         override fun copyWithSize(newWidth: Float, newHeight: Float) = copy(width = newWidth, height = newHeight)
         override fun withRotation(newRotation: Float) = copy(rotation = newRotation)
+
+        fun effectiveParams(): Map<String, Float> {
+            return if (params.isNotEmpty()) params else PhysicsStencilDefaults.defaultParams(stencilType)
+        }
     }
 
     /**
@@ -592,6 +597,150 @@ enum class PhysicsStencilType(val displayName: String, val category: String) {
     CIRCUIT_VOLTMETER("Вольтметр (V)", "Электричество"),
     CIRCUIT_RHEOSTAT("Реостат (R рег)", "Электричество"),
     MAGNET_FIELD("Полосовой магнит и поле B", "Магнетизм")
+}
+
+/**
+ * Дефолтные физические параметры и генератор маркировки для интерактивных стенсилов.
+ */
+object PhysicsStencilDefaults {
+    fun defaultParams(type: PhysicsStencilType): Map<String, Float> = when (type) {
+        PhysicsStencilType.INCLINED_PLANE -> mapOf("m" to 2.0f, "angle" to 30f, "mu" to 0.15f)
+        PhysicsStencilType.PULLEY_BLOCK -> mapOf("m1" to 3.0f, "m2" to 1.0f)
+        PhysicsStencilType.SPRING -> mapOf("m" to 2.0f, "k" to 100f)
+        PhysicsStencilType.MATHEMATICAL_PENDULUM -> mapOf("L" to 1.0f, "g" to 9.8f)
+        PhysicsStencilType.LEVER_BALANCE -> mapOf("d1" to 40f, "d2" to 20f, "m1" to 2.0f)
+        PhysicsStencilType.THERMO_CYLINDER -> mapOf("p" to 100f, "V" to 5.0f, "nu" to 1.0f)
+        PhysicsStencilType.THERMO_PV_CYCLE -> mapOf("p1" to 100f, "p2" to 300f, "V1" to 2.0f, "V2" to 6.0f)
+        PhysicsStencilType.CIRCUIT_RESISTOR -> mapOf("R" to 6.0f, "U" to 12.0f)
+        PhysicsStencilType.CIRCUIT_BATTERY -> mapOf("U" to 12.0f)
+        PhysicsStencilType.CIRCUIT_CAPACITOR -> mapOf("C" to 47.0f, "U" to 12.0f)
+        PhysicsStencilType.CIRCUIT_INDUCTOR -> mapOf("L" to 10.0f)
+        PhysicsStencilType.CIRCUIT_SWITCH -> emptyMap()
+        PhysicsStencilType.CIRCUIT_LAMP -> mapOf("R" to 6.0f, "U" to 12.0f)
+        PhysicsStencilType.CIRCUIT_AMMETER -> mapOf("I" to 2.4f, "Imax" to 5.0f)
+        PhysicsStencilType.CIRCUIT_VOLTMETER -> mapOf("U" to 9.6f, "Umax" to 15.0f)
+        PhysicsStencilType.CIRCUIT_RHEOSTAT -> mapOf("Rcur" to 20.0f, "Rmax" to 50.0f, "U" to 12.0f)
+        PhysicsStencilType.MAGNET_FIELD -> mapOf("B" to 0.5f, "q" to 10.0f, "v" to 1000.0f, "I" to 3.0f)
+        PhysicsStencilType.OPTICAL_LENS -> mapOf("F" to 20.0f, "d" to 30.0f)
+        PhysicsStencilType.OPTICAL_PRISM -> mapOf("A" to 60.0f, "n" to 1.50f)
+    }
+
+    fun computeLabel(type: PhysicsStencilType, params: Map<String, Float>): String {
+        return when (type) {
+            PhysicsStencilType.INCLINED_PLANE -> {
+                val m = params["m"] ?: 2.0f
+                val angle = (params["angle"] ?: 30f).toInt()
+                val mu = params["mu"] ?: 0.15f
+                val rad = (angle * kotlin.math.PI / 180.0).toFloat()
+                val g = 9.8f
+                val fNet = maxOf(0f, m * g * kotlin.math.sin(rad) - mu * m * g * kotlin.math.cos(rad))
+                val a = fNet / m
+                "m=${"%.1f".format(m)}кг, α=${angle}°, a=${"%.1f".format(a)}м/с²"
+            }
+            PhysicsStencilType.PULLEY_BLOCK -> {
+                val m1 = params["m1"] ?: 3.0f
+                val m2 = params["m2"] ?: 1.0f
+                val a = if (m1 + m2 > 0f) kotlin.math.abs(m1 - m2) * 9.8f / (m1 + m2) else 0f
+                "m1=${"%.1f".format(m1)}кг, m2=${"%.1f".format(m2)}кг, a=${"%.1f".format(a)}м/с²"
+            }
+            PhysicsStencilType.SPRING -> {
+                val m = params["m"] ?: 2.0f
+                val k = params["k"] ?: 100f
+                val t = if (k > 0f) 2f * kotlin.math.PI.toFloat() * kotlin.math.sqrt(m / k) else 0f
+                "k=${k.toInt()}Н/м, m=${"%.1f".format(m)}кг, T=${"%.2f".format(t)}с"
+            }
+            PhysicsStencilType.MATHEMATICAL_PENDULUM -> {
+                val l = params["L"] ?: 1.0f
+                val g = params["g"] ?: 9.8f
+                val t = if (g > 0f && l > 0f) 2f * kotlin.math.PI.toFloat() * kotlin.math.sqrt(l / g) else 0f
+                val nu = if (t > 0f) 1f / t else 0f
+                "L=${"%.2f".format(l)}м, T=${"%.2f".format(t)}с, ν=${"%.2f".format(nu)}Гц"
+            }
+            PhysicsStencilType.LEVER_BALANCE -> {
+                val d1 = (params["d1"] ?: 40f).toInt()
+                val d2 = (params["d2"] ?: 20f).toInt()
+                val m1 = params["m1"] ?: 2.0f
+                val m2 = if (d2 > 0) m1 * d1 / d2 else 0f
+                "d1=${d1}см, d2=${d2}см, m2=${"%.1f".format(m2)}кг"
+            }
+            PhysicsStencilType.THERMO_CYLINDER -> {
+                val p = (params["p"] ?: 100f).toInt()
+                val v = params["V"] ?: 5.0f
+                val nu = params["nu"] ?: 1.0f
+                val tK = if (nu > 0f) (p * 1000f * (v * 1e-3f)) / (nu * 8.314f) else 0f
+                "p=${p}кПа, V=${"%.1f".format(v)}л, T=${tK.toInt()}K"
+            }
+            PhysicsStencilType.THERMO_PV_CYCLE -> {
+                val p1 = (params["p1"] ?: 100f).toInt()
+                val p2 = (params["p2"] ?: 300f).toInt()
+                val v1 = params["V1"] ?: 2.0f
+                val v2 = params["V2"] ?: 6.0f
+                val work = kotlin.math.abs(p2 - p1) * 1000f * (kotlin.math.abs(v2 - v1) * 1e-3f)
+                "A(цикл)=${"%.1f".format(work)}Дж, p=${p1}..${p2}кПа"
+            }
+            PhysicsStencilType.CIRCUIT_RESISTOR -> {
+                val r = params["R"] ?: 6.0f
+                val u = params["U"] ?: 12.0f
+                val i = if (r > 0f) u / r else 0f
+                val p = u * i
+                "R=${"%.1f".format(r)}Ом, I=${"%.2f".format(i)}А, P=${"%.1f".format(p)}Вт"
+            }
+            PhysicsStencilType.CIRCUIT_BATTERY -> {
+                val u = (params["U"] ?: 12.0f).toInt()
+                "U=${u}В"
+            }
+            PhysicsStencilType.CIRCUIT_CAPACITOR -> {
+                val c = (params["C"] ?: 47.0f).toInt()
+                val u = params["U"] ?: 12.0f
+                val w = 0.5f * (c * 1e-6f) * u * u * 1000f
+                "C=${c}мкФ, W=${"%.2f".format(w)}мДж"
+            }
+            PhysicsStencilType.CIRCUIT_INDUCTOR -> {
+                val l = (params["L"] ?: 10.0f).toInt()
+                "L=${l}мГн"
+            }
+            PhysicsStencilType.CIRCUIT_SWITCH -> "Ключ К1"
+            PhysicsStencilType.CIRCUIT_LAMP -> {
+                val r = params["R"] ?: 6.0f
+                val u = params["U"] ?: 12.0f
+                val i = if (r > 0f) u / r else 0f
+                val p = u * i
+                "Лампа ${"%.1f".format(p)}Вт (${u.toInt()}В)"
+            }
+            PhysicsStencilType.CIRCUIT_AMMETER -> {
+                val i = params["I"] ?: 2.4f
+                "Амперметр: I=${"%.2f".format(i)}А"
+            }
+            PhysicsStencilType.CIRCUIT_VOLTMETER -> {
+                val u = params["U"] ?: 9.6f
+                "Вольтметр: U=${"%.1f".format(u)}В"
+            }
+            PhysicsStencilType.CIRCUIT_RHEOSTAT -> {
+                val rCur = (params["Rcur"] ?: 20.0f).toInt()
+                val rMax = (params["Rmax"] ?: 50.0f).toInt()
+                val u = params["U"] ?: 12.0f
+                val i = if (rCur > 0) u / rCur else 0f
+                "Реостат: R=${rCur}/${rMax}Ом, I=${"%.2f".format(i)}А"
+            }
+            PhysicsStencilType.MAGNET_FIELD -> {
+                val b = params["B"] ?: 0.5f
+                val i = params["I"] ?: 3.0f
+                "B=${"%.2f".format(b)}Тл, I=${"%.1f".format(i)}А"
+            }
+            PhysicsStencilType.OPTICAL_LENS -> {
+                val f = (params["F"] ?: 20.0f).toInt()
+                val d = (params["d"] ?: 30.0f).toInt()
+                val dP = if (f > 0) 100f / f else 0f
+                val mag = if (d - f != 0 && d > 0) kotlin.math.abs((d.toFloat() * f / (d - f)) / d) else 1f
+                "F=${f}см, D=${"%.1f".format(dP)}дптр, Г=${"%.1f".format(mag)}x"
+            }
+            PhysicsStencilType.OPTICAL_PRISM -> {
+                val a = (params["A"] ?: 60.0f).toInt()
+                val n = params["n"] ?: 1.50f
+                "A=${a}°, n=${"%.2f".format(n)}"
+            }
+        }
+    }
 }
 
 /**
